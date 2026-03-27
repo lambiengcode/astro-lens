@@ -1,26 +1,286 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #060a13;
+  --foreground: #e2e8f0;
+  --card: #0d1117;
+  --card-hover: #111822;
+  --border: #1e2538;
+  --accent: #3b5bdb;
+  --accent-dim: #2b4bc6;
+  --accent-glow: rgba(59, 91, 219, 0.15);
+  --gold: #e8b339;
+  --gold-dim: rgba(232, 179, 57, 0.15);
+  --muted: #4a5568;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --purple: #9775cd;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
+  --color-accent-glow: var(--accent-glow);
+  --color-gold: var(--gold);
+  --color-gold-dim: var(--gold-dim);
+  --color-muted: var(--muted);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-purple: var(--purple);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/* ============================================================
+   PARTICLE / STAR FIELD BACKGROUNDS
+   ============================================================ */
+
+.stars-bg {
+  background-image:
+    radial-gradient(1.5px 1.5px at 10% 20%, rgba(59, 91, 219, 0.4), transparent),
+    radial-gradient(1px 1px at 30% 60%, rgba(232, 179, 57, 0.3), transparent),
+    radial-gradient(1.5px 1.5px at 50% 10%, rgba(151, 117, 205, 0.35), transparent),
+    radial-gradient(1px 1px at 70% 80%, rgba(255, 255, 255, 0.15), transparent),
+    radial-gradient(2px 2px at 85% 30%, rgba(59, 91, 219, 0.3), transparent),
+    radial-gradient(1px 1px at 95% 70%, rgba(232, 179, 57, 0.2), transparent),
+    radial-gradient(1px 1px at 15% 90%, rgba(151, 117, 205, 0.2), transparent),
+    radial-gradient(1.5px 1.5px at 60% 45%, rgba(255, 255, 255, 0.1), transparent);
+  background-size: 400px 300px;
+  animation: starfield 20s linear infinite;
+}
+
+@keyframes starfield {
+  0% { background-position: 0 0; }
+  100% { background-position: 400px 300px; }
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes float-delayed {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(3deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(59, 91, 219, 0.1), 0 0 60px rgba(59, 91, 219, 0.05); }
+  50% { box-shadow: 0 0 30px rgba(59, 91, 219, 0.25), 0 0 80px rgba(59, 91, 219, 0.1); }
+}
+
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 15px rgba(232, 179, 57, 0.1); }
+  50% { box-shadow: 0 0 30px rgba(232, 179, 57, 0.2); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slide-up-fade {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(50px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(50px) rotate(-360deg); }
+}
+
+@keyframes glow-line {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes typing-dot {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-float-delayed { animation: float-delayed 7s ease-in-out infinite 1s; }
+.animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+.animate-pulse-gold { animation: pulse-gold 4s ease-in-out infinite; }
+.animate-spin-slow { animation: spin-slow 20s linear infinite; }
+.animate-fade-in-up { animation: fade-in-up 0.6s ease-out forwards; }
+.animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
+.animate-scale-in { animation: scale-in 0.3s ease-out forwards; }
+.animate-slide-in-right { animation: slide-in-right 0.4s ease-out forwards; }
+.animate-slide-up-fade { animation: slide-up-fade 0.3s ease-out forwards; }
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(59, 91, 219, 0.08), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+
+/* ============================================================
+   GLASS MORPHISM
+   ============================================================ */
+
+.glass {
+  background: rgba(13, 17, 23, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(30, 37, 56, 0.6);
+}
+
+.glass-strong {
+  background: rgba(13, 17, 23, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(30, 37, 56, 0.8);
+}
+
+/* ============================================================
+   GLOW EFFECTS
+   ============================================================ */
+
+.glow-accent {
+  box-shadow: 0 0 20px rgba(59, 91, 219, 0.15), 0 0 60px rgba(59, 91, 219, 0.05);
+}
+
+.glow-gold {
+  box-shadow: 0 0 20px rgba(232, 179, 57, 0.12), 0 0 50px rgba(232, 179, 57, 0.04);
+}
+
+.text-glow-accent {
+  text-shadow: 0 0 20px rgba(59, 91, 219, 0.5);
+}
+
+.text-glow-gold {
+  text-shadow: 0 0 20px rgba(232, 179, 57, 0.4);
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #2a3348; }
+
+/* ============================================================
+   MARKDOWN / INTERPRETATION PROSE
+   ============================================================ */
+
+.prose-interpretation h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #e8b339;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #1e2538;
+}
+
+.prose-interpretation h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #5b8af5;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose-interpretation p {
+  margin-bottom: 0.75rem;
+  line-height: 1.8;
+  color: #c9d1d9;
+}
+
+.prose-interpretation strong {
+  color: #e8b339;
+  font-weight: 600;
+}
+
+.prose-interpretation ul, .prose-interpretation ol {
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose-interpretation li {
+  margin-bottom: 0.35rem;
+  line-height: 1.7;
+  color: #c9d1d9;
+}
+
+.prose-interpretation blockquote {
+  border-left: 3px solid #3b5bdb;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: #6b7a94;
+  font-style: italic;
+}
+
+/* ============================================================
+   CHAT BUBBLES
+   ============================================================ */
+
+.chat-bubble-user {
+  background: linear-gradient(135deg, #1a2744, #1e2f50);
+  border: 1px solid rgba(59, 91, 219, 0.3);
+}
+
+.chat-bubble-ai {
+  background: #111620;
+  border: 1px solid #1e2538;
+}
+
+.typing-indicator span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3b5bdb;
+  animation: typing-dot 1.4s infinite;
+}
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }

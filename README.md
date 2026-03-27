@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tử Vi Đẩu Số — AI Astrology
+
+Vietnamese Zi Wei Dou Shu (Tử Vi Đẩu Số) astrology web app powered by iztro and Gemini AI.
+
+## Features
+
+- **Lá số tử vi** — Generate a full 12-palace Zi Wei Dou Shu chart from birth date, time, and gender
+- **12 Cung** — Interactive grid in the classic 4×4 perimeter layout (ziwei.pub dark navy style)
+- **Đại Vận** — Detailed 10-year major life period view with timeline, stars, and mutagens
+- **Luận giải AI** — Deep Vietnamese interpretation via a 3-layer Gemini prompt system (chained reasoning + self-check + anti-hallucination)
+- **Vận hạn** — Current decadal / yearly / monthly horoscope overlay
+- **Chat AI** — Follow-up Q&A grounded in the user's own chart data
+- **Giờ Tý split** — Correctly handles both 00:00–00:59 (timeIndex 0) and 23:00–23:59 (timeIndex 12)
+- Dark theme with glass morphism, animated star field, orbiting particles, and staggered entrance animations
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript 5 |
+| Styling | Tailwind CSS v4 |
+| Astrology engine | iztro v2.5.8 |
+| AI | Google Gemini 2.5 Pro (`@google/generative-ai`) |
+| Runtime | React 19 |
 
 ## Getting Started
 
-First, run the development server:
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure environment
+
+Create a `.env.local` file:
+
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+Get a key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+
+### 3. Run the dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/
+│   ├── page.tsx              # Landing / birth input form
+│   ├── result/page.tsx       # Chart result page (5 tabs)
+│   └── api/
+│       ├── analyze/route.ts  # POST /api/analyze — chart generation + AI interpretation
+│       └── chat/route.ts     # POST /api/chat — follow-up Q&A
+├── components/
+│   ├── chart/
+│   │   ├── ChartGrid.tsx     # 4×4 palace grid
+│   │   ├── ChartSummary.tsx  # Overview panel
+│   │   ├── PalaceDetail.tsx  # Expanded palace drawer
+│   │   ├── DecadalView.tsx   # Đại vận timeline
+│   │   └── Interpretation.tsx # Markdown prose renderer
+│   ├── chat/
+│   │   └── ChatPanel.tsx     # Slide-up chat panel with suggestion chips
+│   └── ui/
+│       ├── Header.tsx
+│       ├── Footer.tsx
+│       └── LoadingScreen.tsx # Animated loading overlay
+├── lib/
+│   ├── iztro.ts              # Chart generation (no timezone conversion)
+│   └── gemini.ts             # 3-layer AI prompt system
+└── types/index.ts            # Shared TypeScript types
+```
 
-## Learn More
+## AI Prompt Architecture (`src/lib/gemini.ts`)
 
-To learn more about Next.js, take a look at the following resources:
+The Gemini prompt is split into three layers:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **System Instruction** — Immutable expert identity, epistemic rules (no hallucinated stars, cross-palace consistency, Mệnh cung as root), tone control (no fear-mongering, no flattery), and output discipline. Loaded via `systemInstruction` so it cannot be overridden by prompt content.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. **Data Context** — Structured chart dump: birth info, all 12 palaces with stars/brightness/mutagens/changsheng/decadal range, current horoscope overlay.
 
-## Deploy on Vercel
+3. **Chained Reasoning + Self-Check + Task** — Forces the model to:
+   - Internally reason through core chart, cross-palace correlations, contradiction detection, and horoscope evaluation (Step A–D, not printed)
+   - Run a 6-point self-check gate before writing (completeness, no invented stars, Mệnh consistency, no silent contradictions, tone, negative-indicator handling)
+   - Output a structured 5-section Vietnamese interpretation only after passing the gate
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Birth Time Notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+iztro timeIndex mapping used:
+
+| Value | Label | Time range |
+|---|---|---|
+| 0 | Tý (early) | 00:00–00:59 |
+| 1–11 | Sửu → Hợi | 01:00–22:59 |
+| 12 | Tý (late) | 23:00–23:59 |
+
+No timezone conversion is applied — birth time is passed directly to iztro.
+
+## Build
+
+```bash
+npm run build
+npm run start
+```
