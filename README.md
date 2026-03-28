@@ -2,6 +2,8 @@
 
 Vietnamese Zi Wei Dou Shu (Tử Vi Đẩu Số) astrology web app powered by iztro and Gemini AI.
 
+![Full Page](public/screenshots/homepage-full.png)
+
 ## Features
 
 - **Lá số tử vi** — Generate a full 12-palace Zi Wei Dou Shu chart from birth date, time, and gender
