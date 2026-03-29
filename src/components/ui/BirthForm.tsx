@@ -3,22 +3,57 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BIRTH_HOURS } from '@/types';
-import type { BirthInput } from '@/types';
+import type { BirthInput, RectificationCandidate } from '@/types';
 import LoadingScreen from './LoadingScreen';
+import CandidateSelection from './CandidateSelection';
+
+type Step = 'form' | 'loading-candidates' | 'select-candidate' | 'loading-analysis';
 
 export default function BirthForm() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<Step>('form');
   const [error, setError] = useState<string | null>(null);
+  const [unknownHour, setUnknownHour] = useState(false);
+  const [candidates, setCandidates] = useState<RectificationCandidate[]>([]);
 
   const [form, setForm] = useState<BirthInput>({
     name: '',
     solarDate: '',
-    birthHour: 6, // default Ngọ (11:00–12:59)
+    birthHour: 6,
     gender: 'male',
     location: 'Việt Nam',
   });
 
+  // ── Run full analysis with a specific timeIndex ────────────────────────────
+  const runAnalysis = async (timeIndex: number) => {
+    setStep('loading-analysis');
+    setError(null);
+    const input: BirthInput = { ...form, birthHour: timeIndex };
+
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input }),
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        setError(data.error || 'Đã xảy ra lỗi.');
+        setStep('form');
+        return;
+      }
+
+      sessionStorage.setItem('tuvi_result', JSON.stringify(data.data));
+      sessionStorage.setItem('tuvi_input', JSON.stringify(input));
+      router.push('/result');
+    } catch {
+      setError('Không thể kết nối đến máy chủ. Vui lòng thử lại.');
+      setStep('form');
+    }
+  };
+
+  // ── Submit handler ─────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -28,35 +63,55 @@ export default function BirthForm() {
       return;
     }
 
-    setLoading(true);
+    // Known hour → go straight to analysis
+    if (!unknownHour) {
+      await runAnalysis(form.birthHour);
+      return;
+    }
 
+    // Unknown hour → fetch all 13 candidates
+    setStep('loading-candidates');
     try {
-      const res = await fetch('/api/analyze', {
+      const res = await fetch('/api/candidates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input: form }),
+        body: JSON.stringify({ solarDate: form.solarDate, gender: form.gender }),
       });
-
       const data = await res.json();
 
-      if (!data.success) {
-        setError(data.error || 'Đã xảy ra lỗi.');
-        setLoading(false);
+      if (!data.success || !data.candidates?.length) {
+        setError(data.error || 'Không thể tạo danh sách ứng viên.');
+        setStep('form');
         return;
       }
 
-      // Store result in sessionStorage for the result page
-      sessionStorage.setItem('tuvi_result', JSON.stringify(data.data));
-      sessionStorage.setItem('tuvi_input', JSON.stringify(form));
-      router.push('/result');
+      setCandidates(data.candidates);
+      setStep('select-candidate');
     } catch {
       setError('Không thể kết nối đến máy chủ. Vui lòng thử lại.');
-      setLoading(false);
+      setStep('form');
     }
   };
 
-  if (loading) return <LoadingScreen />;
+  // ── Render states ──────────────────────────────────────────────────────────
+  if (step === 'loading-candidates' || step === 'loading-analysis') {
+    return <LoadingScreen />;
+  }
 
+  if (step === 'select-candidate') {
+    return (
+      <CandidateSelection
+        candidates={candidates}
+        solarDate={form.solarDate}
+        gender={form.gender}
+        name={form.name}
+        onSelect={(timeIndex) => runAnalysis(timeIndex)}
+        onBack={() => setStep('form')}
+      />
+    );
+  }
+
+  // ── Main form ──────────────────────────────────────────────────────────────
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
@@ -95,25 +150,48 @@ export default function BirthForm() {
         />
       </div>
 
-      {/* Birth hour */}
+      {/* Birth hour + unknown toggle */}
       <div>
-        <label className="block text-sm font-medium text-muted mb-2">
-          Giờ sinh <span className="text-danger">*</span>
-        </label>
-        <select
-          value={form.birthHour}
-          onChange={(e) => setForm({ ...form, birthHour: parseInt(e.target.value) })}
-          className="w-full px-4 py-3 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all appearance-none"
-        >
-          {BIRTH_HOURS.map((hour) => (
-            <option key={hour.value} value={hour.value}>
-              {hour.label}
-            </option>
-          ))}
-        </select>
-        <p className="text-xs text-muted/50 mt-1.5">
-          Giờ Tý có 2 lựa chọn: 23:00–23:59 (cùng ngày) và 00:00–00:59 (đầu ngày mới).
-        </p>
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-sm font-medium text-muted">
+            Giờ sinh {!unknownHour && <span className="text-danger">*</span>}
+          </label>
+          <button
+            type="button"
+            onClick={() => setUnknownHour((v) => !v)}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1 rounded-full border transition-all ${
+              unknownHour
+                ? 'border-[#3b5bdb]/50 bg-[#3b5bdb]/10 text-[#5b8af5]'
+                : 'border-[#1e2538] text-[#4a5568] hover:border-[#3d4a5c] hover:text-[#6b7a94]'
+            }`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full transition-colors ${unknownHour ? 'bg-[#5b8af5]' : 'bg-[#3d4a5c]'}`} />
+            Không biết giờ sinh
+          </button>
+        </div>
+
+        {unknownHour ? (
+          <div className="px-4 py-3 rounded-lg bg-[#0d1117] border border-[#3b5bdb]/20 text-sm text-[#6b7a94] leading-relaxed">
+            Hệ thống sẽ tạo <span className="text-[#5b8af5] font-medium">13 lá số</span> ứng với 13 giờ sinh — bạn chọn cung Mệnh phản ánh đúng tính cách nhất.
+          </div>
+        ) : (
+          <>
+            <select
+              value={form.birthHour}
+              onChange={(e) => setForm({ ...form, birthHour: parseInt(e.target.value) })}
+              className="w-full px-4 py-3 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all appearance-none"
+            >
+              {BIRTH_HOURS.map((hour) => (
+                <option key={hour.value} value={hour.value}>
+                  {hour.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted/50 mt-1.5">
+              Giờ Tý có 2 lựa chọn: 23:00–23:59 (cùng ngày) và 00:00–00:59 (đầu ngày mới).
+            </p>
+          </>
+        )}
       </div>
 
       {/* Gender */}
@@ -166,7 +244,7 @@ export default function BirthForm() {
         type="submit"
         className="w-full py-4 rounded-lg bg-gradient-to-r from-accent-dim to-accent text-white font-semibold text-lg hover:opacity-90 transition-all animate-pulse-glow"
       >
-        ✦ Lập Lá Số Tử Vi
+        {unknownHour ? '◎ Xem 13 Cung Mệnh' : '✦ Lập Lá Số Tử Vi'}
       </button>
 
       <p className="text-xs text-muted/60 text-center">

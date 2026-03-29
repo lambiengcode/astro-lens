@@ -85,6 +85,17 @@ export interface AnalysisResult {
   decadalPeriods: DecadalPeriod[];
 }
 
+// Candidate for unknown-birth-hour flow
+export interface RectificationCandidate {
+  timeIndex: number;
+  hourLabel: string;
+  hourRange: string;
+  menhEarthlyBranch: string;  // which earthly branch Mệnh lands on
+  menhMajorStars: string[];   // major star names in Mệnh cung
+  fiveElementsClass: string;
+  soul: string;               // Mệnh chủ
+}
+
 export interface AnalyzeRequest {
   input: BirthInput;
 }
