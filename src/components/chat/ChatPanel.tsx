@@ -36,7 +36,7 @@ export default function ChatPanel({ chart, name, isOpen, onClose }: ChatPanelPro
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (isOpen) inputRef.current?.focus();
@@ -52,6 +52,7 @@ export default function ChatPanel({ chart, name, isOpen, onClose }: ChatPanelPro
     const userMsg: ChatMessage = { role: 'user', content: text.trim() };
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
+    if (inputRef.current) inputRef.current.style.height = '40px';
     setLoading(true);
 
     try {
@@ -177,15 +178,29 @@ export default function ChatPanel({ chart, name, isOpen, onClose }: ChatPanelPro
 
         {/* Input */}
         <form onSubmit={handleSubmit} className="px-4 py-3 border-t border-[#1e2538] bg-[#080c14]">
-          <div className="flex gap-2">
-            <input
+          <div className="flex gap-2 items-end">
+            <textarea
               ref={inputRef}
-              type="text"
+              rows={1}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Hỏi về lá số của bạn..."
+              onChange={(e) => {
+                setInput(e.target.value);
+                // Auto-grow up to 3 lines
+                e.target.style.height = 'auto';
+                const lineHeight = 20;
+                const maxHeight = lineHeight * 3 + 20; // 3 lines + padding
+                e.target.style.height = Math.min(e.target.scrollHeight, maxHeight) + 'px';
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e as unknown as React.FormEvent);
+                }
+              }}
+              placeholder="Hỏi về lá số của bạn... (Shift+Enter để xuống dòng)"
               disabled={loading}
-              className="flex-1 px-4 py-2.5 rounded-xl bg-[#0d1117] border border-[#1e2538] text-sm text-[#e2e8f0] placeholder:text-[#3d4a5c] focus:outline-none focus:border-[#3b5bdb]/50 focus:ring-1 focus:ring-[#3b5bdb]/20 transition-all disabled:opacity-50"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-[#0d1117] border border-[#1e2538] text-sm text-[#e2e8f0] placeholder:text-[#3d4a5c] focus:outline-none focus:border-[#3b5bdb]/50 focus:ring-1 focus:ring-[#3b5bdb]/20 transition-all disabled:opacity-50 resize-none overflow-y-auto leading-5"
+              style={{ minHeight: '40px', maxHeight: '80px' }}
             />
             <button
               type="submit"
@@ -195,6 +210,7 @@ export default function ChatPanel({ chart, name, isOpen, onClose }: ChatPanelPro
               Gửi
             </button>
           </div>
+          <p className="text-[10px] text-[#3d4a5c] mt-1.5 pl-1">Enter gửi · Shift+Enter xuống dòng</p>
         </form>
       </div>
     </div>

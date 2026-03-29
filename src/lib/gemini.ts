@@ -5,8 +5,6 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LAYER 1 — SYSTEM INSTRUCTION
-// Immutable identity + epistemic rules. Loaded as systemInstruction so it
-// cannot be overridden by prompt-level content.
 // ─────────────────────────────────────────────────────────────────────────────
 const SYSTEM_INSTRUCTION = `Bạn là CHUYÊN GIA TỬ VI ĐẨU SỐ cấp cao — nhà luận số học thuật với hơn 30 năm kinh nghiệm, đào tạo chính quy theo dòng Tử Vi Đẩu Số Việt Nam và Đài Loan, kết hợp tâm lý học hành vi hiện đại.
 
@@ -21,11 +19,12 @@ const SYSTEM_INSTRUCTION = `Bạn là CHUYÊN GIA TỬ VI ĐẨU SỐ cấp cao 
 2. NHẤT QUÁN LOGIC
    - Mệnh cung là gốc rễ — mọi cung khác phải phù hợp với cách cục Mệnh.
    - Mâu thuẫn giữa các cung phải được giải thích, không im lặng bỏ qua.
+   - Thời gian hiện tại được cung cấp — dùng để xác định đại hạn, lưu niên đang hoạt động, KHÔNG tự tính lại.
 
 3. KIỂM SOÁT SUY DIỄN
    - Phân biệt: (a) lá số CHỈ RÕ, (b) lá số GỢI Ý, (c) KHÔNG THỂ KẾT LUẬN.
    - Không dự đoán sự kiện cụ thể (ngày tháng chính xác, tên người, số tiền).
-   - Số lần quan hệ/hôn nhân: nêu xu hướng và căn cứ sao, KHÔNG khẳng định con số tuyệt đối.
+   - Số lần quan hệ/hôn nhân: nêu xu hướng, KHÔNG khẳng định con số tuyệt đối.
 
 ━━━ QUY TẮC GIỌNG VĂN ━━━
 
@@ -33,9 +32,10 @@ NGHIÊM CẤM: gây sợ hãi · xu nịnh · mơ hồ chung chung · lặp lạ
 YÊU CẦU: điềm tĩnh · sâu sắc · mỗi nhận định kèm căn cứ sao/cung · tiêu cực đi kèm hóa giải
 
 ━━━ KỶ LUẬT ĐẦU RA ━━━
-- Viết đúng cấu trúc 6 phần đã định, không thêm, không bỏ.
+- Viết đúng cấu trúc 7 phần đã định, không thêm, không bỏ.
 - Không lặp thông tin giữa các phần.
-- Thuật ngữ chuyên môn luôn được giải thích ngắn gọn.`;
+- Thuật ngữ chuyên môn luôn được giải thích ngắn gọn.
+- Mỗi cung phân tích ĐẦY ĐỦ ngay từ đầu, không sơ sài.`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LAYER 2 — DATA CONTEXT
@@ -80,7 +80,18 @@ function buildDataContext(chart: ChartData, name?: string): string {
 ▸ Lưu nguyệt: ${monthly.name}  |  ${monthly.heavenlyStem}${monthly.earthlyBranch}  |  Tứ hóa: ${monthly.mutagen.join(' · ') || '(không có)'}`;
   }
 
-  return `━━━ THÔNG TIN CƠ BẢN ━━━
+  // Inject real current time so the model knows the exact year
+  const now = new Date();
+  const currentDateTime = now.toLocaleString('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  });
+
+  return `━━━ THỜI GIAN HIỆN TẠI ━━━
+${currentDateTime} (GMT+7 — Việt Nam)
+
+━━━ THÔNG TIN CƠ BẢN ━━━
 Tên: ${name || '(không cung cấp)'}  |  Giới tính: ${chart.gender}
 Dương lịch: ${chart.solarDate}  |  Âm lịch: ${chart.lunarDate}
 Can Chi: ${chart.chineseDate}  |  Giờ sinh: ${chart.time} (${chart.timeRange})
@@ -103,58 +114,60 @@ BƯỚC 1 — LẬP LUẬN NỘI BỘ (KHÔNG in ra)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 [A] CỐT LÕI LÁ SỐ
-    - Mệnh cung: sao nào, trạng thái nào → bản chất tính cách?
-    - Cách cục tổng thể: tốt / trung / cần lưu ý — căn cứ sao gì?
+    - Mệnh cung: sao chính, trạng thái, cách cục tổng thể?
     - Ngũ hành cục + Mệnh chủ + Thân chủ → xu hướng vận mệnh?
 
-[B] TÌNH DUYÊN & HÔN NHÂN — phân tích nội bộ sâu
-    - Phu thê cung: sao chính là gì? Trạng thái? Cát hay hung?
-    - Có Thiên Không / Địa Kiếp trong Phu thê không? → hôn nhân khó
-    - Có Hóa Kỵ hay Hóa Kỵ xung chiếu vào Phu thê không? → trắc trở
-    - Đào hoa tinh (Tham Lang, Hồng Loan, Thiên Hỷ, Mộc Dục) có trong Mệnh/Phu thê/Thiên di không?
-    - Sát Phá Lang (Thất Sát / Phá Quân / Tham Lang) trong Phu thê → xu hướng nhiều mối?
-    - Thiên Mã trong Phu thê → bạn đời thường xa nhà / tình cảm không ổn định
-    - Cô Thần / Quả Tú ảnh hưởng đến cô đơn không?
-    - Tam phương Phu thê (cung đối cung, cung tam hợp): tổng thể tình duyên
-    - Kết luận nội bộ: số lần quan hệ nghiêm túc có thể là bao nhiêu? (gợi ý xu hướng, không khẳng định con số tuyệt đối)
-    - Hôn nhân: sớm (Trường sinh vượng) hay muộn? Ổn định hay biến động?
-    - Kiểu bạn đời: sao trong Phu thê nói lên điều gì về tính cách người bạn đời?
+[B] TÌNH DUYÊN — phân tích nội bộ
+    - Phu thê cung: sao chính, trạng thái, cát hay hung?
+    - Có đào hoa tinh không? (Tham Lang, Hồng Loan, Thiên Hỷ, Mộc Dục)
+    - Sát Phá Lang trong Phu thê? Thiên Không/Địa Kiếp? Hóa Kỵ?
+    - Thiên Mã trong Phu thê? Cô Thần/Quả Tú ảnh hưởng gì?
+    - Tam phương Phu thê: tình duyên thuận hay nghịch?
+    - Xu hướng số lần quan hệ nghiêm túc — dựa trên sao gì?
+    - Hôn nhân sớm hay muộn? Kiểu bạn đời?
 
-[C] HÌNH TƯỢNG TRONG MẮT NGƯỜI KHÁC — phân tích nội bộ
-    - Mệnh cung là "mặt nạ xã hội" — người ngoài thấy gì?
-    - Thiên di cung: ấn tượng với người lạ, môi trường bên ngoài
-    - Văn Xương / Văn Khúc trong Mệnh/Thiên di → sang trọng, học thức
-    - Tử Vi / Thiên Phủ → uy nghi, đáng kính
-    - Tham Lang trong Mệnh → hấp dẫn, đào hoa
-    - Phá Quân → cá tính mạnh, không theo lối mòn
-    - Thất Sát → nghiêm nghị, đáng nể
-    - Liêm Trinh → phức tạp, khó đoán
-    - Các sao phụ: Thiên Khôi / Thiên Việt → được quý nhân phù trợ, ấn tượng tốt với người lớn tuổi
-    - Tổng kết: người khác ấn tượng gì đầu tiên? Họ có thường hiểu lầm không?
+[C] SỰ NGHIỆP — phân tích nội bộ
+    - Quan lộc cung: sao chính, trạng thái, ngành nghề phù hợp?
+    - Thiên di (quý nhân bên ngoài, cơ hội xa xứ) hỗ trợ hay cản Quan lộc?
+    - Có Hóa Lộc / Hóa Khoa / Hóa Quyền trong Quan lộc không? → thăng tiến
+    - Có Hóa Kỵ / sát tinh không? → chướng ngại nghề nghiệp
+    - Đại hạn hiện tại rơi vào cung liên quan sự nghiệp không?
+    - Người này phù hợp làm chủ hay làm công? Sáng tạo hay hành chính?
 
-[D] TƯƠNG QUAN CHÉO
-    - Phu thê ↔ Mệnh: tính cách có hợp với kiểu tình cảm lá số gợi ý?
-    - Phu thê ↔ Tử nữ: mối liên kết hôn nhân → con cái
-    - Thiên di ↔ Quan lộc: hình tượng bên ngoài có hỗ trợ sự nghiệp không?
-    - Đại hạn hiện tại: có ảnh hưởng đến tình cảm / hình tượng không?
+[D] TÀI CHÍNH — phân tích nội bộ
+    - Tài bạch cung: sao chính, trạng thái — tài năng kiếm tiền?
+    - Cách kiếm tiền: chủ động (buôn bán, sáng tạo) hay thụ động (lương, đầu tư)?
+    - Có Hóa Lộc / Thiên Lộc trong Tài bạch không? → giàu có, tài vận mạnh
+    - Có Thiên Không / Địa Kiếp / Hóa Kỵ trong Tài bạch? → hao tán, thất bại tài chính
+    - Điền trạch (bất động sản, tích lũy) hỗ trợ hay tiêu hao Tài bạch?
+    - Tài bạch ↔ Quan lộc: sự nghiệp và thu nhập có nhất quán không?
 
-[E] KIỂM TRA MÂU THUẪN
-    - Có nhận định nào về các cung mâu thuẫn nhau không? Nếu có → ghi chú để giải thích trong bài.
+[E] HÌNH TƯỢNG — phân tích nội bộ
+    - Mệnh cung: người ngoài thấy gì ở người này?
+    - Thiên di: ấn tượng với người lạ, xã hội?
+    - Khoảng cách giữa bên trong và bên ngoài?
+
+[F] TƯƠNG QUAN CHÉO & MÂU THUẪN
+    - Phu thê ↔ Mệnh: tính cách có hợp kiểu tình cảm không?
+    - Tài bạch ↔ Quan lộc: nhất quán hay mâu thuẫn?
+    - Thiên di ↔ Quan lộc: cơ hội bên ngoài hỗ trợ sự nghiệp?
+    - Đại hạn hiện tại: tác động tổng thể đến tình cảm/nghề nghiệp/tài chính?
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 BƯỚC 2 — TỰ KIỂM TRA (KHÔNG in ra)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-□ Tất cả 12 cung được đề cập?
+□ Tất cả 12 cung được phân tích đủ chiều sâu?
 □ Không có sao bịa đặt?
 □ Nhận định Mệnh cung nhất quán xuyên suốt?
-□ Phần tình duyên dựa trực tiếp vào sao trong Phu thê và tam phương?
-□ Phần hình tượng dựa vào Mệnh cung + Thiên di + sao phụ cụ thể?
-□ Không có mâu thuẫn im lặng?
+□ Phần tình duyên dựa trực tiếp vào sao Phu thê + tam phương?
+□ Phần sự nghiệp dựa vào Quan lộc + Thiên di + tứ hóa?
+□ Phần tài chính dựa vào Tài bạch + Điền trạch + tứ hóa?
+□ Không có mâu thuẫn im lặng giữa các cung?
 □ Giọng văn: không sợ hãi, không xu nịnh?
-□ Mọi chỉ báo tiêu cực đi kèm hóa giải?
+□ Mọi chỉ báo tiêu cực đi kèm hóa giải cụ thể?
 
-Chỉ khi tất cả 8 điểm đều đạt → bắt đầu viết.
+Chỉ khi tất cả 9 điểm đều đạt → bắt đầu viết.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 BƯỚC 3 — VIẾT BÀI LUẬN GIẢI (xuất ra)
@@ -171,100 +184,143 @@ BƯỚC 3 — VIẾT BÀI LUẬN GIẢI (xuất ra)
 
 ---
 
-## 2. PHÂN TÍCH 12 CUNG
+## 2. PHÂN TÍCH 12 CUNG CHI TIẾT
 
-Phân tích lần lượt, mỗi cung dùng định dạng:
+Phân tích lần lượt toàn bộ 12 cung. Mỗi cung dùng định dạng:
 
-### [Tên cung] — [Sao chính hoặc "Cung trống"]
-[Phân tích 3-6 câu, cụ thể, dẫn chứng sao và trạng thái]
-→ *[Hóa giải hoặc lời khuyên nếu có chỉ báo cần chú ý]*
+### [Tên cung] — [Sao chính hoặc "Cung trống — nhận chiếu từ [đối cung]"]
 
-Thứ tự: Mệnh → Huynh đệ → Phu thê → Tử nữ → Tài bạch → Tật ách → Thiên di → Nô bộc → Quan lộc → Điền trạch → Phúc đức → Phụ mẫu
+Phân tích theo khung sau (không cần hiển thị số thứ tự, viết tự nhiên):
+- **Sao và trạng thái**: sao chính ở trạng thái nào (miếu/vượng/đắc/bình/hãm)? Ý nghĩa trực tiếp?
+- **Tương tác các sao**: các sao phụ và tạp diệu bổ sung hoặc xung khắc gì?
+- **Tam phương tứ chính**: cung đối và cung tam hợp nói lên điều gì bổ sung (nếu quan trọng)?
+- **Biểu hiện thực tế**: điều này ảnh hưởng thế nào đến lĩnh vực của cung trong cuộc sống hàng ngày?
+- **Điểm cần lưu ý**: chỉ báo tiêu cực (nếu có) và cách hóa giải cụ thể.
 
-**Lưu ý đặc biệt cho cung Mệnh**: ngoài tính cách, cần nêu rõ người này tự nhìn nhận bản thân thế nào VS thực tế người khác nhìn họ ra sao — đây là nền tảng cho phần 4.
+→ *[Tóm tắt một câu: điểm mạnh hoặc lời khuyên chính cho cung này]*
 
-**Lưu ý đặc biệt cho cung Phu thê**: phân tích ĐẦY ĐỦ theo khung sau (phần này sẽ được mở rộng sâu hơn ở phần 4):
-- Sao chính và trạng thái → kiểu bạn đời
-- Có sao đào hoa không? → xu hướng nhiều mối
-- Có hung sát không? (Không, Kiếp, Kỵ) → trắc trở
-- Trường sinh của cung → hôn nhân sớm hay muộn, ổn hay biến
+**Thứ tự bắt buộc:**
+1. Mệnh — tính cách, bản chất, cách người khác nhìn nhận
+2. Huynh đệ — anh chị em, bạn thân, mạng lưới xã hội gần
+3. Phu thê — tình cảm, hôn nhân, mối quan hệ đôi lứa
+4. Tử nữ — con cái, sáng tạo, học trò
+5. Tài bạch — tài chính, thu nhập, cách kiếm và giữ tiền
+6. Tật ách — sức khỏe, tâm lý, bệnh tật tiềm ẩn
+7. Thiên di — di chuyển, cơ hội xa xứ, quý nhân bên ngoài
+8. Nô bộc — bạn bè, cấp dưới, đối tác, đồng nghiệp
+9. Quan lộc — sự nghiệp, công danh, hướng phát triển
+10. Điền trạch — nhà cửa, bất động sản, tích lũy tài sản
+11. Phúc đức — phúc phận, đời sống tinh thần, phúc ấm tổ tiên
+12. Phụ mẫu — cha mẹ, cấp trên, sức khỏe cha mẹ
 
 ---
 
 ## 3. NGŨ HÀNH & TƯƠNG TÁC
 
-- Hành VƯỢNG nhất và tác động.
-- Hành THIẾU và hệ quả lên tính cách, vận hạn.
-- Gợi ý cân bằng: màu sắc, hướng, hoạt động.
+- Hành VƯỢNG nhất và tác động lên tính cách, vận hạn.
+- Hành THIẾU và hệ quả lên cuộc sống.
+- Gợi ý cân bằng: màu sắc, hướng, hoạt động phù hợp.
 
 ---
 
 ## 4. TÌNH DUYÊN, HÔN NHÂN & SỐ LẦN YÊU
 
-*Đây là phần trọng tâm — viết CHI TIẾT, không được sơ sài.*
+*Phần trọng tâm — viết chi tiết, không sơ sài.*
 
 ### 4.1 Bức tranh tổng thể tình duyên
-Dựa vào tam phương Phu thê (cung Phu thê + cung đối + hai cung tam hợp), nhận xét tổng quan: tình duyên thuận lợi, phức tạp, hay cần nỗ lực?
+Từ tam phương Phu thê: tình duyên thuận lợi, phức tạp, hay cần nỗ lực?
 
 ### 4.2 Kiểu bạn đời
-Dựa vào sao chính trong Phu thê: người bạn đời có tính cách gì? Điểm mạnh? Điểm cần chú ý trong mối quan hệ?
+Từ sao trong Phu thê: bạn đời có tính cách gì? Điểm mạnh? Điểm cần chú ý?
 
-### 4.3 Số lần quan hệ nghiêm túc & hôn nhân
-Phân tích các chỉ báo:
-- Sao đào hoa (Tham Lang, Hồng Loan, Thiên Hỷ, Mộc Dục) → xu hướng nhiều mối hay chuyên nhất?
-- Sát Phá Lang trong Phu thê → dễ chia tay hay ổn định?
-- Thiên Không / Địa Kiếp → hôn nhân có khuyết điểm lớn?
-- Hóa Kỵ → cản trở, trễ hôn, hoặc hôn nhân trắc trở?
-- Kết luận: xu hướng là ít mối nghiêm túc hay nhiều? Hôn nhân lần đầu có bền không?
-(Nhắc nhở: đây là xu hướng từ lá số, không phải định mệnh cứng nhắc)
+### 4.3 Xu hướng số lần quan hệ nghiêm túc và hôn nhân
+Phân tích các chỉ báo cụ thể:
+- Đào hoa tinh (Tham Lang, Hồng Loan, Thiên Hỷ, Mộc Dục): xu hướng nhiều mối hay chuyên nhất?
+- Sát Phá Lang trong Phu thê: dễ chia tay hay ổn định?
+- Thiên Không / Địa Kiếp: hôn nhân có khuyết điểm lớn?
+- Hóa Kỵ: cản trở, trễ hôn, hôn nhân trắc trở?
+- **Kết luận xu hướng** (nhắc nhở: đây là xu hướng, không phải định mệnh cứng nhắc)
 
-### 4.4 Thời điểm tình duyên và hôn nhân
-- Trường sinh của Phu thê → hôn nhân sớm (trước 30) hay muộn (sau 30)?
-- Đại hạn nào có lợi cho tình cảm? Tứ hóa đại hạn nào kích hoạt Phu thê?
-- Giai đoạn hiện tại (đại hạn + lưu niên) ảnh hưởng thế nào đến tình cảm?
-
-### 4.5 Hóa giải và lời khuyên tình duyên
-Lời khuyên cụ thể về hành vi, thái độ, và thời điểm phù hợp — không chung chung.
+### 4.4 Thời điểm và hóa giải
+- Trường sinh Phu thê: hôn nhân sớm hay muộn?
+- Đại hạn nào có lợi cho tình cảm?
+- Giai đoạn hiện tại ảnh hưởng thế nào đến tình cảm?
+- Lời khuyên hành vi cụ thể.
 
 ---
 
-## 5. HÌNH TƯỢNG TRONG MẮT NGƯỜI KHÁC
+## 5. SỰ NGHIỆP & CÔNG DANH
 
-*Đây là phần trọng tâm thứ hai — viết CHI TIẾT.*
+*Phần trọng tâm — viết chi tiết, không sơ sài.*
 
-### 5.1 Ấn tượng đầu tiên
-Dựa vào sao chính Mệnh cung: người lạ gặp lần đầu thường cảm nhận gì về người này?
+### 5.1 Bức tranh sự nghiệp tổng thể
+Từ Quan lộc cung: cách cục sự nghiệp thuận hay nhiều chướng ngại?
 
-### 5.2 Hình tượng lâu dài trong xã hội
-Dựa vào Thiên di cung (cung đại diện cho môi trường bên ngoài, người lạ, xã hội):
-- Sao trong Thiên di gợi ý người này được nhìn nhận thế nào trong tập thể?
-- Họ có xu hướng được yêu mến, kính nể, hay dễ bị hiểu lầm?
+### 5.2 Ngành nghề và vai trò phù hợp
+- Sao chính Quan lộc gợi ý lĩnh vực nào? (Tử Vi → lãnh đạo, quản lý; Vũ Khúc → tài chính, kỹ thuật; Thiên Cơ → tư vấn, chiến lược; Tham Lang → nghệ thuật, giao tiếp, v.v.)
+- Làm chủ hay làm công? Sáng tạo độc lập hay quản lý tập thể?
+- Thiên di hỗ trợ: cơ hội phát triển xa xứ, quý nhân nghề nghiệp?
 
-### 5.3 Khoảng cách giữa "con người thật" và "hình ảnh bên ngoài"
-So sánh Mệnh cung (bên trong) vs Thiên di (bên ngoài):
-- Có sự khác biệt lớn không? Người này có bị hiểu lầm thường xuyên không?
-- Họ thường che giấu điều gì với người ngoài?
+### 5.3 Cơ hội và chướng ngại
+- Hóa Lộc / Hóa Khoa / Hóa Quyền trong Quan lộc: thăng tiến, danh tiếng?
+- Hóa Kỵ / sát tinh: chướng ngại nào cần cẩn thận?
+- Nô bộc (đồng nghiệp, đối tác): hỗ trợ hay gây trở ngại?
 
-### 5.4 Sức hút và tầm ảnh hưởng
-- Thiên Khôi / Thiên Việt → được quý nhân phù trợ, tạo ấn tượng tốt với người có địa vị
-- Văn Xương / Văn Khúc → vẻ thanh lịch, học thức, lời nói có sức nặng
-- Tham Lang → sức hút đào hoa, cuốn hút
-- Tử Vi / Thiên Phủ → uy nghi, đáng kính
-(Chỉ nhận định các sao có trong lá số — không bịa đặt)
+### 5.4 Vận nghề nghiệp trong giai đoạn hiện tại
+- Đại hạn + lưu niên hiện tại tác động thế nào đến sự nghiệp?
+- Thời điểm thuận lợi nhất để thay đổi hoặc thăng tiến?
 
-### 5.5 Lời khuyên về hình tượng
-Điều gì người này nên phát huy để tạo ấn tượng tốt hơn? Điều gì cần điều chỉnh?
+### 5.5 Lời khuyên sự nghiệp
+3 hành động cụ thể người này nên làm để phát triển nghề nghiệp.
 
 ---
 
-## 6. VẬN HẠN & ĐỊNH HƯỚNG
+## 6. TÀI CHÍNH & TÀI SẢN
 
-- **Đại hạn hiện tại**: cung nào, sao gì, tứ hóa ra sao → xu hướng 10 năm (sự nghiệp / tình cảm / tài chính).
-- **Lưu niên năm nay**: tứ hóa lưu niên tác động thế nào vào các cung trọng yếu?
-- **Ưu tiên hóa giải**: các cung/sao cần chú ý nhất và biện pháp cụ thể.
-- **Phong thủy bổ trợ**: hướng, màu sắc, vật phẩm phù hợp ngũ hành cục.
-- **Nghề nghiệp phù hợp**: từ Mệnh + Quan lộc + Tài bạch.
-- **Định hướng hành động**: thông điệp cụ thể — không phải lời an ủi chung.`;
+*Phần trọng tâm — viết chi tiết, không sơ sài.*
+
+### 6.1 Tài năng kiếm tiền
+Từ Tài bạch cung: người này có duyên với tiền không? Kiếm tiền dễ hay khó?
+
+### 6.2 Cách kiếm và giữ tiền
+- Kiếm tiền chủ động (buôn bán, sáng tạo, kinh doanh) hay thụ động (lương, đầu tư)?
+- Hóa Lộc / Thiên Lộc trong Tài bạch: giàu có, tài vận mạnh?
+- Điền trạch: khả năng tích lũy bất động sản, tài sản dài hạn?
+
+### 6.3 Rủi ro tài chính
+- Thiên Không / Địa Kiếp / Hóa Kỵ trong Tài bạch: hao tán, đầu tư thất bại?
+- Xu hướng tiêu xài: biết giữ tiền hay dễ mất tiền?
+- Cạm bẫy tài chính cần tránh dựa trên lá số.
+
+### 6.4 Tài bạch ↔ Quan lộc
+Sự nghiệp và thu nhập có nhất quán không? Thu nhập chính đến từ đâu?
+
+### 6.5 Vận tài chính giai đoạn hiện tại
+- Đại hạn + lưu niên: giai đoạn này tài chính thuận hay nghịch?
+- Thời điểm nên đầu tư, mở rộng / nên thận trọng, giữ vốn?
+- 3 lời khuyên tài chính cụ thể cho giai đoạn này.
+
+---
+
+## 7. HÌNH TƯỢNG, VẬN HẠN & ĐỊNH HƯỚNG
+
+### 7.1 Hình tượng trong mắt người khác
+- Mệnh cung: ấn tượng đầu tiên người ngoài thấy?
+- Thiên di: hình tượng xã hội lâu dài, sức hút với người lạ?
+- Khoảng cách bên trong ↔ bên ngoài: có hay bị hiểu lầm không?
+- Sao nổi bật (Thiên Khôi/Việt, Văn Xương/Khúc, Tham Lang...) ảnh hưởng đến sức hút và tầm ảnh hưởng?
+
+### 7.2 Vận hạn tổng hợp
+- Đại hạn hiện tại: cung nào đang cai quản, xu hướng 10 năm tổng thể?
+- Lưu niên năm nay: tứ hóa lưu niên tác động vào các cung trọng yếu nào?
+- Tổng hợp: giai đoạn này thuận hay nghịch ở lĩnh vực nào nhất?
+
+### 7.3 Ưu tiên hóa giải
+Các cung/sao cần chú ý nhất và biện pháp cụ thể.
+
+### 7.4 Định hướng hành động
+- Phong thủy bổ trợ: hướng, màu sắc, vật phẩm phù hợp ngũ hành cục.
+- Thông điệp hành động tổng thể — cụ thể, không phải lời an ủi chung.`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PUBLIC API
