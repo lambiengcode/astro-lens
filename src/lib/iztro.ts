@@ -1,5 +1,7 @@
 import { astro } from 'iztro';
-import type { BirthInput, ChartData, PalaceData, StarData, DecadalPeriod } from '@/types';
+import { BaziCalculator } from '@aharris02/bazi-calculator-by-alvamind';
+import { toDate } from 'date-fns-tz';
+import type { BirthInput, ChartData, PalaceData, StarData, DecadalPeriod, BaziData } from '@/types';
 
 // ============================================================
 // DATA EXTRACTION HELPERS
@@ -57,6 +59,87 @@ function extractHoroscopeItem(item: any) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mutagen: (item.mutagen || []).map((m: any) => str(m)),
   };
+}
+
+// ============================================================
+// BAZI (TỨ TRỤ) EXTRACTION — via @aharris02/bazi-calculator-by-alvamind
+// ============================================================
+
+const BIRTH_HOUR_TO_HOUR: Record<number, number> = {
+  0: 0, 1: 1, 2: 3, 3: 5, 4: 7, 5: 9, 6: 11,
+  7: 13, 8: 15, 9: 17, 10: 19, 11: 21, 12: 23,
+};
+
+function extractBazi(input: BirthInput): BaziData | undefined {
+  try {
+    const [year, month, day] = input.solarDate.split('-').map(Number);
+    const hour = BIRTH_HOUR_TO_HOUR[input.birthHour] ?? 12;
+    const tz = 'Asia/Ho_Chi_Minh';
+
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:00:00`;
+    const birthDate = toDate(dateStr, { timeZone: tz });
+
+    const gender = input.gender === 'male' ? 'male' : 'female';
+    const calc = new BaziCalculator(birthDate, gender, tz, true);
+    const analysis = calc.getCompleteAnalysis();
+    if (!analysis) return undefined;
+
+    const mp = analysis.mainPillars;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parsePillar = (p: any): import('@/types').BaziPillar => ({
+      chinese: p?.chinese || '',
+      element: p?.element || '',
+      animal: p?.animal || '',
+      branchElement: p?.branch?.element || '',
+    });
+
+    const ba = analysis.basicAnalysis;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const interactions = Object.values(analysis.interactions || {}).map((item: any) => ({
+      type: item.type || '',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      participants: (item.participants || []).map((p: any) => `${p.pillar}(${p.elementChar})`),
+      result: item.potentialResultElement || undefined,
+    }));
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const luckPillars = (analysis.luckPillars?.pillars || []).map((lp: any) => ({
+      chinese: `${lp?.heavenlyStem?.character || ''}${lp?.earthlyBranch?.character || ''}`,
+      element: lp?.heavenlyStem?.elementType || '',
+      startAge: lp?.ageStart ?? 0,
+    }));
+
+    return {
+      pillarsString: calc.toString(),
+      yearPillar: parsePillar(mp.year),
+      monthPillar: parsePillar(mp.month),
+      dayPillar: parsePillar(mp.day),
+      hourPillar: parsePillar(mp.time),
+      dayMaster: {
+        stem: ba?.dayMaster?.stem || '',
+        element: ba?.dayMaster?.element || '',
+        nature: ba?.dayMaster?.nature || '',
+      },
+      dayMasterStrength: {
+        strength: ba?.dayMasterStrength?.strength || '',
+        score: ba?.dayMasterStrength?.score ?? 0,
+      },
+      fiveElements: { ...(ba?.fiveFactors || {}) } as Record<string, number>,
+      favorableElements: ba?.favorableElements?.primary || [],
+      unfavorableElements: ba?.favorableElements?.unfavorable || [],
+      nobleman: ba?.nobleman || [],
+      peachBlossom: ba?.peachBlossom || '',
+      skyHorse: ba?.skyHorse || '',
+      intelligence: ba?.intelligence || '',
+      interactions,
+      luckPillars,
+      luckDirection: analysis.luckPillars?.incrementRule ?? 1,
+      luckStartAge: analysis.luckPillars?.startAgeYears ?? null,
+    };
+  } catch (e) {
+    console.warn('[Bazi] Extraction failed:', e);
+    return undefined;
+  }
 }
 
 // ============================================================
@@ -155,6 +238,8 @@ export function generateChart(input: BirthInput): {
     }
   }
 
+  const bazi = extractBazi(input);
+
   const chart: ChartData = {
     gender: str(a.gender),
     solarDate: str(a.solarDate),
@@ -171,6 +256,7 @@ export function generateChart(input: BirthInput): {
     body: str(a.body),
     palaces,
     horoscope,
+    bazi,
   };
 
   return { chart, decadalPeriods };

@@ -65,7 +65,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
     if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
       interpretation = '⚠️ Chưa cấu hình GEMINI_API_KEY. Vui lòng thêm API key vào file .env.local để nhận luận giải chi tiết từ AI.\n\nLá số Tử Vi đã được tạo thành công.';
     } else {
-      interpretation = await analyzeChart(chart, input.name);
+      interpretation = await analyzeChart(chart, input.name, input.selfDescription);
     }
 
     const data = { chart, interpretation, decadalPeriods };

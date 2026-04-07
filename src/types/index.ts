@@ -4,6 +4,48 @@ export interface BirthInput {
   birthHour: number; // 0-12 from BIRTH_HOURS
   gender: 'male' | 'female';
   location?: string;
+  selfDescription?: string; // User's self-description for cross-reference
+}
+
+// ── Bazi / Four Pillars (Tứ Trụ / Bát Tự) ──────────────────────────────────
+export interface BaziPillar {
+  chinese: string;    // e.g. "乙亥"
+  element: string;    // Stem element e.g. "WOOD"
+  animal: string;     // e.g. "Pig"
+  branchElement: string; // Branch element e.g. "WATER"
+}
+
+export interface BaziInteraction {
+  type: string;           // e.g. "StemClash", "BranchClash", "BranchPunishment"
+  participants: string[]; // e.g. ["Month(壬)", "Day(丙)"]
+  result?: string;        // e.g. potential element
+}
+
+export interface BaziLuckPillar {
+  chinese: string;
+  element: string;
+  startAge: number;
+}
+
+export interface BaziData {
+  pillarsString: string;       // e.g. "乙亥年 壬午月 丙子日 甲午時"
+  yearPillar: BaziPillar;
+  monthPillar: BaziPillar;
+  dayPillar: BaziPillar;
+  hourPillar: BaziPillar;
+  dayMaster: { stem: string; element: string; nature: string };  // e.g. { stem: "丙", element: "FIRE", nature: "Yang" }
+  dayMasterStrength: { strength: string; score: number };        // e.g. { strength: "Strong", score: 52.5 }
+  fiveElements: Record<string, number>;    // e.g. { WOOD: 37, FIRE: 31, ... }
+  favorableElements: string[];             // e.g. ["EARTH", "METAL", "WATER"]
+  unfavorableElements: string[];           // e.g. ["WOOD", "FIRE"]
+  nobleman: string[];                      // 貴人 branches
+  peachBlossom: string;                    // 桃花 branch
+  skyHorse: string;                        // 天馬 branch
+  intelligence: string;                    // 文昌 branch
+  interactions: BaziInteraction[];         // Clashes, combos, punishments
+  luckPillars: BaziLuckPillar[];           // 10-year luck pillars
+  luckDirection: number;                   // 1 = forward, -1 = backward
+  luckStartAge: number | null;             // Age when first luck pillar starts
 }
 
 export interface PalaceData {
@@ -49,6 +91,7 @@ export interface ChartData {
   body: string;
   palaces: PalaceData[];
   horoscope?: HoroscopeData;
+  bazi?: BaziData;
 }
 
 export interface HoroscopeData {

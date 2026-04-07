@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 import type { ChartData } from '@/types';
+import { getCachedContentName } from '@/lib/gemini-cache';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 interface ChatRequest {
   message: string;
@@ -73,7 +74,14 @@ Cung Mệnh tại: ${chart.earthlyBranchOfSoulPalace}  |  Cung Thân tại: ${ch
 === 12 CUNG ===
 ${palaceDetails}
 
-=== VẬN HẠN HIỆN TẠI ===${horoscopeInfo}`;
+=== VẬN HẠN HIỆN TẠI ===${horoscopeInfo}
+${chart.bazi ? `
+=== BÁT TỰ / TỨ TRỤ ===
+Tứ trụ: ${chart.bazi.pillarsString}
+Nhật chủ: ${chart.bazi.dayMaster.stem} (${chart.bazi.dayMaster.element}, ${chart.bazi.dayMaster.nature})
+Cường/Nhược: ${chart.bazi.dayMasterStrength.strength} (Score: ${chart.bazi.dayMasterStrength.score})
+Ngũ hành: ${Object.entries(chart.bazi.fiveElements).map(([k, v]) => k + ':' + v).join(' ')}
+Dụng thần: ${chart.bazi.favorableElements.join(', ')}  |  Kỵ thần: ${chart.bazi.unfavorableElements.join(', ')}` : ''}`;
 }
 
 export async function POST(request: NextRequest) {
@@ -88,22 +96,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Vui lòng nhập câu hỏi.' }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-3-flash-preview',
-      systemInstruction: `Bạn là chuyên gia Tử Vi Đẩu Số với hơn 30 năm kinh nghiệm. Quy tắc bất biến:
-- Thời gian hiện tại đã được cung cấp trong ngữ cảnh — dùng nó để xác định đại hạn, lưu niên đang hoạt động.
-- Chỉ nhận định dựa trên sao và cung CÓ TRONG dữ liệu lá số. KHÔNG bịa đặt sao.
-- Khi phân tích vận hạn, bám sát đại hạn và lưu niên được cung cấp — không tự tính lại.
-- Giọng văn: bình tĩnh, trung thực, không đe dọa, không xu nịnh.
-- Mỗi nhận định phải dẫn chứng sao/cung cụ thể.
-- Trả lời bằng tiếng Việt, súc tích (2-4 đoạn), dễ hiểu.`,
-      generationConfig: {
-        temperature: 0.65,
-        topP: 0.92,
-        maxOutputTokens: 4096,
-      },
-    });
-
     const chartContext = buildChartContext(body.chart, body.name);
 
     const historyText = body.history.slice(-6).map((h) =>
@@ -117,8 +109,43 @@ ${body.message}
 
 Hãy trả lời dựa trên lá số và thời gian hiện tại ở trên. Dẫn chứng sao và cung cụ thể.`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    // Cache bundles PDF + system instruction; fallback to inline system instruction
+    const cacheName = await getCachedContentName();
+
+    const CHAT_SYSTEM_INSTRUCTION = `Bạn là ĐẠI SƯ TỬ VI ĐẨU SỐ — bậc thầy luận số hàng đầu với hơn 40 năm kinh nghiệm thực chiến, kết hợp trường phái Việt Nam, Đài Loan và tâm lý học hành vi hiện đại.
+
+━━━ QUY TẮC BẤT BIẾN ━━━
+- Thời gian hiện tại đã được cung cấp trong ngữ cảnh — dùng nó để xác định đại hạn, lưu niên, lưu nguyệt đang hoạt động. KHÔNG tự tính lại.
+- Chỉ nhận định dựa trên sao và cung CÓ TRONG dữ liệu lá số. TUYỆT ĐỐI không bịa đặt sao.
+- LUÔN phân tích đa tầng: nguyên cục → đại hạn → lưu niên → lưu nguyệt khi có liên quan.
+- Mỗi nhận định PHẢI dẫn chứng sao + trạng thái + cung cụ thể.
+- Phân tích tam phương tứ chính cho mọi cung trọng yếu liên quan câu hỏi.
+- Tứ hóa: xác định Lộc/Quyền/Khoa/Kỵ ở cả nguyên cục + đại hạn + lưu niên, chú ý Song Lộc/Song Kỵ.
+- Giọng văn: điềm tĩnh, sâu sắc, học thuật nhưng dễ hiểu, không đe dọa, không xu nịnh.
+- Tiêu cực → kèm hóa giải cụ thể. Tích cực → kèm điều kiện phát huy.
+- Trả lời bằng tiếng Việt, chi tiết và đầy đủ, ưu tiên chiều sâu hơn chiều rộng.
+- Sử dụng kiến thức từ tài liệu tham khảo Tử Vi đã được cung cấp để phân tích chính xác hơn.`;
+
+    const result = await ai.models.generateContent({
+      model: 'gemini-3.1-pro-preview',
+      contents: prompt,
+      config: {
+        // When cache available: system instruction is inside the cache
+        // When cache unavailable: use inline system instruction as fallback
+        ...(cacheName
+          ? { cachedContent: cacheName }
+          : { systemInstruction: CHAT_SYSTEM_INSTRUCTION }),
+        temperature: 0.7,
+        topP: 0.95,
+        topK: 50,
+        maxOutputTokens: 16384,
+        thinkingConfig: {
+          thinkingLevel: ThinkingLevel.HIGH,
+        },
+      },
+    });
+
+    const text = result.text ?? '';
 
     return NextResponse.json({ success: true, reply: text });
   } catch (error) {

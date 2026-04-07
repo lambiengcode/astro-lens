@@ -239,6 +239,24 @@ export default function BirthForm() {
         />
       </div>
 
+      {/* Self description */}
+      <div>
+        <label className="block text-sm font-medium text-muted mb-2">
+          Mô tả bản thân <span className="text-muted/50">(không bắt buộc)</span>
+        </label>
+        <textarea
+          value={form.selfDescription || ''}
+          onChange={(e) => setForm({ ...form, selfDescription: e.target.value })}
+          placeholder="Tính cách, công việc hiện tại, tình trạng tình cảm, sức khỏe, điều bạn đang trăn trở..."
+          rows={3}
+          maxLength={500}
+          className="w-full px-4 py-3 rounded-lg bg-card border border-border text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all resize-none text-sm leading-relaxed"
+        />
+        <p className="text-xs text-muted/50 mt-1.5">
+          Giúp AI đối chiếu lá số với thực tế của bạn — phân tích sẽ chính xác và cá nhân hóa hơn.
+        </p>
+      </div>
+
       {/* Submit */}
       <button
         type="submit"
