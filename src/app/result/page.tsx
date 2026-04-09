@@ -1,18 +1,75 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/ui/Header';
 import Footer from '@/components/ui/Footer';
 import ChartGrid from '@/components/chart/ChartGrid';
 import ChartSummary from '@/components/chart/ChartSummary';
 import PalaceDetail from '@/components/chart/PalaceDetail';
-import Interpretation from '@/components/chart/Interpretation';
+import Interpretation, { InterpretationContent } from '@/components/chart/Interpretation';
 import DecadalView from '@/components/chart/DecadalView';
 import ChatPanel from '@/components/chat/ChatPanel';
 import type { AnalysisResult, BirthInput } from '@/types';
 
 type TabId = 'overview' | 'chart' | 'daivan' | 'interpretation' | 'horoscope';
+
+// ─── PDF EXPORT HELPER ───────────────────────────────────────────────────────
+
+async function captureElement(el: HTMLElement) {
+  const { default: html2canvas } = await import('html2canvas-pro');
+  return html2canvas(el, {
+    backgroundColor: '#060a13',
+    scale: 2,
+    useCORS: true,
+    logging: false,
+  });
+}
+
+function addCanvasToPdf(
+  pdf: InstanceType<typeof import('jspdf').default>,
+  canvas: HTMLCanvasElement,
+  margin: number,
+  contentWidth: number,
+  isFirstSection: boolean,
+) {
+  const pageHeight = pdf.internal.pageSize.getHeight() - margin * 2;
+  const scaledHeight = (canvas.height * contentWidth) / canvas.width;
+
+  if (!isFirstSection) {
+    pdf.addPage();
+  }
+
+  if (scaledHeight <= pageHeight) {
+    pdf.setFillColor(6, 10, 19);
+    pdf.rect(0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight(), 'F');
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin, contentWidth, scaledHeight);
+  } else {
+    const totalPages = Math.ceil(scaledHeight / pageHeight);
+    const sliceHeightPx = (pageHeight / scaledHeight) * canvas.height;
+
+    for (let i = 0; i < totalPages; i++) {
+      if (i > 0 || !isFirstSection) {
+        if (i > 0) pdf.addPage();
+      }
+
+      pdf.setFillColor(6, 10, 19);
+      pdf.rect(0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight(), 'F');
+
+      const sliceCanvas = document.createElement('canvas');
+      sliceCanvas.width = canvas.width;
+      const thisSliceH = Math.min(sliceHeightPx, canvas.height - i * sliceHeightPx);
+      sliceCanvas.height = thisSliceH;
+      const ctx = sliceCanvas.getContext('2d')!;
+      ctx.drawImage(canvas, 0, i * sliceHeightPx, canvas.width, thisSliceH, 0, 0, canvas.width, thisSliceH);
+
+      const sliceScaledH = (thisSliceH * contentWidth) / canvas.width;
+      pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', margin, margin, contentWidth, sliceScaledH);
+    }
+  }
+}
+
+// ─── PAGE COMPONENT ──────────────────────────────────────────────────────────
 
 export default function ResultPage() {
   const router = useRouter();
@@ -21,6 +78,12 @@ export default function ResultPage() {
   const [activePalace, setActivePalace] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [chatOpen, setChatOpen] = useState(false);
+  const [pdfExporting, setPdfExporting] = useState(false);
+
+  // Refs for off-screen PDF capture sections
+  const pdfSummaryRef = useRef<HTMLDivElement>(null);
+  const pdfChartRef = useRef<HTMLDivElement>(null);
+  const pdfInterpretationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('tuvi_result');
@@ -34,6 +97,43 @@ export default function ResultPage() {
     setResult(JSON.parse(stored));
     if (storedInput) setInput(JSON.parse(storedInput));
   }, [router]);
+
+  const handleExportPdf = useCallback(async () => {
+    if (pdfExporting || !result) return;
+    setPdfExporting(true);
+
+    try {
+      const { default: jsPDF } = await import('jspdf');
+
+      const pdfWidth = 595.28;
+      const margin = 30;
+      const contentWidth = pdfWidth - margin * 2;
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+
+      // Capture sections in parallel
+      const captures = await Promise.all([
+        pdfSummaryRef.current ? captureElement(pdfSummaryRef.current) : null,
+        pdfChartRef.current ? captureElement(pdfChartRef.current) : null,
+        pdfInterpretationRef.current ? captureElement(pdfInterpretationRef.current) : null,
+      ]);
+
+      let isFirst = true;
+      for (const canvas of captures) {
+        if (!canvas) continue;
+        addCanvasToPdf(pdf, canvas, margin, contentWidth, isFirst);
+        isFirst = false;
+      }
+
+      const datePart = result.chart.solarDate || new Date().toISOString().split('T')[0];
+      const namePart = input?.name ? `_${input.name}` : '';
+      pdf.save(`tuvi${namePart}_${datePart}.pdf`);
+    } catch (e) {
+      console.error('PDF export failed:', e);
+    } finally {
+      setPdfExporting(false);
+    }
+  }, [pdfExporting, result, input?.name]);
 
   if (!result) {
     return (
@@ -200,7 +300,13 @@ export default function ResultPage() {
             )}
 
             {activeTab === 'interpretation' && (
-              <Interpretation content={result.interpretation} />
+              <Interpretation
+                content={result.interpretation}
+                name={input?.name}
+                solarDate={result.chart.solarDate}
+                onExportPdf={handleExportPdf}
+                pdfExporting={pdfExporting}
+              />
             )}
 
             {activeTab === 'horoscope' && (
@@ -244,6 +350,49 @@ export default function ResultPage() {
         </div>
       </main>
       <Footer />
+
+      {/* ── Off-screen sections for PDF capture ── */}
+      <div
+        aria-hidden
+        className="fixed pointer-events-none"
+        style={{ left: '-9999px', top: 0, width: '900px' }}
+      >
+        {/* Page 1: Summary info */}
+        <div ref={pdfSummaryRef} className="bg-[#060a13] p-8">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-[#e2e8f0]">
+              Lá Số Tử Vi {input?.name && (
+                <span className="text-[#e8b339]"> — {input.name}</span>
+              )}
+            </h1>
+            <p className="text-[#6b7a94] mt-1 text-sm">
+              {result.chart.solarDate} | {result.chart.time} ({result.chart.timeRange}) | {result.chart.zodiac} | {result.chart.fiveElementsClass}
+            </p>
+          </div>
+          <ChartSummary chart={result.chart} name={input?.name} />
+        </div>
+
+        {/* Page 2: Chart grid */}
+        <div ref={pdfChartRef} className="bg-[#060a13] p-8">
+          <h2 className="text-xl font-bold text-[#e8b339] mb-4 flex items-center gap-2">
+            <span>◇</span> Lá Số 12 Cung
+          </h2>
+          <ChartGrid
+            palaces={result.chart.palaces}
+            activePalace={null}
+            onPalaceClick={() => {}}
+          />
+        </div>
+
+        {/* Page 3+: Interpretation */}
+        <div ref={pdfInterpretationRef} className="bg-[#060a13] p-8">
+          <InterpretationContent
+            content={result.interpretation}
+            name={input?.name}
+            solarDate={result.chart.solarDate}
+          />
+        </div>
+      </div>
 
       {/* Chat FAB */}
       {!chatOpen && (
