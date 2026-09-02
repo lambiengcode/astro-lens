@@ -13,7 +13,8 @@ Vietnamese Zi Wei Dou Shu (Tử Vi Đẩu Số) astrology web app powered by izt
 - **Vận hạn** — Current decadal / yearly / monthly horoscope overlay
 - **Chat AI** — Follow-up Q&A grounded in the user's own chart data
 - **Giờ Tý split** — Correctly handles both 00:00–00:59 (timeIndex 0) and 23:00–23:59 (timeIndex 12)
-- Dark theme with glass morphism, animated star field, orbiting particles, and staggered entrance animations
+- iOS 26-style Liquid Glass UI — layered translucent surfaces with specular highlights, adaptive header blur, squircle/pill controls, spring motion, animated star field, and orbiting particles
+- Fraunces (display) + Inter (body) typography via `next/font/google`
 
 ## Tech Stack
 
@@ -23,7 +24,7 @@ Vietnamese Zi Wei Dou Shu (Tử Vi Đẩu Số) astrology web app powered by izt
 | Language | TypeScript 5 |
 | Styling | Tailwind CSS v4 |
 | Astrology engine | iztro v2.5.8 |
-| AI | Google Gemini 2.5 Pro (`@google/generative-ai`) |
+| AI | Google Gemini (`@google/genai`) |
 | Runtime | React 19 |
 
 ## Getting Started
@@ -68,12 +69,13 @@ src/
 │   │   ├── ChartSummary.tsx  # Overview panel
 │   │   ├── PalaceDetail.tsx  # Expanded palace drawer
 │   │   ├── DecadalView.tsx   # Đại vận timeline
-│   │   └── Interpretation.tsx # Markdown prose renderer
+│   │   └── Interpretation.tsx # Personalized hero pull-quote, highlight cards, category tabs (insight + markdown + citations)
 │   ├── chat/
-│   │   └── ChatPanel.tsx     # Slide-up chat panel with suggestion chips
+│   │   └── ChatPanel.tsx     # Chat panel docked on the result page (stacks below content on mobile)
 │   └── ui/
 │       ├── Header.tsx
 │       ├── Footer.tsx
+│       ├── GlassEffects.tsx  # Cursor-tracked specular highlight tracking for glass surfaces
 │       └── LoadingScreen.tsx # Animated loading overlay
 ├── lib/
 │   ├── iztro.ts              # Chart generation (no timezone conversion)
@@ -93,6 +95,8 @@ The Gemini prompt is split into three layers:
    - Internally reason through core chart, cross-palace correlations, contradiction detection, and horoscope evaluation (Step A–D, not printed)
    - Run a 6-point self-check gate before writing (completeness, no invented stars, Mệnh consistency, no silent contradictions, tone, negative-indicator handling)
    - Output a structured 5-section Vietnamese interpretation only after passing the gate
+
+Alongside this, `analyzeHighlights()` makes a separate structured-output Gemini call (JSON schema, `responseMimeType: 'application/json'`) to derive the short hero highlights (strength / caution / favorable period) and one insight per category tab, grounded in the same chart data. Validated against the expected shape before use, with a safe Vietnamese fallback if the response is missing or malformed.
 
 ## Birth Time Notes
 
