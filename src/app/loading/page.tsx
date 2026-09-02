@@ -10,7 +10,20 @@ export default function LoadingPage() {
   useEffect(() => {
     const raw = sessionStorage.getItem('tuvi_pending_action');
     if (!raw) { router.replace('/'); return; }
-    const action = JSON.parse(raw) as { action: 'analysis' | 'candidates'; input?: unknown; solarDate?: string; gender?: string; form?: unknown };
+
+    let action: { action: 'analysis' | 'candidates'; input?: unknown; solarDate?: string; gender?: string; form?: unknown };
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || (parsed.action !== 'analysis' && parsed.action !== 'candidates')) {
+        throw new Error('Invalid pending action');
+      }
+      action = parsed;
+    } catch {
+      sessionStorage.removeItem('tuvi_pending_action');
+      sessionStorage.setItem('tuvi_error', 'Không thể khôi phục yêu cầu. Vui lòng thử lại.');
+      router.replace('/#lap-la-so');
+      return;
+    }
 
     const run = async () => {
       try {
