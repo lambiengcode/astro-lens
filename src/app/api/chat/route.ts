@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
-import type { ChartData } from '@/types';
+import { encode as encodeToon } from '@toon-format/toon';
+import type { ChartData, StarData } from '@/types';
 import { getCachedContentName } from '@/lib/gemini-cache';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
@@ -12,46 +13,18 @@ interface ChatRequest {
   name?: string;
 }
 
+function formatStars(stars: StarData[], includeBrightness: boolean): string {
+  return stars
+    .map((s) => {
+      let str = s.name;
+      if (includeBrightness && s.brightness) str += `(${s.brightness})`;
+      if (s.mutagen) str += `[${s.mutagen}]`;
+      return str;
+    })
+    .join(' · ');
+}
+
 function buildChartContext(chart: ChartData, name?: string): string {
-  // Full palace details — not just one-liners
-  const palaceDetails = chart.palaces.map((p) => {
-    const majors = p.majorStars.length > 0
-      ? p.majorStars.map((s) => {
-          let str = s.name;
-          if (s.brightness) str += `(${s.brightness})`;
-          if (s.mutagen) str += `[${s.mutagen}]`;
-          return str;
-        }).join(' · ')
-      : '— trống —';
-
-    const minors = p.minorStars.length > 0
-      ? p.minorStars.map((s) => {
-          let str = s.name;
-          if (s.mutagen) str += `[${s.mutagen}]`;
-          return str;
-        }).join(' · ')
-      : '';
-
-    const adjectives = p.adjectiveStars.length > 0
-      ? p.adjectiveStars.map((s) => s.name).join(' · ')
-      : '';
-
-    return `▸ ${p.name}${p.isBodyPalace ? ' [THÂN CUNG]' : ''}  Can/Chi: ${p.heavenlyStem}${p.earthlyBranch}  Trường sinh: ${p.changsheng12}  Đại hạn: ${p.decadalRange}
-  Chính tinh: ${majors}
-  Phụ tinh: ${minors || '(không có)'}
-  Tạp diệu: ${adjectives || '(không có)'}`;
-  }).join('\n');
-
-  let horoscopeInfo = '';
-  if (chart.horoscope) {
-    const { decadal, yearly, monthly } = chart.horoscope;
-    horoscopeInfo = `
-▸ Đại hạn hiện tại: ${decadal.name} (${decadal.heavenlyStem}${decadal.earthlyBranch}) | Tứ hóa: ${decadal.mutagen.join(' · ') || 'không có'}
-▸ Lưu niên: ${yearly.name} (${yearly.heavenlyStem}${yearly.earthlyBranch}) | Tứ hóa: ${yearly.mutagen.join(' · ') || 'không có'}
-▸ Lưu nguyệt: ${monthly.name} (${monthly.heavenlyStem}${monthly.earthlyBranch}) | Tứ hóa: ${monthly.mutagen.join(' · ') || 'không có'}`;
-  }
-
-  // Current real-world date/time so AI knows the actual year
   const now = new Date();
   const currentDateTime = now.toLocaleString('vi-VN', {
     timeZone: 'Asia/Ho_Chi_Minh',
@@ -60,28 +33,57 @@ function buildChartContext(chart: ChartData, name?: string): string {
     hour12: false,
   });
 
-  return `=== THỜI GIAN HIỆN TẠI ===
-${currentDateTime} (GMT+7 — Việt Nam)
+  const data: Record<string, unknown> = {
+    thoiGianHienTai: `${currentDateTime} (GMT+7 — Việt Nam)`,
+    thongTinLaSo: {
+      ten: name || '(không cung cấp)',
+      gioiTinh: chart.gender,
+      duongLich: chart.solarDate,
+      amLich: chart.lunarDate,
+      canChi: chart.chineseDate,
+      gioSinh: chart.time,
+      khoangGio: chart.timeRange,
+      conGiap: chart.zodiac,
+      nguHanhCuc: chart.fiveElementsClass,
+      menhChu: chart.soul,
+      thanChu: chart.body,
+      cungMenhTai: chart.earthlyBranchOfSoulPalace,
+      cungThanTai: chart.earthlyBranchOfBodyPalace,
+    },
+    muoiHaiCung: chart.palaces.map((p) => ({
+      cung: p.name,
+      thanCung: p.isBodyPalace,
+      canChi: `${p.heavenlyStem}${p.earthlyBranch}`,
+      truongSinh: p.changsheng12,
+      daiHan: p.decadalRange,
+      chinhTinh: p.majorStars.length > 0 ? formatStars(p.majorStars, true) : '— trống —',
+      phuTinh: p.minorStars.length > 0 ? formatStars(p.minorStars, false) : '(không có)',
+      tapDieu: p.adjectiveStars.length > 0 ? p.adjectiveStars.map((s) => s.name).join(' · ') : '(không có)',
+    })),
+  };
 
-=== THÔNG TIN LÁ SỐ ===
-Tên: ${name || '(không cung cấp)'}  |  Giới tính: ${chart.gender}
-Dương lịch: ${chart.solarDate}  |  Âm lịch: ${chart.lunarDate}
-Can Chi: ${chart.chineseDate}  |  Giờ sinh: ${chart.time} (${chart.timeRange})
-Con giáp: ${chart.zodiac}  |  Ngũ hành cục: ${chart.fiveElementsClass}
-Mệnh chủ: ${chart.soul}  |  Thân chủ: ${chart.body}
-Cung Mệnh tại: ${chart.earthlyBranchOfSoulPalace}  |  Cung Thân tại: ${chart.earthlyBranchOfBodyPalace}
+  if (chart.horoscope) {
+    const { decadal, yearly, monthly } = chart.horoscope;
+    data.vanHanHienTai = {
+      daiHan: { ten: decadal.name, canChi: `${decadal.heavenlyStem}${decadal.earthlyBranch}`, tuHoa: decadal.mutagen.join(' · ') || 'không có' },
+      luuNien: { ten: yearly.name, canChi: `${yearly.heavenlyStem}${yearly.earthlyBranch}`, tuHoa: yearly.mutagen.join(' · ') || 'không có' },
+      luuNguyet: { ten: monthly.name, canChi: `${monthly.heavenlyStem}${monthly.earthlyBranch}`, tuHoa: monthly.mutagen.join(' · ') || 'không có' },
+    };
+  }
 
-=== 12 CUNG ===
-${palaceDetails}
+  if (chart.bazi) {
+    const b = chart.bazi;
+    data.batTu = {
+      tuTru: b.pillarsString,
+      nhatChu: `${b.dayMaster.stem} (${b.dayMaster.element}, ${b.dayMaster.nature})`,
+      cuongNhuoc: `${b.dayMasterStrength.strength} (Score: ${b.dayMasterStrength.score})`,
+      nguHanh: Object.entries(b.fiveElements).map(([k, v]) => `${k}:${v}`).join(' '),
+      dungThan: b.favorableElements.join(', '),
+      kyThan: b.unfavorableElements.join(', '),
+    };
+  }
 
-=== VẬN HẠN HIỆN TẠI ===${horoscopeInfo}
-${chart.bazi ? `
-=== BÁT TỰ / TỨ TRỤ ===
-Tứ trụ: ${chart.bazi.pillarsString}
-Nhật chủ: ${chart.bazi.dayMaster.stem} (${chart.bazi.dayMaster.element}, ${chart.bazi.dayMaster.nature})
-Cường/Nhược: ${chart.bazi.dayMasterStrength.strength} (Score: ${chart.bazi.dayMasterStrength.score})
-Ngũ hành: ${Object.entries(chart.bazi.fiveElements).map(([k, v]) => k + ':' + v).join(' ')}
-Dụng thần: ${chart.bazi.favorableElements.join(', ')}  |  Kỵ thần: ${chart.bazi.unfavorableElements.join(', ')}` : ''}`;
+  return encodeToon(data);
 }
 
 export async function POST(request: NextRequest) {
@@ -127,7 +129,7 @@ Hãy trả lời dựa trên lá số và thời gian hiện tại ở trên. D�
 - Sử dụng kiến thức từ tài liệu tham khảo Tử Vi đã được cung cấp để phân tích chính xác hơn.`;
 
     const result = await ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
+      model: 'gemini-3.6-flash',
       contents: prompt,
       config: {
         // When cache available: system instruction is inside the cache

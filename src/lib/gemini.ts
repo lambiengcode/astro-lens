@@ -1,6 +1,18 @@
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
-import type { ChartData } from '@/types';
+import { encode as encodeToon } from '@toon-format/toon';
+import type { ChartData, StarData } from '@/types';
 import { getCachedContentName } from './gemini-cache';
+
+function formatStars(stars: StarData[], includeBrightness: boolean): string {
+  return stars
+    .map((s) => {
+      let str = s.name;
+      if (includeBrightness && s.brightness) str += `(${s.brightness})`;
+      if (s.mutagen) str += `[${s.mutagen}]`;
+      return str;
+    })
+    .join(' · ');
+}
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
@@ -81,46 +93,6 @@ YÊU CẦU: điềm tĩnh · sâu sắc · học thuật nhưng dễ hiểu · m
 // LAYER 2 — DATA CONTEXT
 // ─────────────────────────────────────────────────────────────────────────────
 function buildDataContext(chart: ChartData, name?: string, selfDescription?: string): string {
-  const palacesSummary = chart.palaces
-    .map((p) => {
-      const majors = p.majorStars.length > 0
-        ? p.majorStars.map((s) => {
-            let str = s.name;
-            if (s.brightness) str += `(${s.brightness})`;
-            if (s.mutagen) str += `[${s.mutagen}]`;
-            return str;
-          }).join(' · ')
-        : '— trống —';
-      const minors = p.minorStars.length > 0
-        ? p.minorStars.map((s) => {
-            let str = s.name;
-            if (s.mutagen) str += `[${s.mutagen}]`;
-            return str;
-          }).join(' · ')
-        : '';
-      const adjectives = p.adjectiveStars.length > 0
-        ? p.adjectiveStars.map((s) => s.name).join(' · ')
-        : '';
-
-      return `▸ ${p.name}${p.isBodyPalace ? ' [★THÂN CUNG]' : ''}
-  Can/Chi: ${p.heavenlyStem}${p.earthlyBranch}  |  Trường sinh: ${p.changsheng12}  |  Đại hạn: ${p.decadalRange}
-  Chính tinh: ${majors}
-  Phụ tinh: ${minors || '(không có)'}
-  Tạp diệu: ${adjectives || '(không có)'}`;
-    })
-    .join('\n\n');
-
-  let horoscopeSection = '';
-  if (chart.horoscope) {
-    const { decadal, yearly, monthly } = chart.horoscope;
-    horoscopeSection = `
-━━━ VẬN HẠN HIỆN TẠI ━━━
-▸ Đại hạn:   ${decadal.name}  |  ${decadal.heavenlyStem}${decadal.earthlyBranch}  |  Tứ hóa: ${decadal.mutagen.join(' · ') || '(không có)'}
-▸ Lưu niên:  ${yearly.name}  |  ${yearly.heavenlyStem}${yearly.earthlyBranch}  |  Tứ hóa: ${yearly.mutagen.join(' · ') || '(không có)'}
-▸ Lưu nguyệt: ${monthly.name}  |  ${monthly.heavenlyStem}${monthly.earthlyBranch}  |  Tứ hóa: ${monthly.mutagen.join(' · ') || '(không có)'}`;
-  }
-
-  // Inject real current time so the model knows the exact year
   const now = new Date();
   const currentDateTime = now.toLocaleString('vi-VN', {
     timeZone: 'Asia/Ho_Chi_Minh',
@@ -128,72 +100,88 @@ function buildDataContext(chart: ChartData, name?: string, selfDescription?: str
     hour: '2-digit', minute: '2-digit', hour12: false,
   });
 
-  // Bazi (Four Pillars) section
-  let baziSection = '';
+  const data: Record<string, unknown> = {
+    thoiGianHienTai: `${currentDateTime} (GMT+7 — Việt Nam)`,
+    thongTinCoBan: {
+      ten: name || '(không cung cấp)',
+      gioiTinh: chart.gender,
+      duongLich: chart.solarDate,
+      amLich: chart.lunarDate,
+      canChi: chart.chineseDate,
+      gioSinh: chart.time,
+      khoangGio: chart.timeRange,
+      cungGiap: chart.sign,
+      conGiap: chart.zodiac,
+      nguHanhCuc: chart.fiveElementsClass,
+      menhChu: chart.soul,
+      thanChu: chart.body,
+      cungMenhTai: chart.earthlyBranchOfSoulPalace,
+      cungThanTai: chart.earthlyBranchOfBodyPalace,
+    },
+    muoiHaiCung: chart.palaces.map((p) => ({
+      cung: p.name,
+      thanCung: p.isBodyPalace,
+      canChi: `${p.heavenlyStem}${p.earthlyBranch}`,
+      truongSinh: p.changsheng12,
+      daiHan: p.decadalRange,
+      chinhTinh: p.majorStars.length > 0 ? formatStars(p.majorStars, true) : '— trống —',
+      phuTinh: p.minorStars.length > 0 ? formatStars(p.minorStars, false) : '(không có)',
+      tapDieu: p.adjectiveStars.length > 0 ? p.adjectiveStars.map((s) => s.name).join(' · ') : '(không có)',
+    })),
+  };
+
+  if (chart.horoscope) {
+    const { decadal, yearly, monthly } = chart.horoscope;
+    data.vanHanHienTai = {
+      daiHan: { ten: decadal.name, canChi: `${decadal.heavenlyStem}${decadal.earthlyBranch}`, tuHoa: decadal.mutagen.join(' · ') || '(không có)' },
+      luuNien: { ten: yearly.name, canChi: `${yearly.heavenlyStem}${yearly.earthlyBranch}`, tuHoa: yearly.mutagen.join(' · ') || '(không có)' },
+      luuNguyet: { ten: monthly.name, canChi: `${monthly.heavenlyStem}${monthly.earthlyBranch}`, tuHoa: monthly.mutagen.join(' · ') || '(không có)' },
+    };
+  }
+
   if (chart.bazi) {
     const b = chart.bazi;
     const elemVN: Record<string, string> = { WOOD: 'Mộc', FIRE: 'Hỏa', EARTH: 'Thổ', METAL: 'Kim', WATER: 'Thủy' };
     const toVN = (e: string) => elemVN[e] || e;
 
-    const fiveStr = Object.entries(b.fiveElements)
-      .sort(([, a], [, b]) => b - a)
-      .map(([el, score]) => `${toVN(el)}: ${score}`)
-      .join(' · ');
+    const pillar = (p: typeof b.yearPillar) => `${p.chinese} | ${toVN(p.element)} | ${p.animal} | Chi: ${toVN(p.branchElement)}`;
 
-    const interStr = b.interactions.length > 0
-      ? b.interactions.map((i) => `${i.type}: ${i.participants.join(' ↔ ')}${i.result ? ` → ${toVN(i.result)}` : ''}`).join('\n  ')
-      : '(không có)';
-
-    const luckStr = b.luckPillars.length > 0
-      ? b.luckPillars.map((lp) => `${lp.startAge}t: ${lp.chinese}(${toVN(lp.element)})`).join(' → ')
-      : '(không có)';
-
-    baziSection = `
-━━━ BÁT TỰ / TỨ TRỤ (Four Pillars of Destiny) ━━━
-▸ Tứ trụ: ${b.pillarsString}
-▸ Năm trụ:   ${b.yearPillar.chinese} | ${toVN(b.yearPillar.element)} | ${b.yearPillar.animal} | Chi: ${toVN(b.yearPillar.branchElement)}
-▸ Tháng trụ: ${b.monthPillar.chinese} | ${toVN(b.monthPillar.element)} | ${b.monthPillar.animal} | Chi: ${toVN(b.monthPillar.branchElement)}
-▸ Ngày trụ:  ${b.dayPillar.chinese} | ${toVN(b.dayPillar.element)} | ${b.dayPillar.animal} | Chi: ${toVN(b.dayPillar.branchElement)}  ← NHẬT CHỦ
-▸ Giờ trụ:   ${b.hourPillar.chinese} | ${toVN(b.hourPillar.element)} | ${b.hourPillar.animal} | Chi: ${toVN(b.hourPillar.branchElement)}
-▸ Nhật chủ (Day Master): ${b.dayMaster.stem} — ${toVN(b.dayMaster.element)} (${b.dayMaster.nature})
-▸ Cường/Nhược: ${b.dayMasterStrength.strength} (Score: ${b.dayMasterStrength.score})
-▸ Ngũ hành phân bố: ${fiveStr}
-▸ Dụng thần (Favorable): ${b.favorableElements.map(toVN).join(', ') || '(không xác định)'}
-▸ Kỵ thần (Unfavorable): ${b.unfavorableElements.map(toVN).join(', ') || '(không xác định)'}
-▸ Quý nhân (貴人): ${b.nobleman.join(', ') || '(không có)'}
-▸ Đào hoa (桃花): ${b.peachBlossom || '(không có)'}
-▸ Thiên mã (天馬): ${b.skyHorse || '(không có)'}
-▸ Văn xương (文昌): ${b.intelligence || '(không có)'}
-▸ Tương tác trụ:
-  ${interStr}
-▸ Đại vận Bát Tự (${b.luckDirection === 1 ? 'Thuận' : 'Nghịch'}, khởi ${b.luckStartAge ?? '?'}t):
-  ${luckStr}`;
+    data.batTu = {
+      tuTru: b.pillarsString,
+      namTru: pillar(b.yearPillar),
+      thangTru: pillar(b.monthPillar),
+      ngayTru: `${pillar(b.dayPillar)} (Nhật chủ)`,
+      gioTru: pillar(b.hourPillar),
+      nhatChu: `${b.dayMaster.stem} — ${toVN(b.dayMaster.element)} (${b.dayMaster.nature})`,
+      cuongNhuoc: `${b.dayMasterStrength.strength} (Score: ${b.dayMasterStrength.score})`,
+      nguHanhPhanBo: Object.entries(b.fiveElements)
+        .sort(([, a], [, c]) => c - a)
+        .map(([el, score]) => `${toVN(el)}: ${score}`)
+        .join(' · '),
+      dungThan: b.favorableElements.map(toVN).join(', ') || '(không xác định)',
+      kyThan: b.unfavorableElements.map(toVN).join(', ') || '(không xác định)',
+      quyNhan: b.nobleman.join(', ') || '(không có)',
+      daoHoa: b.peachBlossom || '(không có)',
+      thienMa: b.skyHorse || '(không có)',
+      vanXuong: b.intelligence || '(không có)',
+      tuongTacTru: b.interactions.length > 0
+        ? b.interactions.map((i) => `${i.type}: ${i.participants.join(' ↔ ')}${i.result ? ` → ${toVN(i.result)}` : ''}`)
+        : '(không có)',
+      daiVanBatTu: {
+        huong: b.luckDirection === 1 ? 'Thuận' : 'Nghịch',
+        khoiTuoi: b.luckStartAge ?? '?',
+        cacDaiVan: b.luckPillars.length > 0
+          ? b.luckPillars.map((lp) => `${lp.startAge}t: ${lp.chinese}(${toVN(lp.element)})`)
+          : '(không có)',
+      },
+    };
   }
 
-  // Self-description section
-  let selfSection = '';
   if (selfDescription?.trim()) {
-    selfSection = `
-━━━ MÔ TẢ BẢN THÂN (do người dùng cung cấp) ━━━
-${selfDescription.trim()}`;
+    data.moTaBanThan = selfDescription.trim();
   }
 
-  return `━━━ THỜI GIAN HIỆN TẠI ━━━
-${currentDateTime} (GMT+7 — Việt Nam)
-
-━━━ THÔNG TIN CƠ BẢN ━━━
-Tên: ${name || '(không cung cấp)'}  |  Giới tính: ${chart.gender}
-Dương lịch: ${chart.solarDate}  |  Âm lịch: ${chart.lunarDate}
-Can Chi: ${chart.chineseDate}  |  Giờ sinh: ${chart.time} (${chart.timeRange})
-Cung giáp: ${chart.sign}  |  Con giáp: ${chart.zodiac}
-Ngũ hành cục: ${chart.fiveElementsClass}
-Mệnh chủ: ${chart.soul}  |  Thân chủ: ${chart.body}
-Cung Mệnh tại: ${chart.earthlyBranchOfSoulPalace}  |  Cung Thân tại: ${chart.earthlyBranchOfBodyPalace}
-${baziSection}
-━━━ 12 CUNG ━━━
-${palacesSummary}
-${horoscopeSection}
-${selfSection}`;
+  return encodeToon(data);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -616,7 +604,7 @@ export async function analyzeChart(chart: ChartData, name?: string, selfDescript
   }
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3.1-pro-preview',
+    model: 'gemini-3.6-flash',
     contents: prompt,
     config: {
       // When cache is available, systemInstruction is bundled in cache
