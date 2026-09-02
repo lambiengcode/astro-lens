@@ -19,12 +19,20 @@ export default function BirthForm() {
     const pendingCandidates = sessionStorage.getItem('tuvi_candidates_state');
     const pendingError = sessionStorage.getItem('tuvi_error');
     if (pendingCandidates) {
-      const parsed = JSON.parse(pendingCandidates) as { form: BirthInput; candidates: RectificationCandidate[] };
-      setForm(parsed.form);
-      setCandidates(parsed.candidates);
-      setUnknownHour(true);
-      setStep('select-candidate');
-      sessionStorage.removeItem('tuvi_candidates_state');
+      try {
+        const parsed = JSON.parse(pendingCandidates) as { form: BirthInput; candidates: RectificationCandidate[] };
+        if (!parsed?.form || !Array.isArray(parsed.candidates) || parsed.candidates.length === 0) {
+          throw new Error('Invalid candidates state');
+        }
+        setForm(parsed.form);
+        setCandidates(parsed.candidates);
+        setUnknownHour(true);
+        setStep('select-candidate');
+      } catch {
+        setError('Không thể khôi phục danh sách giờ sinh. Vui lòng thử lại.');
+      } finally {
+        sessionStorage.removeItem('tuvi_candidates_state');
+      }
     }
     if (pendingError) {
       setError(pendingError);
