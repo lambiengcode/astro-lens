@@ -23,7 +23,7 @@ Vietnamese Zi Wei Dou Shu (Tử Vi Đẩu Số) astrology web app powered by izt
 | Language | TypeScript 5 |
 | Styling | Tailwind CSS v4 |
 | Astrology engine | iztro v2.5.8 |
-| AI | Google Gemini 2.5 Pro (`@google/generative-ai`) |
+| AI | Google Gemini `gemini-3.6-flash` (`@google/genai`) |
 | Runtime | React 19 |
 
 ## Getting Started
@@ -87,7 +87,7 @@ The Gemini prompt is split into three layers:
 
 1. **System Instruction** — Immutable expert identity, epistemic rules (no hallucinated stars, cross-palace consistency, Mệnh cung as root), tone control (no fear-mongering, no flattery), and output discipline. Loaded via `systemInstruction` so it cannot be overridden by prompt content.
 
-2. **Data Context** — Structured chart dump: birth info, all 12 palaces with stars/brightness/mutagens/changsheng/decadal range, current horoscope overlay.
+2. **Data Context** — TOON-encoded chart dump (via `@toon-format/toon`): birth info, all 12 palaces with stars/brightness/mutagens/changsheng/decadal range, current horoscope overlay, and Bazi pillars.
 
 3. **Chained Reasoning + Self-Check + Task** — Forces the model to:
    - Internally reason through core chart, cross-palace correlations, contradiction detection, and horoscope evaluation (Step A–D, not printed)
