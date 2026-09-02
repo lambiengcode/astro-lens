@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateChart } from '@/lib/iztro';
-import { analyzeChart } from '@/lib/gemini';
-import type { AnalyzeRequest, AnalyzeResponse } from '@/types';
+import { analyzeChart, analyzeHighlights } from '@/lib/gemini';
+import type { AnalyzeRequest, AnalyzeResponse, InterpretationHighlights } from '@/types';
+import { INTERPRETATION_CATEGORIES } from '@/types';
+
+const FALLBACK_HIGHLIGHTS: InterpretationHighlights = {
+  strength: 'Cần cấu hình GEMINI_API_KEY để nhận điểm mạnh cá nhân hóa.',
+  caution: 'Cần cấu hình GEMINI_API_KEY để nhận lưu ý cá nhân hóa.',
+  favorablePeriod: 'Cần cấu hình GEMINI_API_KEY để nhận thời điểm thuận lợi cá nhân hóa.',
+  categoryInsights: Object.fromEntries(
+    INTERPRETATION_CATEGORIES.map((category) => [category, 'Chưa có insight — vui lòng cấu hình GEMINI_API_KEY.'])
+  ) as InterpretationHighlights['categoryInsights'],
+};
 
 // Simple in-memory cache
 const cache = new Map<string, { data: AnalyzeResponse['data']; timestamp: number }>();
@@ -61,14 +71,19 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
     console.log('[API /analyze] Chart OK:', { palaces: chart.palaces.length, decadals: decadalPeriods.length });
 
     let interpretation: string;
+    let highlights: InterpretationHighlights;
 
     if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
       interpretation = '⚠️ Chưa cấu hình GEMINI_API_KEY. Vui lòng thêm API key vào file .env.local để nhận luận giải chi tiết từ AI.\n\nLá số Tử Vi đã được tạo thành công.';
+      highlights = FALLBACK_HIGHLIGHTS;
     } else {
-      interpretation = await analyzeChart(chart, input.name, input.selfDescription);
+      [interpretation, highlights] = await Promise.all([
+        analyzeChart(chart, input.name, input.selfDescription),
+        analyzeHighlights(chart, input.name),
+      ]);
     }
 
-    const data = { chart, interpretation, decadalPeriods };
+    const data = { chart, interpretation, highlights, decadalPeriods };
 
     cache.set(cacheKey, { data, timestamp: Date.now() });
 

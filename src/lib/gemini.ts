@@ -1,5 +1,6 @@
-import { GoogleGenAI, ThinkingLevel } from '@google/genai';
-import type { ChartData } from '@/types';
+import { GoogleGenAI, ThinkingLevel, Type } from '@google/genai';
+import type { ChartData, InterpretationHighlights } from '@/types';
+import { INTERPRETATION_CATEGORIES } from '@/types';
 import { getCachedContentName } from './gemini-cache';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
@@ -636,4 +637,47 @@ export async function analyzeChart(chart: ChartData, name?: string, selfDescript
   });
 
   return response.text ?? '';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STRUCTURED HIGHLIGHTS — short, chart-derived hero highlights + per-category insights
+// ─────────────────────────────────────────────────────────────────────────────
+const HIGHLIGHTS_SYSTEM_INSTRUCTION = `Bạn là chuyên gia Tử Vi Đẩu Số. Dựa trên dữ liệu lá số được cung cấp, hãy tóm tắt CỰC NGẮN GỌN (mỗi câu ≤ 20 từ), bằng tiếng Việt, dựa TRỰC TIẾP vào sao/cung/tứ hóa THỰC CÓ trong dữ liệu — không bịa đặt, không chung chung.`;
+
+const HIGHLIGHTS_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    strength: { type: Type.STRING, description: 'Một câu nêu điểm mạnh nổi bật nhất, có dẫn chứng sao/cung cụ thể.' },
+    caution: { type: Type.STRING, description: 'Một câu nêu điều cần lưu ý nhất, có dẫn chứng sao/cung cụ thể.' },
+    favorablePeriod: { type: Type.STRING, description: 'Một câu nêu thời điểm/giai đoạn thuận lợi nhất, dựa trên đại hạn/lưu niên hiện tại.' },
+    categoryInsights: {
+      type: Type.OBJECT,
+      properties: Object.fromEntries(
+        INTERPRETATION_CATEGORIES.map((category) => [
+          category,
+          { type: Type.STRING, description: `Một câu insight ngắn gọn cho lĩnh vực ${category}, dựa trên cung tương ứng.` },
+        ])
+      ),
+      required: [...INTERPRETATION_CATEGORIES],
+    },
+  },
+  required: ['strength', 'caution', 'favorablePeriod', 'categoryInsights'],
+};
+
+export async function analyzeHighlights(chart: ChartData, name?: string): Promise<InterpretationHighlights> {
+  const prompt = buildDataContext(chart, name);
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-3.1-pro-preview',
+    contents: prompt,
+    config: {
+      systemInstruction: HIGHLIGHTS_SYSTEM_INSTRUCTION,
+      responseMimeType: 'application/json',
+      responseSchema: HIGHLIGHTS_SCHEMA,
+      temperature: 0.6,
+      maxOutputTokens: 2048,
+    },
+  });
+
+  return JSON.parse(response.text ?? '{}') as InterpretationHighlights;
 }

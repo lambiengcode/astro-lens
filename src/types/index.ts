@@ -122,9 +122,21 @@ export interface DecadalPeriod {
   isCurrentDecadal: boolean;
 }
 
+export const INTERPRETATION_CATEGORIES = ['Tính cách', 'Sự nghiệp', 'Tình duyên', 'Tài chính', 'Vận hạn'] as const;
+
+export type InterpretationCategory = (typeof INTERPRETATION_CATEGORIES)[number];
+
+export interface InterpretationHighlights {
+  strength: string;
+  caution: string;
+  favorablePeriod: string;
+  categoryInsights: Record<InterpretationCategory, string>;
+}
+
 export interface AnalysisResult {
   chart: ChartData;
   interpretation: string;
+  highlights: InterpretationHighlights;
   decadalPeriods: DecadalPeriod[];
 }
 

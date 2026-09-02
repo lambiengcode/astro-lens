@@ -301,6 +301,7 @@ export default function ResultPage() {
             {activeTab === 'interpretation' && (
               <Interpretation
                 content={result.interpretation}
+                highlights={result.highlights}
                 name={input?.name}
                 solarDate={result.chart.solarDate}
                 onExportPdf={handleExportPdf}
@@ -392,6 +393,7 @@ export default function ResultPage() {
         <div ref={pdfInterpretationRef} className="bg-[#060a13] p-8">
           <InterpretationContent
             content={result.interpretation}
+            highlights={result.highlights}
             name={input?.name}
             solarDate={result.chart.solarDate}
           />

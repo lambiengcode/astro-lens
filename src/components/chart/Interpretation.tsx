@@ -1,9 +1,12 @@
 'use client';
 
 import { useRef, useState, useCallback } from 'react';
+import { INTERPRETATION_CATEGORIES } from '@/types';
+import type { InterpretationCategory, InterpretationHighlights } from '@/types';
 
 interface InterpretationProps {
   content: string;
+  highlights: InterpretationHighlights;
   name?: string;
   solarDate?: string;
   onExportPdf?: () => void;
@@ -33,7 +36,7 @@ function renderMarkdown(text: string): string {
   return `<p>${html}</p>`;
 }
 
-const CATEGORIES = ['Tính cách', 'Sự nghiệp', 'Tình duyên', 'Tài chính', 'Vận hạn'];
+const CATEGORIES = INTERPRETATION_CATEGORIES;
 
 function getSections(content: string) {
   const matches = [...content.matchAll(/^#{1,3}\s*(.+)$/gm)];
@@ -48,9 +51,9 @@ function getSections(content: string) {
   return { sections, quote: plain.slice(0, 190) + (plain.length > 190 ? '…' : '') };
 }
 
-export function InterpretationContent({ content, name, solarDate }: { content: string; name?: string; solarDate?: string }) {
+export function InterpretationContent({ content, highlights, name, solarDate }: { content: string; highlights: InterpretationHighlights; name?: string; solarDate?: string }) {
   const { sections, quote } = getSections(content);
-  const [activeCategory, setActiveCategory] = useState(CATEGORIES[0]);
+  const [activeCategory, setActiveCategory] = useState<InterpretationCategory>(CATEGORIES[0]);
   const active = sections.find((section) => section.category === activeCategory) || sections[0];
   const citations = active.body.match(/\*\*([^*]+)\*\*/g)?.slice(0, 3).map((item) => item.replace(/\*/g, '')) || ['Lá số tổng thể', 'Ngũ hành', 'Cung Mệnh'];
   const influence = Math.min(92, Math.max(58, 62 + citations.length * 8));
@@ -67,9 +70,9 @@ export function InterpretationContent({ content, name, solarDate }: { content: s
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
-          ['Điểm mạnh', 'Khả năng thích nghi và nhìn thấu vấn đề', '#5fe0a8'],
-          ['Điều cần lưu ý', 'Giữ nhịp nghỉ ngơi khi vận khí biến động', '#f3c97f'],
-          ['Thời điểm thuận lợi', 'Tập trung vào chu kỳ đang mở ra', '#7c96ff'],
+          ['Điểm mạnh', highlights.strength, '#5fe0a8'],
+          ['Điều cần lưu ý', highlights.caution, '#f3c97f'],
+          ['Thời điểm thuận lợi', highlights.favorablePeriod, '#7c96ff'],
         ].map(([label, value, color]) => <div key={label} className="glass-1 rounded-2xl p-4"><span className="text-[10px] uppercase tracking-wider" style={{ color }}>{label}</span><p className="text-xs text-[#a4afd0] mt-2 leading-relaxed">{value}</p></div>)}
       </div>
 
@@ -81,6 +84,7 @@ export function InterpretationContent({ content, name, solarDate }: { content: s
         <div className="flex gap-2 overflow-x-auto pb-2 mb-5">
           {CATEGORIES.map((category) => <button key={category} onClick={() => setActiveCategory(category)} className={`chip-glass press-spring shrink-0 px-3 py-2 text-xs ${activeCategory === category ? 'text-[#f7c4ef] border-[#ef8fe0]/40 bg-[#ef8fe0]/10' : 'text-[#6b7a94]'}`}>{category}</button>)}
         </div>
+        <p className="text-sm text-[#c8d0e8] leading-relaxed mb-4">{highlights.categoryInsights[active.category]}</p>
         <div className="flex items-center justify-between text-xs mb-2"><span className="text-[#a4afd0]">Mức ảnh hưởng</span><span className="text-[#ef8fe0] font-semibold">{influence}%</span></div>
         <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mb-6"><div className="h-full rounded-full bg-gradient-to-r from-[#7c96ff] via-[#bd93ff] to-[#ef8fe0]" style={{ width: `${influence}%` }} /></div>
         <div className="prose-interpretation text-foreground/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: renderMarkdown(active.body) }} />
@@ -89,7 +93,7 @@ export function InterpretationContent({ content, name, solarDate }: { content: s
   );
 }
 
-export default function Interpretation({ content, name, solarDate, onExportPdf, pdfExporting }: InterpretationProps) {
+export default function Interpretation({ content, highlights, name, solarDate, onExportPdf, pdfExporting }: InterpretationProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const [exportingType, setExportingType] = useState<ExportType>(null);
 
@@ -177,7 +181,7 @@ export default function Interpretation({ content, name, solarDate, onExportPdf, 
 
       {/* Capturable content area */}
       <div ref={contentRef}>
-        <InterpretationContent content={content} name={name} solarDate={solarDate} />
+        <InterpretationContent content={content} highlights={highlights} name={name} solarDate={solarDate} />
       </div>
     </div>
   );
