@@ -33,12 +33,12 @@ function PeriodCard({ period, birthYear, isExpanded, onToggle }: {
 
   return (
     <div className={`
-      rounded-xl border transition-all
+      rounded-xl transition-all press-spring
       ${isCurrent
-        ? 'border-[#3b5bdb]/60 bg-[#131c30] shadow-lg shadow-[#3b5bdb]/10'
+        ? 'glass-strong glass-gold-edge'
         : isPast
-          ? 'border-[#1e2538] bg-[#0d1117]/60 opacity-70'
-          : 'border-[#1e2538] bg-[#0d1117]'
+          ? 'glass opacity-70'
+          : 'glass'
       }
     `}>
       {/* Header — always visible */}
@@ -51,7 +51,7 @@ function PeriodCard({ period, birthYear, isExpanded, onToggle }: {
             {/* Period label + palace name */}
             <div className="flex items-center gap-2 flex-wrap">
               {isCurrent && (
-                <span className="px-2 py-0.5 rounded-full bg-[#3b5bdb]/20 text-[#5b8af5] text-[10px] font-bold uppercase tracking-wider border border-[#3b5bdb]/30">
+                <span className="chip-glass px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#e8b339]">
                   Hiện tại
                 </span>
               )}
@@ -93,11 +93,8 @@ function PeriodCard({ period, birthYear, isExpanded, onToggle }: {
                 <span
                   key={i}
                   className={`
-                    inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[11px] border
-                    ${star.mutagen
-                      ? 'bg-[#e8b339]/10 border-[#e8b339]/30 text-[#e8b339]'
-                      : 'bg-[#9775cd]/10 border-[#9775cd]/20 text-[#9775cd]'
-                    }
+                    chip-glass inline-flex items-center gap-0.5 px-2 py-0.5 text-[11px]
+                    ${star.mutagen ? 'text-[#e8b339]' : 'text-[#9775cd]'}
                   `}
                 >
                   {star.name}
@@ -129,7 +126,7 @@ function PeriodCard({ period, birthYear, isExpanded, onToggle }: {
               <h4 className="text-[11px] font-semibold text-[#5b8af5] uppercase tracking-wider mb-2">Tứ hóa đại hạn</h4>
               <div className="flex flex-wrap gap-2">
                 {period.mutagen.map((m, i) => (
-                  <span key={i} className="px-2.5 py-1 rounded-lg bg-[#e8b339]/10 border border-[#e8b339]/25 text-[#e8b339] text-xs font-medium">
+                  <span key={i} className="chip-glass px-2.5 py-1 text-[#e8b339] text-xs font-medium">
                     {m}
                   </span>
                 ))}
@@ -143,7 +140,7 @@ function PeriodCard({ period, birthYear, isExpanded, onToggle }: {
               <h4 className="text-[11px] font-semibold text-[#5b8af5] uppercase tracking-wider mb-2">Phụ tinh</h4>
               <div className="flex flex-wrap gap-1.5">
                 {period.minorStars.map((star, i) => (
-                  <span key={i} className="px-2 py-0.5 rounded text-[11px] bg-[#1a2236] border border-[#2a3348] text-[#7c8ba5]">
+                  <span key={i} className="chip-glass px-2 py-0.5 text-[11px] text-[#7c8ba5]">
                     {star.name}
                     {star.brightness && <span className="text-[9px] ml-0.5 opacity-60">{star.brightness}</span>}
                     {star.mutagen && <span className="text-[9px] ml-0.5 font-bold text-[#e8b339]">{star.mutagen}</span>}
@@ -159,7 +156,7 @@ function PeriodCard({ period, birthYear, isExpanded, onToggle }: {
               <h4 className="text-[11px] font-semibold text-[#5b8af5] uppercase tracking-wider mb-2">Tạp diệu</h4>
               <div className="flex flex-wrap gap-1.5">
                 {period.adjectiveStars.map((star, i) => (
-                  <span key={i} className="px-2 py-0.5 rounded text-[10px] bg-[#0d1117] border border-[#1e2538] text-[#4a5568]">
+                  <span key={i} className="chip-glass px-2 py-0.5 text-[10px] text-[#4a5568]">
                     {star.name}
                   </span>
                 ))}
@@ -168,7 +165,7 @@ function PeriodCard({ period, birthYear, isExpanded, onToggle }: {
           )}
 
           {/* Summary box */}
-          <div className="p-3 rounded-lg bg-[#0a0e17] border border-[#1a2236]">
+          <div className="glass-1 p-3 rounded-lg">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div>
                 <span className="text-[10px] text-[#3d4a5c] uppercase tracking-wider">Cung</span>
@@ -225,7 +222,7 @@ export default function DecadalView({ periods, birthYear }: DecadalViewProps) {
       </div>
 
       {/* Timeline overview */}
-      <div className="p-4 rounded-xl bg-[#0d1117] border border-[#1e2538]">
+      <div className="glass p-4 rounded-xl">
         <div className="flex gap-0.5 h-8 rounded-lg overflow-hidden">
           {periods.map((period, i) => {
             const isCurrent = currentAge >= period.range[0] && currentAge <= period.range[1];
@@ -276,7 +273,7 @@ export default function DecadalView({ periods, birthYear }: DecadalViewProps) {
       </div>
 
       {/* Legend */}
-      <div className="p-3 rounded-lg bg-[#0a0e17] border border-[#1a2236] flex flex-wrap gap-4 text-[10px]">
+      <div className="glass-1 p-3 rounded-lg flex flex-wrap gap-4 text-[10px]">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded bg-[#3b5bdb]" />
           <span className="text-[#6b7a94]">Đại hạn hiện tại</span>

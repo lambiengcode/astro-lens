@@ -12,7 +12,6 @@ interface ChatPanelProps {
   chart: ChartData;
   name?: string;
   isOpen: boolean;
-  onClose: () => void;
 }
 
 const SUGGESTIONS = [
@@ -31,7 +30,7 @@ function renderMarkdownInline(text: string): string {
     .replace(/\n/g, '<br/>');
 }
 
-export default function ChatPanel({ chart, name, isOpen, onClose }: ChatPanelProps) {
+export default function ChatPanel({ chart, name, isOpen }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -89,25 +88,19 @@ export default function ChatPanel({ chart, name, isOpen, onClose }: ChatPanelPro
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-0 right-0 sm:bottom-6 sm:right-6 z-50 w-full sm:w-[420px] h-[100dvh] sm:h-[600px] sm:max-h-[80vh] flex flex-col animate-slide-up-fade">
-      <div className="flex-1 flex flex-col bg-[#0b0f18] border border-[#1e2538] rounded-none sm:rounded-2xl overflow-hidden shadow-2xl shadow-black/60">
+    <div className="w-full h-[620px] lg:h-[calc(100vh-7rem)] lg:max-h-[760px] lg:sticky lg:top-24 flex flex-col animate-slide-up-fade">
+      <div className="glass-strong flex-1 flex flex-col rounded-none sm:rounded-3xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#1e2538] bg-[#0d1320]">
+        <div className="glass-1 flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#3b5bdb] to-[#9775cd] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3b5bdb] to-[#9775cd] flex items-center justify-center">
               <span className="text-white text-sm">✦</span>
             </div>
             <div>
               <h3 className="text-sm font-semibold text-[#e2e8f0]">Hỏi Chuyên Gia Tử Vi</h3>
-              <p className="text-[10px] text-[#4a5568]">AI phân tích dựa trên lá số của bạn</p>
+              <p className="text-[10px] text-[#5fe0a8] flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#5fe0a8] animate-pulse" /> Trực tuyến · AI phân tích lá số</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#4a5568] hover:text-[#e2e8f0] hover:bg-[#1a2236] transition-all"
-          >
-            ✕
-          </button>
         </div>
 
         {/* Messages */}
@@ -128,7 +121,7 @@ export default function ChatPanel({ chart, name, isOpen, onClose }: ChatPanelPro
                   <button
                     key={i}
                     onClick={() => sendMessage(s)}
-                    className="px-3 py-1.5 rounded-full text-xs bg-[#1a2236] border border-[#2a3348] text-[#7c8ba5] hover:text-[#5b8af5] hover:border-[#3b5bdb]/40 hover:bg-[#131c30] transition-all"
+                    className="chip-glass press-spring px-3 py-1.5 text-xs text-[#7c8ba5] hover:text-[#5b8af5]"
                   >
                     {s}
                   </button>
@@ -177,7 +170,7 @@ export default function ChatPanel({ chart, name, isOpen, onClose }: ChatPanelPro
         </div>
 
         {/* Input */}
-        <form onSubmit={handleSubmit} className="px-4 py-3 border-t border-[#1e2538] bg-[#080c14]">
+        <form onSubmit={handleSubmit} className="glass-1 px-4 py-3">
           <div className="flex gap-2 items-end">
             <textarea
               ref={inputRef}
@@ -199,13 +192,13 @@ export default function ChatPanel({ chart, name, isOpen, onClose }: ChatPanelPro
               }}
               placeholder="Hỏi về lá số của bạn... (Shift+Enter để xuống dòng)"
               disabled={loading}
-              className="flex-1 px-4 py-2.5 rounded-xl bg-[#0d1117] border border-[#1e2538] text-sm text-[#e2e8f0] placeholder:text-[#3d4a5c] focus:outline-none focus:border-[#3b5bdb]/50 focus:ring-1 focus:ring-[#3b5bdb]/20 transition-all disabled:opacity-50 resize-none overflow-y-auto leading-5"
+              className="glass-1 flex-1 px-4 py-2.5 rounded-2xl text-sm text-[#e2e8f0] placeholder:text-[#3d4a5c] focus:outline-none focus:border-[#3b5bdb]/50 focus:ring-1 focus:ring-[#3b5bdb]/20 transition-all disabled:opacity-50 resize-none overflow-y-auto leading-5"
               style={{ minHeight: '40px', maxHeight: '80px' }}
             />
             <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#3b5bdb] to-[#5b8af5] text-white text-sm font-medium hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+              className="press-spring pill px-5 py-2.5 bg-gradient-to-r from-[#3b5bdb] to-[#5b8af5] text-white text-sm font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
             >
               Gửi
             </button>

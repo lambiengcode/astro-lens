@@ -77,7 +77,6 @@ export default function ResultPage() {
   const [input, setInput] = useState<BirthInput | null>(null);
   const [activePalace, setActivePalace] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
-  const [chatOpen, setChatOpen] = useState(false);
   const [pdfExporting, setPdfExporting] = useState(false);
 
   // Refs for off-screen PDF capture sections
@@ -167,7 +166,7 @@ export default function ResultPage() {
           <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#9775cd]/[0.02] rounded-full blur-[100px]" />
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative lg:grid lg:grid-cols-[minmax(0,1fr)_360px] gap-6">
           {/* Page header */}
           <div className="mb-8 animate-fade-in-up">
             <button
@@ -190,15 +189,15 @@ export default function ResultPage() {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 mb-8 overflow-x-auto pb-2 border-b border-[#1e2538] animate-fade-in-up stagger-1">
+          <div className="flex gap-2 mb-8 overflow-x-auto pb-2 animate-fade-in-up stagger-1">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-[1px] ${
+                className={`press-spring px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                   activeTab === tab.id
-                    ? 'border-[#3b5bdb] text-[#5b8af5] text-glow-accent'
-                    : 'border-transparent text-[#4a5568] hover:text-[#8b9dc3] hover:border-[#2a3348]'
+                    ? 'glass glass-gold-edge text-[#5b8af5] text-glow-accent'
+                    : 'chip-glass text-[#4a5568] hover:text-[#8b9dc3]'
                 }`}
               >
                 <span className="mr-1.5">{tab.icon}</span>
@@ -212,7 +211,7 @@ export default function ResultPage() {
             {activeTab === 'overview' && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ChartSummary chart={result.chart} name={input?.name} />
-                <div className="bg-[#0d1117] border border-[#1e2538] rounded-xl p-6">
+                <div className="glass rounded-xl p-6">
                   <h3 className="text-lg font-bold text-[#e8b339] text-glow-gold mb-4">Điểm nổi bật</h3>
                   <div className="space-y-3">
                     {(() => {
@@ -221,7 +220,7 @@ export default function ResultPage() {
                       );
                       if (!soulPalace) return null;
                       return (
-                        <div className="p-3 rounded-lg bg-[#0a0e17] border border-[#1a2236] hover:border-[#2a3348] transition-colors">
+                        <div className="glass-1 press-spring p-3 rounded-lg">
                           <span className="text-[10px] text-[#4a5568] uppercase tracking-wider">Mệnh cung</span>
                           <div className="mt-1.5 flex flex-wrap gap-1.5">
                             {soulPalace.majorStars.length > 0 ? (
@@ -240,12 +239,12 @@ export default function ResultPage() {
                       );
                     })()}
 
-                    <div className="p-3 rounded-lg bg-[#0a0e17] border border-[#1a2236] hover:border-[#2a3348] transition-colors">
+                    <div className="glass-1 press-spring p-3 rounded-lg">
                       <span className="text-[10px] text-[#4a5568] uppercase tracking-wider">Ngũ hành cục</span>
                       <p className="text-sm font-medium text-[#8b9dc3] mt-1">{result.chart.fiveElementsClass}</p>
                     </div>
 
-                    <div className="p-3 rounded-lg bg-[#0a0e17] border border-[#1a2236] hover:border-[#2a3348] transition-colors">
+                    <div className="glass-1 press-spring p-3 rounded-lg">
                       <span className="text-[10px] text-[#4a5568] uppercase tracking-wider">Mệnh chủ / Thân chủ</span>
                       <p className="text-sm font-medium text-[#8b9dc3] mt-1">{result.chart.soul} / {result.chart.body}</p>
                     </div>
@@ -254,7 +253,7 @@ export default function ResultPage() {
                       const current = result.decadalPeriods.find((p) => p.isCurrentDecadal);
                       if (!current) return null;
                       return (
-                        <div className="p-3 rounded-lg bg-[#131c30] border border-[#3b5bdb]/30 glow-accent">
+                        <div className="glass-1 press-spring p-3 rounded-lg glow-accent">
                           <span className="text-[10px] text-[#5b8af5] uppercase tracking-wider">Đại hạn hiện tại</span>
                           <p className="text-sm font-medium text-[#8b9dc3] mt-1">
                             {current.palaceName} ({current.range[0]}–{current.range[1]} tuổi)
@@ -318,7 +317,7 @@ export default function ResultPage() {
                       { key: 'yearly', title: `Lưu Niên (${new Date().getFullYear()})`, data: result.chart.horoscope.yearly },
                       { key: 'monthly', title: 'Lưu Nguyệt', data: result.chart.horoscope.monthly },
                     ].map(({ key, title, data }) => (
-                      <div key={key} className="bg-[#0d1117] border border-[#1e2538] rounded-xl p-6 hover:border-[#2a3348] transition-colors">
+                      <div key={key} className="glass rounded-xl p-6">
                         <h3 className="text-lg font-bold text-[#e8b339] mb-4">{title}</h3>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                           <div>
@@ -340,13 +339,18 @@ export default function ResultPage() {
                     ))}
                   </>
                 ) : (
-                  <div className="bg-[#0d1117] border border-[#1e2538] rounded-xl p-6 text-center text-[#4a5568]">
+                  <div className="glass rounded-xl p-6 text-center text-[#4a5568]">
                     Không có dữ liệu vận hạn cho lá số này.
                   </div>
                 )}
               </div>
             )}
           </div>
+          <ChatPanel
+            chart={result.chart}
+            name={input?.name}
+            isOpen
+          />
         </div>
       </main>
       <Footer />
@@ -394,29 +398,6 @@ export default function ResultPage() {
         </div>
       </div>
 
-      {/* Chat FAB */}
-      {!chatOpen && (
-        <button
-          onClick={() => setChatOpen(true)}
-          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-[#3b5bdb] to-[#9775cd] text-white flex items-center justify-center shadow-lg shadow-[#3b5bdb]/30 hover:shadow-[0_0_30px_rgba(59,91,219,0.4)] hover:scale-110 active:scale-95 transition-all animate-fade-in group"
-          title="Hỏi chuyên gia Tử Vi"
-        >
-          <span className="text-xl group-hover:animate-float">✦</span>
-          {/* Ping dot */}
-          <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#e8b339] opacity-75" />
-            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#e8b339] border-2 border-[#060a13]" />
-          </span>
-        </button>
-      )}
-
-      {/* Chat Panel */}
-      <ChatPanel
-        chart={result.chart}
-        name={input?.name}
-        isOpen={chatOpen}
-        onClose={() => setChatOpen(false)}
-      />
     </>
   );
 }

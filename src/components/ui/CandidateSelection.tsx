@@ -233,7 +233,7 @@ export default function CandidateSelection({ candidates, solarDate, gender, onSe
     <div className="space-y-5">
       {/* Header */}
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#3b5bdb]/10 border border-[#3b5bdb]/20 mb-3">
+        <div className="chip-glass inline-flex items-center gap-2 px-3 py-1.5 mb-3">
           <span className="w-1.5 h-1.5 rounded-full bg-[#5b8af5] animate-pulse" />
           <span className="text-xs text-[#5b8af5]">Chọn Cung Mệnh</span>
         </div>
@@ -257,16 +257,16 @@ export default function CandidateSelection({ candidates, solarDate, gender, onSe
               key={c.timeIndex}
               type="button"
               onClick={() => setSelected(c.timeIndex)}
-              className={`w-full text-left p-4 rounded-xl border transition-all ${
+              className={`press-spring w-full text-left p-4 rounded-xl transition-all ${
                 isSelected
-                  ? 'border-[#3b5bdb] bg-[#121d3a] ring-1 ring-[#3b5bdb]/30'
-                  : 'border-[#1e2538] bg-[#0d1117] hover:border-[#2a3a5c] hover:bg-[#0f1520]'
+                  ? 'glass-strong glass-gold-edge'
+                  : 'glass-1 hover:border-[#2a3a5c]'
               }`}
             >
               <div className="flex items-start gap-3">
                 {/* Radio */}
                 <div className={`mt-1 w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
-                  isSelected ? 'border-[#3b5bdb] bg-[#3b5bdb]' : 'border-[#2a3550]'
+                  isSelected ? 'border-[#e8b339] bg-[#e8b339]' : 'border-[#2a3550]'
                 }`}>
                   {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                 </div>
@@ -274,8 +274,8 @@ export default function CandidateSelection({ candidates, solarDate, gender, onSe
                 <div className="flex-1 min-w-0">
                   {/* Row 1: hour + archetype + mệnh location */}
                   <div className="flex items-center gap-2 flex-wrap mb-2">
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${
-                      isSelected ? 'text-[#5b8af5] border-[#3b5bdb]/40 bg-[#3b5bdb]/10' : 'text-[#4a5568] border-[#1e2538]'
+                    <span className={`chip-glass text-[10px] font-medium px-2 py-0.5 ${
+                      isSelected ? 'text-[#f4cf6b]' : 'text-[#4a5568]'
                     }`}>
                       {c.hourRange}
                     </span>
@@ -300,7 +300,7 @@ export default function CandidateSelection({ candidates, solarDate, gender, onSe
                     )}
                     {/* Tags */}
                     {profile.tags.map((tag) => (
-                      <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-[#1a2236] text-[#4a5568]">
+                      <span key={tag} className="chip-glass text-[9px] px-1.5 py-0.5 text-[#4a5568]">
                         {tag}
                       </span>
                     ))}
@@ -327,7 +327,7 @@ export default function CandidateSelection({ candidates, solarDate, gender, onSe
         <button
           type="button"
           onClick={onBack}
-          className="flex-1 py-3 rounded-xl border border-[#1e2538] text-[#6b7a94] text-sm font-medium hover:border-[#3d4a5c] hover:text-[#e2e8f0] transition-all"
+          className="press-spring chip-glass flex-1 py-3 rounded-full text-[#6b7a94] text-sm font-medium hover:text-[#e2e8f0] transition-all"
         >
           ← Quay lại
         </button>
@@ -335,7 +335,7 @@ export default function CandidateSelection({ candidates, solarDate, gender, onSe
           type="button"
           disabled={selected === null}
           onClick={() => selected !== null && onSelect(selected)}
-          className="flex-[2] py-3 rounded-xl bg-gradient-to-r from-[#2b4bc6] to-[#3b5bdb] text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-all"
+          className="press-spring flex-[2] py-3 rounded-full bg-gradient-to-r from-[#2b4bc6] to-[#3b5bdb] text-white text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-all"
         >
           ✦ Lập lá số với giờ này
         </button>

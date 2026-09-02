@@ -33,26 +33,58 @@ function renderMarkdown(text: string): string {
   return `<p>${html}</p>`;
 }
 
+const CATEGORIES = ['Tính cách', 'Sự nghiệp', 'Tình duyên', 'Tài chính', 'Vận hạn'];
+
+function getSections(content: string) {
+  const matches = [...content.matchAll(/^#{1,3}\s*(.+)$/gm)];
+  const sections = CATEGORIES.map((category, i) => {
+    const match = matches.find((item) => item[1].toLowerCase().includes(category.toLowerCase()));
+    const start = match?.index ?? -1;
+    const next = start >= 0 ? matches.find((item) => (item.index ?? 0) > start)?.index : undefined;
+    const body = start >= 0 ? content.slice(start, next) : '';
+    return { category, body: body || (i === 0 ? content.slice(0, Math.min(content.length, 900)) : 'Nội dung đang được tổng hợp từ toàn bộ lá số của bạn.') };
+  });
+  const plain = content.replace(/[#*_>-]/g, '').replace(/\s+/g, ' ').trim();
+  return { sections, quote: plain.slice(0, 190) + (plain.length > 190 ? '…' : '') };
+}
+
 export function InterpretationContent({ content, name, solarDate }: { content: string; name?: string; solarDate?: string }) {
-  const html = renderMarkdown(content);
+  const { sections, quote } = getSections(content);
+  const [activeCategory, setActiveCategory] = useState(CATEGORIES[0]);
+  const active = sections.find((section) => section.category === activeCategory) || sections[0];
+  const citations = active.body.match(/\*\*([^*]+)\*\*/g)?.slice(0, 3).map((item) => item.replace(/\*/g, '')) || ['Lá số tổng thể', 'Ngũ hành', 'Cung Mệnh'];
+  const influence = Math.min(92, Math.max(58, 62 + citations.length * 8));
   return (
-    <div className="bg-card border border-border rounded-xl p-6 sm:p-8">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gold flex items-center gap-2">
-          <span>✦</span> Luận Giải Chi Tiết
-        </h2>
-        {(name || solarDate) && (
-          <span className="text-xs text-[#4a5568]">
-            {name && <span>{name}</span>}
-            {name && solarDate && <span> | </span>}
-            {solarDate && <span>{solarDate}</span>}
-          </span>
-        )}
+    <div className="space-y-4">
+      <div className="glass-strong glass-gold-edge rounded-3xl p-6 sm:p-8 relative overflow-hidden">
+        <div className="absolute -right-10 -top-16 w-48 h-48 rounded-full bg-[#ef8fe0]/10 blur-3xl pointer-events-none" />
+        <p className="text-[10px] uppercase tracking-[.2em] text-[#ef8fe0] mb-4">Chân dung năng lượng · {name || 'Lá số của bạn'}</p>
+        <blockquote className="display-font text-2xl sm:text-3xl leading-tight text-[#f3f6fd] max-w-3xl">“{quote}”</blockquote>
+        <div className="flex flex-wrap gap-2 mt-5">
+          {citations.map((citation) => <span key={citation} className="chip-glass px-3 py-1.5 text-xs text-[#f7c4ef]">✦ {citation}</span>)}
+        </div>
       </div>
-      <div
-        className="prose-interpretation text-foreground/90 leading-relaxed"
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {[
+          ['Điểm mạnh', 'Khả năng thích nghi và nhìn thấu vấn đề', '#5fe0a8'],
+          ['Điều cần lưu ý', 'Giữ nhịp nghỉ ngơi khi vận khí biến động', '#f3c97f'],
+          ['Thời điểm thuận lợi', 'Tập trung vào chu kỳ đang mở ra', '#7c96ff'],
+        ].map(([label, value, color]) => <div key={label} className="glass-1 rounded-2xl p-4"><span className="text-[10px] uppercase tracking-wider" style={{ color }}>{label}</span><p className="text-xs text-[#a4afd0] mt-2 leading-relaxed">{value}</p></div>)}
+      </div>
+
+      <div className="glass rounded-2xl p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gold flex items-center gap-2"><span>✦</span> Luận Giải Chi Tiết</h2>
+          <span className="text-xs text-[#4a5568]">{solarDate}</span>
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-5">
+          {CATEGORIES.map((category) => <button key={category} onClick={() => setActiveCategory(category)} className={`chip-glass press-spring shrink-0 px-3 py-2 text-xs ${activeCategory === category ? 'text-[#f7c4ef] border-[#ef8fe0]/40 bg-[#ef8fe0]/10' : 'text-[#6b7a94]'}`}>{category}</button>)}
+        </div>
+        <div className="flex items-center justify-between text-xs mb-2"><span className="text-[#a4afd0]">Mức ảnh hưởng</span><span className="text-[#ef8fe0] font-semibold">{influence}%</span></div>
+        <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mb-6"><div className="h-full rounded-full bg-gradient-to-r from-[#7c96ff] via-[#bd93ff] to-[#ef8fe0]" style={{ width: `${influence}%` }} /></div>
+        <div className="prose-interpretation text-foreground/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: renderMarkdown(active.body) }} />
+      </div>
     </div>
   );
 }
@@ -94,7 +126,7 @@ export default function Interpretation({ content, name, solarDate, onExportPdf, 
         <button
           onClick={handleExportImage}
           disabled={isExporting}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[#131c30] border border-[#1e2538] text-[#8b9dc3] hover:text-[#e2e8f0] hover:border-[#3b5bdb]/50 hover:bg-[#1a2540] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="glass press-spring pill inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#8b9dc3] hover:text-[#e2e8f0] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {exportingType === 'image' ? (
             <>
@@ -118,7 +150,7 @@ export default function Interpretation({ content, name, solarDate, onExportPdf, 
         <button
           onClick={onExportPdf}
           disabled={isExporting}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[#131c30] border border-[#1e2538] text-[#8b9dc3] hover:text-[#e2e8f0] hover:border-[#3b5bdb]/50 hover:bg-[#1a2540] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="glass-gold-edge glass press-spring pill inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#e8b339] hover:text-[#f5cc5c] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {pdfExporting ? (
             <>

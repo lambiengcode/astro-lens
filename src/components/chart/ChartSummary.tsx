@@ -22,9 +22,9 @@ export default function ChartSummary({ chart, name }: ChartSummaryProps) {
   ];
 
   return (
-    <div className="bg-[#0d1117] border border-[#1e2538] rounded-xl p-6">
+    <div className="glass rounded-xl p-6">
       <div className="flex items-center gap-3 mb-5">
-        <div className="w-10 h-10 rounded-lg bg-[#131c30] border border-[#3b5bdb]/30 flex items-center justify-center">
+        <div className="glass-1 w-10 h-10 rounded-full flex items-center justify-center">
           <span className="text-[#5b8af5] text-lg">☰</span>
         </div>
         <div>

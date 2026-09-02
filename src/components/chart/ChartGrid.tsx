@@ -70,6 +70,12 @@ function isSoulPalace(palace: PalaceData): boolean {
   return n.includes('mệnh') || n === '命宫' || n === '命宮';
 }
 
+const RING_POSITION: Record<number, [number, number]> = {
+  5: [12.5, 12.5], 6: [37.5, 12.5], 7: [62.5, 12.5], 8: [87.5, 12.5],
+  4: [12.5, 37.5], 3: [12.5, 62.5], 9: [87.5, 37.5], 10: [87.5, 62.5],
+  2: [12.5, 87.5], 1: [37.5, 87.5], 0: [62.5, 87.5], 11: [87.5, 87.5],
+};
+
 // ============================================================
 // STAR RENDERING (ziwei.pub style)
 // ============================================================
@@ -109,16 +115,18 @@ function PalaceCell({
   palace,
   branchLabel,
   isActive,
+  isDimmed,
   onClick,
 }: {
   palace: PalaceData | undefined;
   branchLabel: string;
   isActive: boolean;
+  isDimmed: boolean;
   onClick: () => void;
 }) {
   if (!palace) {
     return (
-      <div className="border border-[#1e2538] bg-[#0d1117] min-h-[140px] sm:min-h-[170px] flex items-center justify-center">
+      <div className="glass-1 min-h-[140px] sm:min-h-[170px] flex items-center justify-center">
         <span className="text-[10px] text-[#2a3348]">{branchLabel}</span>
       </div>
     );
@@ -130,14 +138,15 @@ function PalaceCell({
     <button
       onClick={onClick}
       className={`
-        relative w-full border text-left transition-all cursor-pointer
+        press-spring relative w-full text-left cursor-pointer
         min-h-[140px] sm:min-h-[170px] flex flex-col
         ${isActive
-          ? 'bg-[#141c2e] border-[#3b5bdb] z-10 shadow-[0_0_15px_rgba(59,91,219,0.15)]'
+          ? 'glass-strong glow-accent z-10'
           : isMenh
-            ? 'bg-[#131825] border-[#2a3348] hover:bg-[#161e30]'
-            : 'bg-[#0d1117] border-[#1e2538] hover:bg-[#111822]'
+            ? 'glass-1 glass-gold-edge'
+            : 'glass-1'
         }
+        ${isDimmed ? 'opacity-30 saturate-50' : ''}
       `}
     >
       {/* Mệnh cung top indicator */}
@@ -220,6 +229,11 @@ function PalaceCell({
 
 export default function ChartGrid({ palaces, activePalace, onPalaceClick }: ChartGridProps) {
   const branchMap = buildBranchMap(palaces);
+  const activeBranch = activePalace === null ? null : [...branchMap.entries()].find(([, palace]) => palace.index === activePalace)?.[0] ?? null;
+  const trineBranches = activeBranch === null ? [] : [(activeBranch + 4) % 12, (activeBranch + 8) % 12];
+  const oppositeBranch = activeBranch === null ? null : (activeBranch + 6) % 12;
+  const relatedBranches = new Set(activeBranch === null ? [] : [activeBranch, ...trineBranches, oppositeBranch]);
+  const names = (branches: number[]) => branches.map((branch) => branchMap.get(branch)?.name).filter(Boolean).join(' · ');
 
   const missing: string[] = [];
   for (let i = 0; i < 12; i++) {
@@ -234,6 +248,7 @@ export default function ChartGrid({ palaces, activePalace, onPalaceClick }: Char
         palace={palace}
         branchLabel={BRANCH_LABELS[branch]}
         isActive={palace ? activePalace === palace.index : false}
+        isDimmed={activeBranch !== null && !relatedBranches.has(branch)}
         onClick={() => palace && onPalaceClick(palace.index)}
       />
     );
@@ -248,7 +263,17 @@ export default function ChartGrid({ palaces, activePalace, onPalaceClick }: Char
       )}
 
       <div className="overflow-x-auto">
-        <div className="min-w-[620px] sm:min-w-[740px] border border-[#1e2538] bg-[#0a0e17] rounded-lg overflow-hidden">
+        <div className="relative min-w-[620px] sm:min-w-[740px] border border-[#1e2538] bg-[#0a0e17] rounded-lg overflow-hidden">
+          {activeBranch !== null && RING_POSITION[activeBranch] && (
+            <svg className="absolute inset-0 w-full h-full z-20 pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              {trineBranches.map((branch) => RING_POSITION[branch] && (
+                <line key={`trine-${branch}`} x1={RING_POSITION[activeBranch][0]} y1={RING_POSITION[activeBranch][1]} x2={RING_POSITION[branch][0]} y2={RING_POSITION[branch][1]} stroke="#7c96ff" strokeWidth="0.7" opacity="0.8" />
+              ))}
+              {oppositeBranch !== null && RING_POSITION[oppositeBranch] && (
+                <line x1={RING_POSITION[activeBranch][0]} y1={RING_POSITION[activeBranch][1]} x2={RING_POSITION[oppositeBranch][0]} y2={RING_POSITION[oppositeBranch][1]} stroke="#ef8fe0" strokeWidth="0.7" strokeDasharray="2 1.5" opacity="0.9" />
+              )}
+            </svg>
+          )}
           {/* Row 0: top 4 */}
           <div className="grid grid-cols-4">
             {TOP_ROW.map(renderCell)}
@@ -262,7 +287,7 @@ export default function ChartGrid({ palaces, activePalace, onPalaceClick }: Char
             </div>
 
             {/* Center 2×2 */}
-            <div className="col-span-2 border-x border-[#1e2538] flex flex-col items-center justify-center bg-[#0a0e17] min-h-[280px] sm:min-h-[340px] relative">
+            <div className="glass-1 col-span-2 flex flex-col items-center justify-center min-h-[280px] sm:min-h-[340px] relative">
               {/* Decorative circles */}
               <div className="absolute inset-6 sm:inset-10 rounded-full border border-[#1a2236] opacity-60" />
               <div className="absolute inset-12 sm:inset-16 rounded-full border border-[#1a2236] opacity-30" />
@@ -293,6 +318,12 @@ export default function ChartGrid({ palaces, activePalace, onPalaceClick }: Char
           </div>
         </div>
       </div>
+      {activeBranch !== null && (
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#6b7a94]">
+          <span className="text-[#7c96ff]">Tam hợp: {names(trineBranches) || '—'}</span>
+          <span className="text-[#ef8fe0]">Đối cung: {oppositeBranch === null ? '—' : (branchMap.get(oppositeBranch)?.name || '—')}</span>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 export default function Footer() {
   return (
-    <footer className="border-t border-[#1e2538]/50 py-8 mt-auto relative overflow-hidden">
+    <footer className="glass-1 border-l-0 border-r-0 border-b-0 py-8 mt-auto relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-t from-[#3b5bdb]/[0.02] to-transparent" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center text-sm text-[#4a5568] relative">
         <p>

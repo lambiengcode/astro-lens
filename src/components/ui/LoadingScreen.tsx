@@ -39,7 +39,7 @@ export default function LoadingScreen() {
       <div className="absolute top-1/3 left-1/3 w-[300px] h-[300px] bg-[#3b5bdb]/[0.06] rounded-full blur-[80px] animate-pulse-glow" />
       <div className="absolute bottom-1/3 right-1/3 w-[250px] h-[250px] bg-[#9775cd]/[0.05] rounded-full blur-[60px]" />
 
-      <div className="relative text-center px-6">
+      <div className="relative text-center px-10 py-12 rounded-3xl glass-strong">
         {/* Spinning rings */}
         <div className="relative w-36 h-36 mx-auto mb-10">
           <div className="absolute inset-0 rounded-full border border-[#3b5bdb]/20 animate-spin-slow" />

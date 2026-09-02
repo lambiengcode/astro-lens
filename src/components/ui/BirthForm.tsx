@@ -130,7 +130,7 @@ export default function BirthForm() {
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
           placeholder="Nhập họ tên..."
-          className="w-full px-4 py-3 rounded-lg bg-card border border-border text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+          className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
         />
       </div>
 
@@ -146,7 +146,7 @@ export default function BirthForm() {
           required
           max={new Date().toISOString().split('T')[0]}
           min="1920-01-01"
-          className="w-full px-4 py-3 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all [color-scheme:dark]"
+          className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-foreground focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all [color-scheme:dark]"
         />
       </div>
 
@@ -159,11 +159,10 @@ export default function BirthForm() {
           <button
             type="button"
             onClick={() => setUnknownHour((v) => !v)}
-            className={`flex items-center gap-1.5 text-xs px-3 py-1 rounded-full border transition-all ${
-              unknownHour
-                ? 'border-[#3b5bdb]/50 bg-[#3b5bdb]/10 text-[#5b8af5]'
-                : 'border-[#1e2538] text-[#4a5568] hover:border-[#3d4a5c] hover:text-[#6b7a94]'
+            className={`chip-glass press-spring flex items-center gap-1.5 text-xs px-3 py-1 transition-colors ${
+              unknownHour ? 'text-[#5b8af5]' : 'text-[#4a5568] hover:text-[#6b7a94]'
             }`}
+            style={unknownHour ? { borderColor: 'rgba(59,91,219,0.5)', backgroundColor: 'rgba(59,91,219,0.12)' } : undefined}
           >
             <span className={`w-1.5 h-1.5 rounded-full transition-colors ${unknownHour ? 'bg-[#5b8af5]' : 'bg-[#3d4a5c]'}`} />
             Không biết giờ sinh
@@ -171,7 +170,7 @@ export default function BirthForm() {
         </div>
 
         {unknownHour ? (
-          <div className="px-4 py-3 rounded-lg bg-[#0d1117] border border-[#3b5bdb]/20 text-sm text-[#6b7a94] leading-relaxed">
+          <div className="px-4 py-3 rounded-lg glass-1 text-sm text-[#6b7a94] leading-relaxed">
             Hệ thống sẽ tạo <span className="text-[#5b8af5] font-medium">13 lá số</span> ứng với 13 giờ sinh — bạn chọn cung Mệnh phản ánh đúng tính cách nhất.
           </div>
         ) : (
@@ -179,7 +178,7 @@ export default function BirthForm() {
             <select
               value={form.birthHour}
               onChange={(e) => setForm({ ...form, birthHour: parseInt(e.target.value) })}
-              className="w-full px-4 py-3 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all appearance-none"
+              className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-foreground focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all appearance-none"
             >
               {BIRTH_HOURS.map((hour) => (
                 <option key={hour.value} value={hour.value}>
@@ -203,22 +202,20 @@ export default function BirthForm() {
           <button
             type="button"
             onClick={() => setForm({ ...form, gender: 'male' })}
-            className={`px-4 py-3 rounded-lg border text-center font-medium transition-all ${
-              form.gender === 'male'
-                ? 'border-accent bg-accent/10 text-accent'
-                : 'border-border bg-card text-muted hover:border-border hover:bg-card-hover'
+            className={`chip-glass press-spring px-4 py-3 text-center font-medium transition-colors ${
+              form.gender === 'male' ? 'text-accent' : 'text-muted hover:text-foreground'
             }`}
+            style={form.gender === 'male' ? { borderColor: 'rgba(59,91,219,0.5)', backgroundColor: 'var(--accent-glow)' } : undefined}
           >
             ♂ Nam
           </button>
           <button
             type="button"
             onClick={() => setForm({ ...form, gender: 'female' })}
-            className={`px-4 py-3 rounded-lg border text-center font-medium transition-all ${
-              form.gender === 'female'
-                ? 'border-accent bg-accent/10 text-accent'
-                : 'border-border bg-card text-muted hover:border-border hover:bg-card-hover'
+            className={`chip-glass press-spring px-4 py-3 text-center font-medium transition-colors ${
+              form.gender === 'female' ? 'text-accent' : 'text-muted hover:text-foreground'
             }`}
+            style={form.gender === 'female' ? { borderColor: 'rgba(59,91,219,0.5)', backgroundColor: 'var(--accent-glow)' } : undefined}
           >
             ♀ Nữ
           </button>
@@ -235,7 +232,7 @@ export default function BirthForm() {
           value={form.location}
           onChange={(e) => setForm({ ...form, location: e.target.value })}
           placeholder="Việt Nam"
-          className="w-full px-4 py-3 rounded-lg bg-card border border-border text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+          className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
         />
       </div>
 
@@ -250,7 +247,7 @@ export default function BirthForm() {
           placeholder="Tính cách, công việc hiện tại, tình trạng tình cảm, sức khỏe, điều bạn đang trăn trở..."
           rows={3}
           maxLength={500}
-          className="w-full px-4 py-3 rounded-lg bg-card border border-border text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all resize-none text-sm leading-relaxed"
+          className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all resize-none text-sm leading-relaxed"
         />
         <p className="text-xs text-muted/50 mt-1.5">
           Giúp AI đối chiếu lá số với thực tế của bạn — phân tích sẽ chính xác và cá nhân hóa hơn.
@@ -260,7 +257,7 @@ export default function BirthForm() {
       {/* Submit */}
       <button
         type="submit"
-        className="w-full py-4 rounded-lg bg-gradient-to-r from-accent-dim to-accent text-white font-semibold text-lg hover:opacity-90 transition-all animate-pulse-glow"
+        className="w-full py-4 rounded-full press-spring bg-gradient-to-r from-accent-dim to-accent text-white font-semibold text-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_0_30px_rgba(59,91,219,0.25)] animate-pulse-glow"
       >
         {unknownHour ? '◎ Xem 13 Cung Mệnh' : '✦ Lập Lá Số Tử Vi'}
       </button>

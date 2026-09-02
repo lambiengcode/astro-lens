@@ -28,7 +28,7 @@ function MiniPalaceGrid() {
       {cells.map((c, i) => {
         if (c.center) {
           return (
-            <div key={i} className="bg-[#0a0d14] rounded aspect-square flex items-center justify-center">
+            <div key={i} className="glass-1 rounded aspect-square flex items-center justify-center">
               {i === 5 && (
                 <div className="text-center">
                   <div className="text-[10px] text-[#3d4a5c] leading-tight">Mệnh</div>
@@ -43,8 +43,8 @@ function MiniPalaceGrid() {
             key={i}
             className={`rounded aspect-square p-1.5 flex flex-col justify-between ${
               c.highlight
-                ? 'bg-[#131c30] border border-[#3b5bdb]/30'
-                : 'bg-[#0d1117] border border-[#1e2538]/60'
+                ? 'glass-strong glass-gold-edge'
+                : 'glass-1'
             }`}
           >
             <span className="text-[8px] text-[#4a5568]">{c.label}</span>
@@ -63,17 +63,17 @@ function MiniChat() {
   return (
     <div className="space-y-2.5 text-xs">
       <div className="flex justify-end">
-        <div className="bg-[#1a2744] border border-[#3b5bdb]/20 rounded-xl rounded-br-sm px-3 py-2 max-w-[80%] text-[#c9d1d9]">
+        <div className="chat-bubble-user rounded-2xl rounded-br-sm px-3 py-2 max-w-[80%] text-[#c9d1d9]">
           Tình duyên năm nay thế nào?
         </div>
       </div>
       <div className="flex justify-start">
-        <div className="bg-[#111620] border border-[#1e2538] rounded-xl rounded-bl-sm px-3 py-2 max-w-[85%] text-[#c9d1d9] leading-relaxed">
+        <div className="chat-bubble-ai rounded-2xl rounded-bl-sm px-3 py-2 max-w-[85%] text-[#c9d1d9] leading-relaxed">
           Cung Phu thê có <span className="text-[#9775cd] font-medium">Tham Lang</span> miếu địa — năm nay đại hạn kích hoạt, tình cảm có nhiều cơ hội mới...
         </div>
       </div>
       <div className="flex justify-end">
-        <div className="bg-[#1a2744] border border-[#3b5bdb]/20 rounded-xl rounded-br-sm px-3 py-2 max-w-[80%] text-[#c9d1d9]">
+        <div className="chat-bubble-user rounded-2xl rounded-br-sm px-3 py-2 max-w-[80%] text-[#c9d1d9]">
           Nên làm nghề gì?
         </div>
       </div>
@@ -101,7 +101,7 @@ function MiniTimeline() {
       {periods.map((p, i) => (
         <div key={i} className="flex items-center gap-2">
           <span className="text-[9px] text-[#3d4a5c] w-12 shrink-0">{p.age}</span>
-          <div className="flex-1 h-5 rounded-md relative overflow-hidden bg-[#0d1117] border border-[#1e2538]">
+          <div className="flex-1 h-5 rounded-full relative overflow-hidden glass-1">
             <div
               className={`h-full rounded-md transition-all ${
                 p.current
@@ -170,7 +170,7 @@ export default function Home() {
           </div>
 
           <div className="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
-            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full glass mb-8 animate-fade-in-up">
+            <div className="inline-flex items-center gap-2 px-5 py-2 chip-glass mb-8 animate-fade-in-up">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3b5bdb] opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#5b8af5]" />
@@ -194,11 +194,11 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up stagger-3">
               <a
                 href="#lap-la-so"
-                className="group relative inline-flex items-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-to-r from-[#2b4bc6] to-[#3b5bdb] text-white font-semibold text-lg transition-all hover:shadow-[0_0_40px_rgba(59,91,219,0.3)] hover:scale-[1.02] active:scale-[0.98]"
+                className="group relative inline-flex items-center gap-2.5 px-8 py-4 rounded-full press-spring bg-gradient-to-r from-[#2b4bc6] to-[#3b5bdb] text-white font-semibold text-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_0_30px_rgba(59,91,219,0.25)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_0_40px_rgba(59,91,219,0.35)]"
               >
                 <span className="text-xl group-hover:animate-float">✦</span>
                 Lập Lá Số Ngay
-                <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#3b5bdb] to-[#5b8af5] opacity-0 group-hover:opacity-100 transition-opacity -z-10 blur-xl" />
+                <span className="absolute inset-0 rounded-full bg-gradient-to-r from-[#3b5bdb] to-[#5b8af5] opacity-0 group-hover:opacity-100 transition-opacity -z-10 blur-xl" />
               </a>
               <div className="flex items-center gap-2 text-[#4a5568] text-sm">
                 <span className="text-[#22c55e]">✓</span> Miễn phí &nbsp;·&nbsp;
@@ -209,7 +209,7 @@ export default function Home() {
         </section>
 
         {/* ── Stats bar ────────────────────────────────────────────────────── */}
-        <section className="border-y border-[#1e2538]/60 bg-[#0d1117]/60 backdrop-blur">
+        <section className="glass-1 border-l-0 border-r-0">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
             {[
               { value: '12', label: 'Cung phân tích' },
@@ -244,10 +244,10 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
 
               {/* Card: 12-palace chart — spans 2 cols */}
-              <div className="sm:col-span-2 group p-6 rounded-2xl bg-[#0d1117] border border-[#1e2538] hover:border-[#3b5bdb]/30 transition-all hover:shadow-lg hover:shadow-[#3b5bdb]/5">
+              <div className="sm:col-span-2 group p-6 rounded-2xl glass press-spring">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#3b5bdb]/10 border border-[#3b5bdb]/20 mb-3">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 chip-glass mb-3">
                       <span className="text-[10px] text-[#5b8af5] font-medium">LÁ SỐ</span>
                     </div>
                     <h3 className="text-base font-semibold text-[#e2e8f0]">Bản Đồ 12 Cung</h3>
@@ -263,9 +263,9 @@ export default function Home() {
               </div>
 
               {/* Card: AI score */}
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-[#0d1117] to-[#111826] border border-[#1e2538] hover:border-[#e8b339]/30 transition-all hover:shadow-lg hover:shadow-[#e8b339]/5 flex flex-col justify-between">
+              <div className="p-6 rounded-2xl glass press-spring flex flex-col justify-between">
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#e8b339]/10 border border-[#e8b339]/20 mb-3">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 chip-glass mb-3">
                     <span className="text-[10px] text-[#e8b339] font-medium">PHÂN TÍCH</span>
                   </div>
                   <h3 className="text-base font-semibold text-[#e2e8f0]">AI Luận Giải Sâu</h3>
@@ -288,8 +288,8 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
 
               {/* Card: Đại Vận timeline */}
-              <div className="p-6 rounded-2xl bg-[#0d1117] border border-[#1e2538] hover:border-[#5b8af5]/30 transition-all hover:shadow-lg hover:shadow-[#5b8af5]/5">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#5b8af5]/10 border border-[#5b8af5]/20 mb-3">
+              <div className="p-6 rounded-2xl glass press-spring">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 chip-glass mb-3">
                   <span className="text-[10px] text-[#5b8af5] font-medium">ĐẠI VẬN</span>
                 </div>
                 <h3 className="text-base font-semibold text-[#e2e8f0] mb-1">Vòng Đời 12 Đại Hạn</h3>
@@ -298,8 +298,8 @@ export default function Home() {
               </div>
 
               {/* Card: Tình duyên */}
-              <div className="p-6 rounded-2xl bg-[#0d1117] border border-[#1e2538] hover:border-[#9775cd]/30 transition-all hover:shadow-lg hover:shadow-[#9775cd]/5">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#9775cd]/10 border border-[#9775cd]/20 mb-3">
+              <div className="p-6 rounded-2xl glass press-spring">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 chip-glass mb-3">
                   <span className="text-[10px] text-[#9775cd] font-medium">TÌNH DUYÊN</span>
                 </div>
                 <h3 className="text-base font-semibold text-[#e2e8f0] mb-1">Hôn Nhân & Tình Cảm</h3>
@@ -320,20 +320,20 @@ export default function Home() {
               </div>
 
               {/* Card: Hình tượng */}
-              <div className="p-6 rounded-2xl bg-[#0d1117] border border-[#1e2538] hover:border-[#e8b339]/30 transition-all hover:shadow-lg hover:shadow-[#e8b339]/5">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#e8b339]/10 border border-[#e8b339]/20 mb-3">
+              <div className="p-6 rounded-2xl glass press-spring">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 chip-glass mb-3">
                   <span className="text-[10px] text-[#e8b339] font-medium">HÌNH TƯỢNG</span>
                 </div>
                 <h3 className="text-base font-semibold text-[#e2e8f0] mb-1">Người Khác Nhìn Bạn Thế Nào</h3>
                 <p className="text-xs text-[#4a5568] mb-4 leading-relaxed">Từ ấn tượng đầu tiên đến hình tượng lâu dài — dựa vào Mệnh cung và Thiên Di.</p>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { label: 'Ấn tượng đầu', color: 'border-[#5b8af5]/30 text-[#5b8af5]' },
-                    { label: 'Sức hút XH', color: 'border-[#9775cd]/30 text-[#9775cd]' },
-                    { label: 'Điểm bị hiểu lầm', color: 'border-[#e8b339]/30 text-[#e8b339]' },
-                    { label: 'Quý nhân phù trợ', color: 'border-[#22c55e]/30 text-[#22c55e]' },
+                    { label: 'Ấn tượng đầu', color: 'text-[#5b8af5]' },
+                    { label: 'Sức hút XH', color: 'text-[#9775cd]' },
+                    { label: 'Điểm bị hiểu lầm', color: 'text-[#e8b339]' },
+                    { label: 'Quý nhân phù trợ', color: 'text-[#22c55e]' },
                   ].map((it) => (
-                    <div key={it.label} className={`text-[10px] px-2 py-1.5 rounded-lg border ${it.color} text-center`}>
+                    <div key={it.label} className={`chip-glass text-[10px] px-2 py-1.5 text-center ${it.color}`}>
                       {it.label}
                     </div>
                   ))}
@@ -345,8 +345,8 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
 
               {/* Card: Ngũ hành */}
-              <div className="p-6 rounded-2xl bg-[#0d1117] border border-[#1e2538] hover:border-[#22c55e]/30 transition-all hover:shadow-lg hover:shadow-[#22c55e]/5">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 mb-3">
+              <div className="p-6 rounded-2xl glass press-spring">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 chip-glass mb-3">
                   <span className="text-[10px] text-[#22c55e] font-medium">NGŨ HÀNH</span>
                 </div>
                 <h3 className="text-base font-semibold text-[#e2e8f0] mb-1">Cân Bằng Ngũ Hành</h3>
@@ -355,10 +355,10 @@ export default function Home() {
               </div>
 
               {/* Card: Chat AI — spans 2 cols */}
-              <div className="sm:col-span-2 p-6 rounded-2xl bg-[#0d1117] border border-[#1e2538] hover:border-[#3b5bdb]/30 transition-all hover:shadow-lg hover:shadow-[#3b5bdb]/5">
+              <div className="sm:col-span-2 p-6 rounded-2xl glass press-spring">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#3b5bdb]/10 border border-[#3b5bdb]/20 mb-3">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 chip-glass mb-3">
                       <span className="text-[10px] text-[#5b8af5] font-medium">CHAT AI</span>
                     </div>
                     <h3 className="text-base font-semibold text-[#e2e8f0]">Hỏi Chuyên Gia Tử Vi</h3>
@@ -368,7 +368,7 @@ export default function Home() {
                   </div>
                   <span className="text-xl opacity-30">✦</span>
                 </div>
-                <div className="bg-[#080c14] rounded-xl border border-[#1a2236] p-4">
+            <div className="glass-1 rounded-2xl p-4">
                   <MiniChat />
                 </div>
               </div>
@@ -378,7 +378,7 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
               {/* Card: Vận hạn */}
-              <div className="p-6 rounded-2xl bg-[#0d1117] border border-[#1e2538] hover:border-[#5b8af5]/30 transition-all">
+              <div className="p-6 rounded-2xl glass press-spring">
                 <div className="w-10 h-10 rounded-xl bg-[#5b8af5]/10 border border-[#5b8af5]/20 flex items-center justify-center mb-4">
                   <span className="text-base">☯</span>
                 </div>
@@ -389,7 +389,7 @@ export default function Home() {
               </div>
 
               {/* Card: Privacy */}
-              <div className="p-6 rounded-2xl bg-[#0d1117] border border-[#1e2538] hover:border-[#9775cd]/30 transition-all">
+              <div className="p-6 rounded-2xl glass press-spring">
                 <div className="w-10 h-10 rounded-xl bg-[#9775cd]/10 border border-[#9775cd]/20 flex items-center justify-center mb-4">
                   <span className="text-base">⊙</span>
                 </div>
@@ -400,7 +400,7 @@ export default function Home() {
               </div>
 
               {/* Card: Traditional method */}
-              <div className="p-6 rounded-2xl bg-[#0d1117] border border-[#1e2538] hover:border-[#e8b339]/30 transition-all">
+              <div className="p-6 rounded-2xl glass press-spring">
                 <div className="w-10 h-10 rounded-xl bg-[#e8b339]/10 border border-[#e8b339]/20 flex items-center justify-center mb-4">
                   <span className="text-base">卍</span>
                 </div>
@@ -430,7 +430,7 @@ export default function Home() {
               ].map((s) => (
                 <div key={s.step} className="text-center relative">
                   <div
-                    className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center border"
+                    className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center glass-1"
                     style={{ backgroundColor: `${s.color}12`, borderColor: `${s.color}30` }}
                   >
                     <span className="text-2xl" style={{ color: s.color }}>{s.icon}</span>
@@ -452,7 +452,7 @@ export default function Home() {
               <h2 className="text-2xl sm:text-3xl font-bold text-[#e2e8f0] mb-3">Lập Lá Số Tử Vi</h2>
               <p className="text-[#6b7a94]">Nhập thông tin ngày giờ sinh để bắt đầu</p>
             </div>
-            <div className="p-6 sm:p-8 rounded-2xl bg-[#0d1117] border border-[#1e2538] shadow-2xl shadow-black/30 animate-pulse-glow">
+            <div className="p-6 sm:p-8 rounded-2xl glass-strong glass-gold-edge animate-pulse-glow">
               <BirthForm />
             </div>
           </div>
