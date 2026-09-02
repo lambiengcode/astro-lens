@@ -4,7 +4,7 @@ import path from 'path';
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 const CACHE_DISPLAY_NAME = 'horoscopes-knowledge-base';
-const CACHE_MODEL = 'gemini-3.1-pro-preview';
+const CACHE_MODEL = 'gemini-3.6-flash';
 // 90 days in seconds — near-permanent for this project
 const CACHE_TTL = '7776000s';
 
@@ -106,7 +106,7 @@ async function _findExistingCache(): Promise<string | null> {
     const caches = await ai.caches.list();
     for await (const cache of caches) {
       if (cache.displayName === CACHE_DISPLAY_NAME) {
-        if (cache.model?.includes('gemini-3.1-pro-preview')) {
+        if (cache.model?.includes(CACHE_MODEL)) {
           return cache.name ?? null;
         }
       }
