@@ -14,6 +14,7 @@ Vietnamese Zi Wei Dou Shu (Tử Vi Đẩu Số) astrology web app powered by izt
 - **Chat AI** — Follow-up Q&A grounded in the user's own chart data
 - **Giờ Tý split** — Correctly handles both 00:00–00:59 (timeIndex 0) and 23:00–23:59 (timeIndex 12)
 - iOS 26-style Liquid Glass UI — layered translucent surfaces with specular highlights, adaptive header blur, squircle/pill controls, spring motion, animated star field, and orbiting particles
+- Shared background system on every screen — fixed full-viewport drifting aurora blobs (azure, violet, gold, fuchsia), animated starfield, and a subtle noise texture behind all glass surfaces
 - Fraunces (display) + Inter (body) typography via `next/font/google`
 
 ## Tech Stack
@@ -59,6 +60,7 @@ Open [http://localhost:3000](http://localhost:3000).
 src/
 ├── app/
 │   ├── page.tsx              # Landing / birth input form
+│   ├── loading/page.tsx      # Dedicated route that runs the pending analyze/candidates call, then routes to /result or back to the form
 │   ├── result/page.tsx       # Chart result page (5 tabs)
 │   └── api/
 │       ├── analyze/route.ts  # POST /api/analyze — chart generation + AI interpretation
@@ -76,7 +78,7 @@ src/
 │       ├── Header.tsx
 │       ├── Footer.tsx
 │       ├── GlassEffects.tsx  # Cursor-tracked specular highlight tracking for glass surfaces
-│       └── LoadingScreen.tsx # Animated loading overlay
+│       └── LoadingScreen.tsx # Animated loading screen rendered by the /loading route
 ├── lib/
 │   ├── iztro.ts              # Chart generation (no timezone conversion)
 │   └── gemini.ts             # 3-layer AI prompt system
