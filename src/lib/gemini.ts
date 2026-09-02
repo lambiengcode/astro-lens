@@ -664,6 +664,26 @@ const HIGHLIGHTS_SCHEMA = {
   required: ['strength', 'caution', 'favorablePeriod', 'categoryInsights'],
 };
 
+function isValidHighlights(value: unknown): value is InterpretationHighlights {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Record<string, unknown>;
+  if (typeof v.strength !== 'string' || !v.strength.trim()) return false;
+  if (typeof v.caution !== 'string' || !v.caution.trim()) return false;
+  if (typeof v.favorablePeriod !== 'string' || !v.favorablePeriod.trim()) return false;
+  if (!v.categoryInsights || typeof v.categoryInsights !== 'object') return false;
+  const insights = v.categoryInsights as Record<string, unknown>;
+  return INTERPRETATION_CATEGORIES.every((category) => typeof insights[category] === 'string' && (insights[category] as string).trim());
+}
+
+const HIGHLIGHTS_FALLBACK: InterpretationHighlights = {
+  strength: 'Không thể tạo nhận định điểm mạnh cá nhân hóa lúc này.',
+  caution: 'Không thể tạo nhận định lưu ý cá nhân hóa lúc này.',
+  favorablePeriod: 'Không thể tạo nhận định thời điểm thuận lợi cá nhân hóa lúc này.',
+  categoryInsights: Object.fromEntries(
+    INTERPRETATION_CATEGORIES.map((category) => [category, 'Chưa có insight cho mục này.'])
+  ) as InterpretationHighlights['categoryInsights'],
+};
+
 export async function analyzeHighlights(chart: ChartData, name?: string): Promise<InterpretationHighlights> {
   const prompt = buildDataContext(chart, name);
 
@@ -679,5 +699,12 @@ export async function analyzeHighlights(chart: ChartData, name?: string): Promis
     },
   });
 
-  return JSON.parse(response.text ?? '{}') as InterpretationHighlights;
+  let parsed: unknown = null;
+  try {
+    parsed = JSON.parse(response.text ?? '{}');
+  } catch {
+    parsed = null;
+  }
+
+  return isValidHighlights(parsed) ? parsed : HIGHLIGHTS_FALLBACK;
 }

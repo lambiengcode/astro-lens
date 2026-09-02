@@ -167,6 +167,7 @@ export default function ResultPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative lg:grid lg:grid-cols-[minmax(0,1fr)_360px] gap-6">
+          <div className="min-w-0">
           {/* Page header */}
           <div className="mb-8 animate-fade-in-up">
             <button
@@ -346,6 +347,7 @@ export default function ResultPage() {
                 )}
               </div>
             )}
+          </div>
           </div>
           <ChatPanel
             chart={result.chart}
