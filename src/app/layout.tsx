@@ -35,7 +35,7 @@ export default function RootLayout({
       lang="vi"
       className={`${inter.variable} ${fraunces.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col"><GlassEffects />{children}</body>
+      <body className="min-h-full flex flex-col"><GlassEffects /><div className="aurora" aria-hidden="true"><div className="aurora-blob aurora-azure" /><div className="aurora-blob aurora-violet" /><div className="aurora-blob aurora-gold" /><div className="aurora-blob aurora-fuchsia" /></div><div className="noise" aria-hidden="true" /><div className="stars-bg stars-global" aria-hidden="true" />{children}</body>
     </html>
   );
 }

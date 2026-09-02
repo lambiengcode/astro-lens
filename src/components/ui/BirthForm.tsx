@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BIRTH_HOURS } from '@/types';
 import type { BirthInput, RectificationCandidate } from '@/types';
-import LoadingScreen from './LoadingScreen';
 import CandidateSelection from './CandidateSelection';
 
 type Step = 'form' | 'loading-candidates' | 'select-candidate' | 'loading-analysis';
@@ -16,6 +15,23 @@ export default function BirthForm() {
   const [unknownHour, setUnknownHour] = useState(false);
   const [candidates, setCandidates] = useState<RectificationCandidate[]>([]);
 
+  useEffect(() => {
+    const pendingCandidates = sessionStorage.getItem('tuvi_candidates_state');
+    const pendingError = sessionStorage.getItem('tuvi_error');
+    if (pendingCandidates) {
+      const parsed = JSON.parse(pendingCandidates) as { form: BirthInput; candidates: RectificationCandidate[] };
+      setForm(parsed.form);
+      setCandidates(parsed.candidates);
+      setUnknownHour(true);
+      setStep('select-candidate');
+      sessionStorage.removeItem('tuvi_candidates_state');
+    }
+    if (pendingError) {
+      setError(pendingError);
+      sessionStorage.removeItem('tuvi_error');
+    }
+  }, []);
+
   const [form, setForm] = useState<BirthInput>({
     name: '',
     solarDate: '',
@@ -26,31 +42,9 @@ export default function BirthForm() {
 
   // ── Run full analysis with a specific timeIndex ────────────────────────────
   const runAnalysis = async (timeIndex: number) => {
-    setStep('loading-analysis');
-    setError(null);
     const input: BirthInput = { ...form, birthHour: timeIndex };
-
-    try {
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input }),
-      });
-      const data = await res.json();
-
-      if (!data.success) {
-        setError(data.error || 'Đã xảy ra lỗi.');
-        setStep('form');
-        return;
-      }
-
-      sessionStorage.setItem('tuvi_result', JSON.stringify(data.data));
-      sessionStorage.setItem('tuvi_input', JSON.stringify(input));
-      router.push('/result');
-    } catch {
-      setError('Không thể kết nối đến máy chủ. Vui lòng thử lại.');
-      setStep('form');
-    }
+    sessionStorage.setItem('tuvi_pending_action', JSON.stringify({ action: 'analysis', input }));
+    router.push('/loading');
   };
 
   // ── Submit handler ─────────────────────────────────────────────────────────
@@ -69,35 +63,11 @@ export default function BirthForm() {
       return;
     }
 
-    // Unknown hour → fetch all 13 candidates
-    setStep('loading-candidates');
-    try {
-      const res = await fetch('/api/candidates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ solarDate: form.solarDate, gender: form.gender }),
-      });
-      const data = await res.json();
-
-      if (!data.success || !data.candidates?.length) {
-        setError(data.error || 'Không thể tạo danh sách ứng viên.');
-        setStep('form');
-        return;
-      }
-
-      setCandidates(data.candidates);
-      setStep('select-candidate');
-    } catch {
-      setError('Không thể kết nối đến máy chủ. Vui lòng thử lại.');
-      setStep('form');
-    }
+    sessionStorage.setItem('tuvi_pending_action', JSON.stringify({ action: 'candidates', solarDate: form.solarDate, gender: form.gender, form }));
+    router.push('/loading');
   };
 
   // ── Render states ──────────────────────────────────────────────────────────
-  if (step === 'loading-candidates' || step === 'loading-analysis') {
-    return <LoadingScreen />;
-  }
-
   if (step === 'select-candidate') {
     return (
       <CandidateSelection

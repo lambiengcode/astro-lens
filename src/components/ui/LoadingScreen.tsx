@@ -31,7 +31,7 @@ export default function LoadingScreen() {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#060a13]/98 backdrop-blur-xl">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-[#060a13]/98 backdrop-blur-xl">
       {/* Background stars */}
       <div className="absolute inset-0 stars-bg opacity-20" />
 
