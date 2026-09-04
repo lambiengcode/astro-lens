@@ -25,15 +25,19 @@ describe('gemini context cache', () => {
     expect(new Set(names).size).toBe(LOCALES.length);
   });
 
-  it('leaves the default locale on the name the deployed cache already has', () => {
-    // Renaming it would orphan the live cache and pay a rebuild on the one
-    // locale whose ~3-minute analysis must not get slower.
-    expect(cacheInternals.displayNameFor(DEFAULT_LOCALE)).toBe('horoscopes-knowledge-base');
+  it('puts the default locale on the bare project name', () => {
+    // This assertion used to say the opposite — that `vi` must keep the name
+    // the deployed cache already had, because renaming it orphans that cache
+    // and pays a rebuild on the one locale whose ~3-minute analysis must not
+    // get slower. The project rename to astro-lens (captain, 2026-09-04) chose
+    // that cost knowingly: Gemini finds a cache by display name only, so every
+    // locale rebuilds once and the reference PDF re-uploads. PARITY.md §13.
+    expect(cacheInternals.displayNameFor(DEFAULT_LOCALE)).toBe('astro-lens-knowledge-base');
   });
 
   it('names the others after their locale', () => {
-    expect(cacheInternals.displayNameFor('ko')).toBe('horoscopes-knowledge-base-ko');
-    expect(cacheInternals.displayNameFor('zh-Hant')).toBe('horoscopes-knowledge-base-zh-Hant');
+    expect(cacheInternals.displayNameFor('ko')).toBe('astro-lens-knowledge-base-ko');
+    expect(cacheInternals.displayNameFor('zh-Hant')).toBe('astro-lens-knowledge-base-zh-Hant');
   });
 });
 

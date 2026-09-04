@@ -858,10 +858,20 @@ system instruction:
 | PDF uploads | 1 | **1** — `_findExistingFile()` looks for the uploaded `horoscopes-reference-book` before uploading, so the five caches reference the same file URI |
 | Caches | 1 | 5, created lazily — only the **first ever** request in a locale pays a creation; the TTL is 90 days |
 | Requests that hit a warm cache | all | all |
-| `vi` cache display name | `horoscopes-knowledge-base` | **unchanged** — the default locale finds and reuses the cache that already exists in the deployed project and pays nothing |
+| `vi` cache display name | `horoscopes-knowledge-base` | `horoscopes-knowledge-base` — **unchanged at the time**, so the default locale reused the cache already in the deployed project and paid nothing |
 
 `tests/unit/prompt.test.ts` asserts the five display names are distinct, and
-that `vi`'s is still the original.
+that `vi`'s is the bare project name.
+
+> **Superseded by the project rename, 2026-09-04.** The captain renamed the
+> project to **astro-lens**, cache identifiers included, knowing the cost. The
+> names are now `astro-lens-knowledge-base[-<locale>]` and
+> `astro-lens-reference-book`, so the row above is history: Gemini finds a
+> cache by display name only, which means **all five caches are orphaned and
+> the reference PDF re-uploads once**. The first analysis in each locale is
+> slower until it warms, `vi` included. That is the accepted price of the
+> rename, not a regression — and the ~3-minute figure above describes a warm
+> cache, which is what every request after the first sees.
 
 The in-memory analysis cache in `api/analyze/route.ts` is keyed by locale too:
 the same birth data in two locales is two different readings.

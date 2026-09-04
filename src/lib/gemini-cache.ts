@@ -5,8 +5,8 @@ import { getPrompt } from './prompt';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
-const CACHE_DISPLAY_NAME = 'horoscopes-knowledge-base';
-const FILE_DISPLAY_NAME = 'horoscopes-reference-book';
+const CACHE_DISPLAY_NAME = 'astro-lens-knowledge-base';
+const FILE_DISPLAY_NAME = 'astro-lens-reference-book';
 const CACHE_MODEL = 'gemini-3.1-pro-preview';
 // 90 days in seconds — near-permanent for this project
 const CACHE_TTL = '7776000s';
@@ -69,7 +69,7 @@ async function _initCache(locale: Locale): Promise<string | null> {
     let readyFile = await _findExistingFile();
 
     if (!readyFile) {
-      const pdfPath = path.join(process.cwd(), 'horoscopes.pdf');
+      const pdfPath = path.join(process.cwd(), 'astro-lens.pdf');
       console.log('[Cache] Uploading PDF:', pdfPath);
 
       const file = await ai.files.upload({
