@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   checkHallucination, checkCoverage, checkLanguage, checkLength, checkStructure,
   knownStars, advisoryStars, starsOnChart, measureLength, LENGTH_TARGET,
+  citationLines,
 } from '../eval/checks';
 import { FIXTURE_RESULT } from '@/lib/fixture';
 import { term } from '@/lib/i18n/vocabulary';
 import { LOCALES, type Locale } from '@/lib/i18n/locales';
 import { starsOrBorrowed } from '@/lib/chart-derived';
+import { BRANCH_LOOKUP, buildBranchMap, tamHopGroup, xung } from '@/lib/branches';
 
 // ============================================================
 // The checkers are the measuring instrument, so they are tested
@@ -94,10 +96,168 @@ describe('check 1 — hallucination (placement)', () => {
     expect(r.notes?.join(' ')).toContain(lesser);
   });
 
-  it('accepts a region list, which is the seam D1 will use', () => {
+  it('accepts a region list, which is the seam D1 uses', () => {
     const citation = 'Căn cứ: Mệnh · Dậu · Tử Vi.'; // Tử Vi is NOT in Mệnh
     const r = checkHallucination('irrelevant prose', CHART, 'vi', { regions: [citation] });
     expect(r.offenders.join(' ')).toContain('Tử Vi');
+  });
+
+  // ── D1 — the citation lines are checked by the same rule as the headings ──
+  //
+  // Firstmate set the bar: "a citation naming a star that is not in that
+  // palace is worse than no citation at all." So a wrong citation must FAIL,
+  // not be recorded as a note.
+
+  it('fails a citation that names a star which is not in the palace it cites', () => {
+    const mệnh = CHART.palaces.find((p) => p.name === 'Mệnh')!;
+    const intruder = knownStars('vi')
+      .find((s) => !mệnh.majorStars.some((m) => term(m.name, 'vi', 'majorStar') === s))!;
+    const reading = section2(correctHeadings('vi'))
+      + `\n## 4. Tình duyên\n\nnhận định\n\n> Cung Mệnh · ${intruder} (Miếu) — sai\n`;
+    const r = checkHallucination(reading, CHART, 'vi');
+    expect(r.pass, 'a wrong citation must fail, not be a note').toBe(false);
+    expect(r.offenders.join(' ')).toContain(intruder);
+    expect(r.offenders.join(' '), 'the message says it was a citation').toContain('citation:');
+  });
+
+  it('passes a citation that names the palace right', () => {
+    const mệnh = CHART.palaces.find((p) => p.name === 'Mệnh')!;
+    const own = mệnh.majorStars.map((m) => term(m.name, 'vi', 'majorStar')).join(' · ');
+    const reading = section2(correctHeadings('vi'))
+      + `\n## 4. Tình duyên\n\nnhận định\n\n> Cung Mệnh · ${own} — đúng\n`;
+    expect(checkHallucination(reading, CHART, 'vi').pass).toBe(true);
+  });
+
+  it('accepts a citation to an empty palace that names its borrowed stars', () => {
+    const empty = CHART.palaces.find((p) => p.majorStars.length === 0)!;
+    const borrowed = starsOrBorrowed(CHART, empty.earthlyBranch).stars
+      .map((s) => term(s.name, 'vi', 'majorStar')).join(' · ');
+    const reading = section2(correctHeadings('vi'))
+      + `\n## 4. Tình duyên\n\nx\n\n> ${term(empty.name, 'vi', 'palace')} · chiếu từ ${borrowed}\n`;
+    expect(checkHallucination(reading, CHART, 'vi').pass).toBe(true);
+  });
+
+  it('does not treat a citation as a parsed palace heading', () => {
+    // Citations must not inflate the "12 headings parsed" gate — otherwise a
+    // reading with no section 2 at all could buy its way past it.
+    const cites = CHART.palaces
+      .map((p) => `> ${term(p.name, 'vi', 'palace')} · x`).join('\n');
+    const r = checkHallucination(`## 2. Phân tích\n\nprose\n\n${cites}\n\n## 3. X`, CHART, 'vi');
+    expect(r.pass).toBe(false);
+    expect(r.offenders.join(' ')).toContain('could not be verified');
+  });
+
+  it("accepts the reference mockup's own two-palace citation", () => {
+    // Verbatim from tests/parity/reference/mockup.html and src/lib/fixture.ts.
+    // Mệnh holds Liêm Trinh + Phá Quân; Thiên Di holds Thiên Tướng. Judging
+    // every star against the FIRST palace named would report this — the
+    // design's own worked example — as a fabrication.
+    const real = '> Căn cứ: Mệnh · Dậu · Liêm Trinh (Lộc) + Phá Quân (Quyền)'
+      + ' · xung chiếu Thiên Di (Mão) Thiên Tướng hãm.';
+    const r = checkHallucination(section2(correctHeadings('vi')) + '\n## 4. X\n\n' + real + '\n', CHART, 'vi');
+    expect(r.pass, r.offenders.join('; ')).toBe(true);
+  });
+
+  it('still catches a star attributed to the palace it does NOT follow', () => {
+    // Same two palaces, stars swapped: segmentation must not become a way to
+    // launder a wrong placement past the check.
+    //
+    // No influence marker here, deliberately. With "xung chiếu" in the line the
+    // đối cung's stars are admitted on purpose (see the tam phương tứ chính
+    // test below), and this swap would then be legitimate rather than wrong.
+    const swapped = '> Căn cứ: Mệnh · Dậu · Thiên Tướng (hãm) · Thiên Di (Mão) Liêm Trinh.';
+    const r = checkHallucination(section2(correctHeadings('vi')) + '\n## 4. X\n\n' + swapped + '\n', CHART, 'vi');
+    expect(r.pass).toBe(false);
+    expect(r.offenders.join(' ')).toContain('Thiên Tướng');
+    expect(r.offenders.join(' ')).toContain('Liêm Trinh');
+  });
+
+  it('does not read the name of the discipline as a star placement', () => {
+    // Measured on the D1 run: 자미두수 CONTAINS 자미, and 紫微斗数 contains 紫微.
+    // Four citations were reported as placing Tử Vi in a palace when the
+    // reading had only named the system it was practising.
+    const spouse = CHART.palaces.find((p) => p.name === 'Phu Thê')!;
+    const cite = `> ${term(spouse.name, 'ko', 'palace')}궁 · 좌보 — 자미두수에서 이는 중요한 암시입니다.`;
+    const r = checkHallucination(section2(correctHeadings('ko')) + '\n## 4. X\n\n' + cite + '\n', CHART, 'ko');
+    expect(r.pass, r.offenders.join('; ')).toBe(true);
+  });
+
+  it('judges a citation on its evidence, not on the prose after the em-dash', () => {
+    // The claim clause names stars again in passing. Judging it placed them in
+    // whichever palace the evidence head mentioned last — 2 of 2 Chinese
+    // misplacements on the D1 run were exactly this.
+    const cite = '> 迁移宫 · 天相(陷) · 冲照 命宫 · 廉贞(平) —— 天相落陷于外，主在外受制于环境。';
+    const r = checkHallucination(section2(correctHeadings('zh-Hans')) + '\n## 4. X\n\n' + cite + '\n', CHART, 'zh-Hans');
+    expect(r.pass, r.offenders.join('; ')).toBe(true);
+  });
+
+  it('still judges the evidence head when the claim clause is present', () => {
+    // Trimming the tail must not become a way to hide a wrong placement.
+    const cite = '> 命宫 · 天相(陷) —— 一段说明文字。';
+    const r = checkHallucination(section2(correctHeadings('zh-Hans')) + '\n## 4. X\n\n' + cite + '\n', CHART, 'zh-Hans');
+    expect(r.pass).toBe(false);
+    expect(r.offenders.join(' ')).toContain('天相');
+  });
+
+  it('anchors a đại vận citation on the branch, not on the natal palace', () => {
+    // "大限官祿宮 (寅)" is not the natal 官祿宮 — the overlay relabels the twelve
+    // palaces onto other branches. Four correct citations were reported as
+    // fabrications on the D1 run for this reason.
+    const nôBộc = CHART.palaces.find((p) => p.name === 'Nô Bộc')!;
+    const stars = nôBộc.majorStars.map((st) => term(st.name, 'zh-Hant', 'majorStar')).join(' ');
+    const branch = term(nôBộc.earthlyBranch, 'zh-Hant', 'branch');
+    const cite = `> 大限官祿宮 (${branch}) · ${stars} —— 現行大限事業運極旺。`;
+    const r = checkHallucination(section2(correctHeadings('zh-Hant')) + '\n## 4. X\n\n' + cite + '\n', CHART, 'zh-Hant');
+    expect(r.pass, r.offenders.join('; ')).toBe(true);
+  });
+
+  it('declines to vouch for an overlay citation that names no branch', () => {
+    // Unverifiable is not the same as wrong. It must not fail, and it must not
+    // silently count as a verified citation either.
+    const cite = '> 大限官祿宮 · 天相(陷) —— 說明。';
+    const r = checkHallucination(section2(correctHeadings('zh-Hant')) + '\n## 4. X\n\n' + cite + '\n', CHART, 'zh-Hant');
+    expect(r.pass, r.offenders.join('; ')).toBe(true);
+  });
+
+  it('still catches a wrong star in a đại vận citation that gives its branch', () => {
+    const mệnh = CHART.palaces.find((p) => p.name === 'Mệnh')!;
+    const branch = term(mệnh.earthlyBranch, 'zh-Hant', 'branch');
+    const wrong = term('Thiên Tướng', 'zh-Hant', 'majorStar'); // not in Mệnh
+    const cite = `> 大限命宮 (${branch}) · ${wrong} —— 說明。`;
+    const r = checkHallucination(section2(correctHeadings('zh-Hant')) + '\n## 4. X\n\n' + cite + '\n', CHART, 'zh-Hant');
+    expect(r.pass).toBe(false);
+    expect(r.offenders.join(' ')).toContain(wrong);
+  });
+
+  it('allows a star that the citation says SHINES IN from tam phương tứ chính', () => {
+    // "照會" is the frame the prompt asks the reading to work in, not a claim
+    // that the star sits there.
+    const empty = CHART.palaces.find((p) => p.majorStars.length === 0)!;
+    const trine = starsOrBorrowed(CHART, empty.earthlyBranch).stars
+      .map((st) => term(st.name, 'zh-Hant', 'majorStar')).join(' ');
+    const cite = `> ${term(empty.name, 'zh-Hant', 'palace')} · ${trine} 照會 —— 說明。`;
+    const r = checkHallucination(section2(correctHeadings('zh-Hant')) + '\n## 4. X\n\n' + cite + '\n', CHART, 'zh-Hant');
+    expect(r.pass, r.offenders.join('; ')).toBe(true);
+  });
+
+  it('does not let an influence marker excuse a star outside the frame', () => {
+    // The allowance opens the đối cung and the two tam hợp corners. A star from
+    // anywhere else must still fail, or the marker becomes a blanket pardon.
+    const mệnh = CHART.palaces.find((p) => p.name === 'Mệnh')!;
+    const at = BRANCH_LOOKUP[mệnh.earthlyBranch.trim()];
+    const inFrame = new Set([xung(at), ...tamHopGroup(at)]);
+    const byBranch = buildBranchMap(CHART.palaces);
+    const outside = [...byBranch.entries()]
+      .filter(([b]) => !inFrame.has(b))
+      .flatMap(([, p]) => p.majorStars.map((st) => term(st.name, 'vi', 'majorStar')))
+      .find((name) => !mệnh.majorStars.some((m) => term(m.name, 'vi', 'majorStar') === name))!;
+    const cite = `> Cung Mệnh · ${outside} chiếu — giải thích.`;
+    const r = checkHallucination(section2(correctHeadings('vi')) + '\n## 4. X\n\n' + cite + '\n', CHART, 'vi');
+    expect(r.pass, `${outside} is outside tam phương tứ chính of Mệnh`).toBe(false);
+  });
+
+  it('reads citation lines out of a reading', () => {
+    expect(citationLines('a\n> một\nb\n>\n>  hai  \n')).toEqual(['một', 'hai']);
   });
 
   it('counts the chart it was given, not a remembered one', () => {
@@ -223,7 +383,12 @@ describe('check 4 — length', () => {
 });
 
 describe('check 5 — structure', () => {
-  const sections = (ns: number[]) => ns.map((n) => `## ${n}. Phần ${n}\n\nnội dung\n`).join('\n');
+  // Sections 4-9 carry a citation, because since D1 a section that cites
+  // nothing is a structural failure in its own right — see the two tests for
+  // that below. These fixtures are about section NUMBERING, so they satisfy it.
+  const cite = (n: number) => (n >= 4 && n <= 7 ? '\n> Cung Mệnh · Liêm Trinh\n' : '');
+  const sections = (ns: number[], level = 2) =>
+    ns.map((n) => `${'#'.repeat(level)} ${n}. Phần ${n}\n\nnội dung\n${cite(n)}`).join('\n');
 
   it('passes 1–9 when there is no Bazi and no self-description', () => {
     const r = checkStructure(sections([1, 2, 3, 4, 5, 6, 7, 8, 9]), { bazi: false, selfDescription: false });
@@ -255,11 +420,33 @@ describe('check 5 — structure', () => {
     expect(r.offenders.join(' ')).toContain('out of order');
   });
 
+  it('fails a section 4-9 that makes judgements with no citation at all', () => {
+    // D1 presence. Accuracy is check 1's job; this is the reading's shape.
+    const bare = [1,2,3,4,5,6,7,8,9].map((n) => `## ${n}. Phần ${n}\n\nnhận định\n`).join('\n');
+    const r = checkStructure(bare, { bazi: false, selfDescription: false });
+    expect(r.pass).toBe(false);
+    // 4-7 only: 8 and 9 are itemised forecasts whose evidence the template
+    // already requires inline, per prediction and per month.
+    expect(r.offenders.filter((o) => o.includes('no citation line'))).toHaveLength(4);
+  });
+
+  it('is satisfied by one citation per section, not the two the prompt asks for', () => {
+    // Deliberate margin: the check should fail a section that cites NOTHING,
+    // not police one citation against two.
+    const cited = [1,2,3,4,5,6,7,8,9]
+      .map((n) => `## ${n}. Phần ${n}\n\nnhận định\n${n >= 4 && n <= 7 ? '\n> Cung Mệnh · Liêm Trinh\n' : ''}`)
+      .join('\n');
+    const r = checkStructure(cited, { bazi: false, selfDescription: false });
+    expect(r.pass, r.offenders.join('; ')).toBe(true);
+  });
+
   it('ignores numbered SUB-headings such as 4.1', () => {
     // Measured: every locale writes these, and reading them as section 4 five
     // times over reported a correct reading as "sections out of order".
     const r = checkStructure(
-      [1,2,3,4,5,6,7,8,9].map((n) => `## ${n}. Phần ${n}\n\n### ${n}.1 Chi tiết\n\n### ${n}.2 Chi tiết\n`).join('\n'),
+      [1,2,3,4,5,6,7,8,9]
+        .map((n) => `## ${n}. Phần ${n}\n\n### ${n}.1 Chi tiết\n${cite(n)}\n### ${n}.2 Chi tiết\n`)
+        .join('\n'),
       { bazi: false, selfDescription: false },
     );
     expect(r.pass, r.offenders.join('; ')).toBe(true);
@@ -270,7 +457,7 @@ describe('check 5 — structure', () => {
     // section 10 on a chart that carried no Bazi.
     const body = [1,2].map((n) => `## ${n}. Phần ${n}\n`).join('')
       + [1,2,3,4,5,6,7,8,9,10,11,12].map((n) => `### ${n}. Cung số ${n}\n`).join('')
-      + [3,4,5,6,7,8,9].map((n) => `## ${n}. Phần ${n}\n`).join('');
+      + [3,4,5,6,7,8,9].map((n) => `## ${n}. Phần ${n}\n${cite(n)}`).join('');
     const r = checkStructure(body, { bazi: false, selfDescription: false });
     expect(r.pass, r.offenders.join('; ')).toBe(true);
   });
@@ -279,8 +466,7 @@ describe('check 5 — structure', () => {
     // Measured: a run shifted every heading down one level. The readings were
     // correct in substance; an earlier version of this check said they had no
     // sections at all.
-    const deep = [1,2,3,4,5,6,7,8,9].map((n) => `### ${n}. Phần ${n}\n\nnội dung\n`).join('\n');
-    const r = checkStructure(deep, { bazi: false, selfDescription: false });
+    const r = checkStructure(sections([1,2,3,4,5,6,7,8,9], 3), { bazi: false, selfDescription: false });
     expect(r.pass, r.offenders.join('; ')).toBe(true);
   });
 

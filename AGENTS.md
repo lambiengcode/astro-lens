@@ -58,7 +58,7 @@ Two things that will save a future session real money and real embarrassment:
   in the wrong palace. `EVAL.md` §2.3 has the reasoning and the false positives
   that produced it.
 
-Three things about the prompt that are easy to get wrong:
+Four things about the prompt that are easy to get wrong:
 
 - **Editing `pack.system` has NO EFFECT while a cache exists.** The context
   cache is found by `displayName` only (`gemini-cache.ts`), never by comparing
@@ -70,6 +70,13 @@ Three things about the prompt that are easy to get wrong:
   when their data is absent, because an instruction saying "skip this section"
   was measured being ignored by four of five locales. The markers are authoring
   syntax and never reach the model; `prompt.test.ts` asserts that.
+- **A `>` line in a reading is a CITATION, not a quotation.** D1: the model
+  names the cung and the sao behind each judgement on its own line, which
+  `renderMarkdown` turns into the `.sealq` block, and `splitCitation` peels off
+  the chat answer's into its `.cite` row. A citation may name a second palace
+  (the đối cung) — the mockup's own does — so anything checking one must
+  attribute each star to the palace it FOLLOWS, never to the first palace in
+  the line. `tests/eval/checks.ts` `segmentByPalace` is that rule.
 - **Vietnamese in a `ko`/`zh` reading is almost always OUR bug.** `term()` looks
   up a whole value, so any code that splits a field before translating it must
   split exactly right — a tứ hóa entry is `"<hoá> <sao>"` and the sao is usually

@@ -215,11 +215,12 @@ BƯỚC 2 — TỰ KIỂM TRA (KHÔNG in ra)
 □ 13. 12 tháng âm lịch đều có lưu nguyệt + tứ hóa + lĩnh vực nổi bật + lời khuyên?
 □ 14. Tổng bài luận giải ≥5000 từ, đủ chiều sâu, không sơ sài?
 □ 15. Không lặp thông tin giữa các phần — mỗi phần mang góc nhìn riêng?
+□ 16. Mỗi phần 4-9 có ít nhất 2 dòng dẫn chứng "> ", mỗi dòng đúng một cung, sao nêu đúng theo dữ liệu?
 ⟦BAZI⟧
-□ 16. Bát Tự đã được phân tích (nếu có dữ liệu) — Nhật chủ, cường/nhược, dụng thần, đối chiếu Tử Vi?
+□ 17. Bát Tự đã được phân tích (nếu có dữ liệu) — Nhật chủ, cường/nhược, dụng thần, đối chiếu Tử Vi?
 ⟦/BAZI⟧
 ⟦SELF⟧
-□ 17. Mô tả bản thân đã được đối chiếu (nếu có) — điểm khớp + không khớp + giải thích?
+□ 18. Mô tả bản thân đã được đối chiếu (nếu có) — điểm khớp + không khớp + giải thích?
 ⟦/SELF⟧
 
 Chỉ khi tất cả điểm áp dụng đều đạt → bắt đầu viết.
@@ -227,6 +228,19 @@ Chỉ khi tất cả điểm áp dụng đều đạt → bắt đầu viết.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 BƯỚC 3 — VIẾT BÀI LUẬN GIẢI (xuất ra)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+━━━ DẪN CHỨNG — BẮT BUỘC ━━━
+Mỗi nhận định quan trọng phải kèm MỘT dòng dẫn chứng riêng, bắt đầu bằng "> ", đúng mẫu:
+
+> Cung Phu Thê · Thiên Phủ (Đắc) [Khoa] · xung chiếu Cung Quan Lộc · Thất Sát (Miếu) — bạn đời điềm đạm, nhưng đời sống chung nhiều biến động vì công việc.
+
+Quy tắc, không ngoại lệ:
+- Nêu tên cung TRƯỚC, rồi đến các sao NẰM TRONG cung đó. Nếu nhận định còn dựa vào đối cung hay tam hợp, nêu tên cung ấy rồi mới đến sao của nó — TUYỆT ĐỐI không gán một sao cho cung không chứa nó.
+- Dấu "> " CHỈ dùng cho dẫn chứng. Tóm tắt một câu, trích sách hay ghi chú không được viết dưới dạng "> ".
+- Chỉ nêu sao THỰC SỰ nằm trong cung đó theo dữ liệu lá số ở trên. Cung trống thì nêu sao của đối cung và ghi rõ "chiếu từ [tên đối cung]".
+- Một dẫn chứng nêu sai sao còn TỆ HƠN không có dẫn chứng. Không chắc thì bỏ dòng đó đi.
+- Mỗi phần từ 4 đến 9 có ít nhất 2 dòng dẫn chứng.
+- Dòng dẫn chứng đứng riêng một dòng, không nằm trong danh sách gạch đầu dòng.
 
 ---
 

@@ -365,12 +365,12 @@ measurement.
 
 | Check | Baseline | After step 2 | |
 |---|---:|---:|---|
-| 1 · hallucination | 10/10 | **9/10** | ▼ one worse |
+| 1 · hallucination | 10/10 | 10/10 | — (see §7.4) |
 | 2 · coverage | 10/10 | 10/10 | — |
 | 3 · language | 7/10 | **10/10** | ▲ fixed |
 | 4 · length | 10/10 | 10/10 | — |
 | 5 · structure | 5/10 | **10/10** | ▲ fixed |
-| **Cells passing all five** | **3/10** | **9/10** | |
+| **Cells passing all five** | **3/10** | **10/10** | |
 
 ### 7.2 Section 10 — fixed, and the instruction was never the problem
 
@@ -421,15 +421,18 @@ Language went 7/10 → 10/10.
 ### 7.4 What got worse, and it is not nothing
 
 **Hallucination went 10/10 → 9/10.** `a-tuvi-ty` at `ko` heads 형제궁 as
-borrowing 천기 · 천량. It borrows 태양 · 거문 — 천기 · 천량 sit in 질액궁. The
-đối cung is wrong.
+borrowing 천기 · 천량, where it borrows 태양 · 거문.
 
-This is the same failure the baseline produced on chart B (§3, chart-B
-finding), in a different cell: the model is intermittently wrong about which
-palace an empty palace borrows from. Nothing in step 2 addresses it, and one
-cell is not enough to call it a regression rather than variance — but it moved
-in the wrong direction and it is the failure D1 exists to catch, so it is
-recorded as a miss, not explained away.
+> **Corrected during step 3 — this was partly the checker, not the reading.**
+> 형제 sits at Thân, and Thân's tam hợp corners are Tý and **Thìn**, which is
+> where 천기 · 천량 are. So the two stars DO reach 형제; what the reading got
+> wrong is the route, calling it the 대궁 when it is the tam hợp. That is a
+> mislabelled relationship, not a fabricated placement. Under the checker as
+> corrected in §8.3 — which admits tam phương tứ chính where the text says
+> 조회 — step 2 re-scores at **hallucination 10/10**, and the step-2 number
+> above should be read as 10/10, not 9/10. The finding is left standing rather
+> than deleted because the mislabelling is real and worth fixing; it simply is
+> not the fabrication this check exists to catch.
 
 `b-vcd-tan` at `ko` errored on the first pass (transport) and was re-run
 single-cell into the same tag. Same prompt, same code.
@@ -469,3 +472,134 @@ new work would be the one to distrust. The evidence that it is a real bug and
 not a convenient one is in the readings themselves: `a-tuvi-ty` at `vi` is
 47KB with all nine sections and all twelve palaces correctly placed, and the
 old checker called it structureless.
+
+---
+
+## 8. P7 step 3 — D1 citations
+
+Run tag `p7-step3`. Every number here, and every number in §7 as amended, comes
+from **one checker** — the one in the tree now. Re-scoring is free, so there is
+no reason to compare two arms measured by two instruments.
+
+### 8.1 The reading now shows its work
+
+| | baseline | p7-step2 | **p7-step3** |
+|---|---:|---:|---:|
+| Citation lines, all ten readings | 0 | 0 | **144** |
+| Fewest in one reading | — | — | 4 |
+| Most in one reading | — | — | 31 |
+
+The `.sealq` block that P0–P4 built and left empty is populated in all five
+locales, on both charts. The chat's `.cite` row is populated too — verified
+against the live API in `vi` and `ko`:
+
+```
+vi  cite = "Cung Mệnh · Liêm Trinh (bình), Phá Quân (hãm), Văn Xương, …"
+ko  cite = "명궁 · 염정(평)"
+```
+
+Both are the fixture's actual placement, and in both the answer text came back
+with no `>` line left in it — `splitCitation` moved it to its own row.
+
+### 8.2 The five checks
+
+| Check | baseline | p7-step2 | **p7-step3** | |
+|---|---:|---:|---:|---|
+| 1 · hallucination | 10/10 | 10/10 | **9/10** | ▼ one, and it is real — §8.4 |
+| 2 · coverage | 10/10 | 10/10 | 10/10 | — |
+| 3 · language | 7/10 | 10/10 | **9/10** | ▼ one, §8.5 |
+| 4 · length | 10/10 | 10/10 | 10/10 | — |
+| 5 · structure — sections | 5/10 | 10/10 | 10/10 | — |
+| 5 · structure — **including citations** | 0/10 | 0/10 | **5/10** | the new bar |
+| **Cells passing all five at the D1 bar** | **0/10** | **0/10** | **5/10** | |
+
+**Read the last two rows carefully.** Check 5 now also requires citations, so
+the two pre-D1 runs score 0/10 on it *by construction* — they contain no
+citations at all, because the feature did not exist. Their 3/10 and 10/10 in §3
+and §7 were measured against a bar with no citation requirement in it. The
+honest cross-run statement is the one in the "sections" row: section numbering
+was already fixed in step 2 and stayed fixed.
+
+### 8.3 Check 1 accused four correct citations before it accused a wrong one
+
+Firstmate set the bar: *"a citation naming a star that is not in that palace is
+worse than no citation at all."* That cuts both ways — a checker that cries
+wolf is worse than no checker, and this one cried wolf four times before it
+caught anything. Every one was found by scoring the readings, not by reasoning
+about them:
+
+| What the reading wrote | What the check said | Why it was wrong |
+|---|---|---|
+| `부처궁 · 좌보 — 자미두수에서…` | 자미 placed in 부처 | **자미두수 CONTAINS 자미.** It named the discipline, not a star. |
+| `迁移宫 · 天相(陷) · 冲照 命宫 · 廉贞(平) —— 天相落陷于外…` | 天相 placed in 命宫 | The prose **after the em-dash** re-mentions the star. The evidence head placed it correctly. |
+| `大限官祿宮 (寅) · 太陽 巨門` | 太陽 placed in 官祿 | `大限官祿宮` is **not the natal 官祿宮**. The overlay relabels palaces onto other branches. |
+| `戌宮 · 大限貪狼化祿照會` | 貪狼 placed in 子女 | `照會` means it **shines in** from tam phương tứ chính, not that it sits there. |
+
+Four fixes, each with its own regression test:
+
+- the discipline's name in all five locales is masked before any star is sought;
+- a citation is judged on its **evidence head**, the part before the em-dash — a
+  heading is not, because a heading's own separator is an em-dash;
+- a citation carrying `大限` / `lưu niên` / `대한` is re-anchored on the **branch**
+  it names, which is why the reference mockup's own citation carries one
+  (`Mệnh · Dậu`); with no branch it is not vouched for either way;
+- `照 / 沖 / chiếu / 조회` opens the đối cung and the two tam hợp corners, and
+  nothing beyond them.
+
+**What the last one costs, stated plainly:** inside a marked citation the check
+can no longer tell "X sits here" from "X shines in", so a misattribution within
+tam phương tứ chính now passes. That is four palaces' worth of stars. It is the
+price of not flagging the evidential frame the prompt itself asks the reading to
+use, and it is what re-scored §7's Korean finding from a fabrication to a
+mislabelled route.
+
+### 8.4 The one hallucination is real, and was verified by hand
+
+`b-vcd-tan` at `zh-Hant`:
+
+```
+> 2. 流年官祿 (2026) · 戌宮 · 大限貪狼化祿照會 —— 2026 下半年，自立門戶的契機成熟。
+```
+
+Checked against the chart rather than against the checker:
+
+- Tham Lang sits at **Sửu**, in Mệnh.
+- The citation places the 2026 lưu niên Quan Lộc at **Tuất**.
+- Tuất's tam phương tứ chính is Thìn, Dần, Ngọ, Tuất. **Sửu is not among them.**
+- The đại vận *is* anchored at Tuất and its hoá lộc *is* on Tham Lang — that
+  half is correct.
+
+So the mutagen is real and the palace is real; the relationship between them is
+not. This is exactly the class of error D1 exists to surface, and it took a
+citation to make it visible — the same reading's section-2 headings are clean.
+
+### 8.5 What else did not come out clean
+
+- **Section 7 carries no citation in 5 of 10 cells** (`vi` on both charts,
+  `zh-Hans`, `zh-Hant`, `ko`). It is a prose judgement section and the prompt
+  asks sections 4–9 for two citations each; sections 4, 5 and 6 comply in every
+  cell and 7 is where compliance stops. This is the single largest remaining
+  gap and it is a prompt problem, not a checker one.
+- **Sections 8 and 9 are deliberately not gated.** They are itemised forecasts —
+  ten predictions, twelve lunar months — and the template already requires their
+  evidence per item and inline (self-check □12, □13). Twenty-two blockquotes
+  interleaved through two lists is a different instruction, and no locale read
+  it that way. The shipped prompt still says "4 through 9"; the checker asks
+  4–7. That mismatch is recorded here rather than quietly fixed, because the
+  prompt as measured is the prompt that ships.
+- **Language 10/10 → 9/10**: `b-vcd-tan` at `ko` writes
+  `『자미두수전서(Tử Vi Đẩu Số Toàn Thư)』` — the Korean title with the Vietnamese
+  romanisation glossed after it. The step-2 rule forbids the Vietnamese form.
+  One cell, the rule unchanged since step 2, so most likely variance rather
+  than regression — but it is a violation of our own rule and is counted as one.
+
+### 8.6 What is worth doing next
+
+1. **Get section 7 citing.** Half the cells skip it. Naming sections 4–7
+   explicitly, and telling the model where the evidence goes in 8 and 9, is a
+   prompt change and a run.
+2. **Teach the checker the đại vận ring**, so an overlay citation without a
+   branch can be verified instead of waved through, and so §8.4's class of
+   error is caught by geometry rather than by hand.
+3. **Narrow the influence allowance** to the stars that follow the marker,
+   which would restore the đối-cung-versus-tam-hợp distinction §8.3 gave up.

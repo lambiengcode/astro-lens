@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 import type { ChartData } from '@/types';
+import { splitCitation } from '@/lib/citation';
 import { getCachedContentName } from '@/lib/gemini-cache';
 import { getMessages } from '@/lib/i18n/messages';
 import { INTL_LOCALE, LOCALE_HEADER, normalizeLocale, type Locale } from '@/lib/i18n/locales';
@@ -118,27 +119,27 @@ const CHAT_TURN: Record<Locale, {
   vi: {
     user: 'Người hỏi', expert: 'Chuyên gia',
     history: 'LỊCH SỬ HỘI THOẠI GẦN NHẤT', question: 'CÂU HỎI',
-    instruction: 'Hãy trả lời dựa trên lá số và thời gian hiện tại ở trên. Dẫn chứng sao và cung cụ thể.',
+    instruction: 'Hãy trả lời dựa trên lá số và thời gian hiện tại ở trên. Kết thúc câu trả lời bằng ĐÚNG MỘT dòng dẫn chứng riêng, bắt đầu bằng "> ", nêu đúng một cung và các sao THỰC SỰ nằm trong cung đó theo dữ liệu trên — ví dụ: "> Cung Phu Thê · Thiên Phủ (Đắc)". Dẫn chứng nêu sai sao còn tệ hơn không có dẫn chứng.',
   },
   'zh-Hans': {
     user: '提问者', expert: '命理师',
     history: '最近的对话记录', question: '问题',
-    instruction: '请依据上方的命盘与当前时间作答，并举出具体的星与宫作为依据。',
+    instruction: '请依据上方的命盘与当前时间作答。答案末尾另起一行给出恰好一行引证，以 "> " 开头，只谈一个宫，所列的星必须确实位于该宫 —— 例如："> 夫妻宫 · 天府(得)"。引证里出现不在该宫的星，比没有引证更糟。',
   },
   'zh-Hant': {
     user: '提問者', expert: '命理師',
     history: '最近的對話紀錄', question: '問題',
-    instruction: '請依據上方的命盤與現時時間作答，並舉出具體的星與宮作為依據。',
+    instruction: '請依據上方的命盤與現時時間作答。答案末尾另起一行給出恰好一行引證，以 "> " 開頭，只談一個宮，所列的星必須確實位於該宮 —— 例如："> 夫妻宮 · 天府(得)"。引證裡出現不在該宮的星，比沒有引證更糟。',
   },
   ko: {
     user: '질문자', expert: '명리가',
     history: '최근 대화 기록', question: '질문',
-    instruction: '위의 명반과 현재 시각을 근거로 답하십시오. 구체적인 성과 궁을 근거로 드십시오.',
+    instruction: '위의 명반과 현재 시각을 근거로 답하십시오. 답변 끝에 전거를 정확히 한 줄, "> " 로 시작해 따로 적으십시오. 한 궁만 말하고, 위 데이터에서 실제로 그 궁에 있는 성만 적습니다 — 예: "> 부처궁 · 천부(득)". 그 궁에 없는 성을 적은 전거는 전거가 없는 것보다 나쁩니다.',
   },
   en: {
     user: 'Asked', expert: 'Master',
     history: 'RECENT CONVERSATION', question: 'QUESTION',
-    instruction: 'Answer from the chart and the current time above. Cite the specific stars and palaces.',
+    instruction: 'Answer from the chart and the current time above. End with EXACTLY ONE citation line of its own, beginning "> ", naming one palace and only stars that ACTUALLY sit in it per the data above — for example: "> Spouse Palace (Phu Thê) · Tian Fu (gained)". A citation naming a star that is not in that palace is worse than no citation at all.',
   },
 };
 
@@ -194,9 +195,9 @@ ${CHAT_TURN[locale].instruction}`;
       },
     });
 
-    const text = result.text ?? '';
+    const { reply, cite } = splitCitation(result.text ?? '');
 
-    return NextResponse.json({ success: true, reply: text });
+    return NextResponse.json({ success: true, reply, cite });
   } catch (error) {
     console.error('Chat error:', error);
     const message = error instanceof Error

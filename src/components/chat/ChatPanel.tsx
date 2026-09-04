@@ -7,8 +7,8 @@ import { useI18n } from '@/lib/i18n/context';
 interface ChatMessage {
   role: 'user' | 'ai';
   content: string;
-  /** Cung + sao behind the answer. The surface is built; populating it is a
-   *  Gemini prompt change, deferred as follow-up work (PLAN.md §11 D1). */
+  /** Cung + sao behind the answer — D1. The route peels it off the reply's
+   *  trailing `>` line; absent when the model did not cite. */
   cite?: string;
 }
 
@@ -62,6 +62,7 @@ export default function ChatPanel({ chart, name, variant = 'floating', onClose }
       setMessages((prev) => [...prev, {
         role: 'ai',
         content: data.success ? data.reply : `${t.chat.errPrefix} ${data.error}`,
+        cite: data.success ? data.cite : undefined,
       }]);
     } catch {
       setMessages((prev) => [...prev, { role: 'ai', content: t.chat.errNetwork }]);

@@ -2,6 +2,7 @@ import type { ChartData } from '@/types';
 import { type Locale } from '@/lib/i18n/locales';
 import { VOCABULARY, term, type Domain } from '@/lib/i18n/vocabulary';
 import { starsOrBorrowed } from '@/lib/chart-derived';
+import { BRANCH_LOOKUP, buildBranchMap, tamHopGroup, xung } from '@/lib/branches';
 
 // ============================================================
 // READING-QUALITY CHECKS — P6 Part A
@@ -178,6 +179,133 @@ function snippet(text: string, at: number, len: number): string {
   return (from > 0 ? '…' : '') + text.slice(from, to).replace(/\s+/g, ' ') + (to < text.length ? '…' : '');
 }
 
+/**
+ * The name of the discipline, in every locale — and the reason it is here.
+ *
+ * `자미두수` CONTAINS `자미`, and `紫微斗数` contains `紫微`. Measured on the D1
+ * run: two Korean and two Chinese citations were reported as placing Tử Vi in
+ * a palace when the reading had merely named the system it was practising. The
+ * lesser-ring scan learned this lesson once already (see ADVISORY_STAR_DOMAINS);
+ * a major star can collide the same way, so the name is masked out before any
+ * star is looked for. Same length in, same length out, so offsets still line up.
+ */
+const SYSTEM_NAMES = [
+  '紫微斗數全書', '紫微斗数全书', '자미두수전서', 'Tử Vi Đẩu Số Toàn Thư',
+  '紫微斗數', '紫微斗数', '자미두수', 'Tử Vi Đẩu Số', 'Zi Wei Dou Shu',
+];
+
+function maskSystemNames(text: string): string {
+  let out = text;
+  for (const name of SYSTEM_NAMES) out = out.split(name).join('\u0000'.repeat(name.length));
+  return out;
+}
+
+/**
+ * The checkable part of a citation: the evidence, not the judgement.
+ *
+ * The form is `<cung> · <sao>(<độ>) [· <cung> · <sao>] — <what it grounds>`.
+ * Everything after the em-dash is prose about the claim, and prose names stars
+ * again in passing — "天相落陷于外，主在外虽注重形象…" after a citation whose
+ * evidence head already placed 天相 correctly in 遷移. Judging the tail placed
+ * that star in whichever palace the head mentioned last, so a correct citation
+ * was reported as a fabrication. Measured: 2 of 2 Chinese misplacements on the
+ * D1 run were this.
+ *
+ * A citation with no em-dash is all evidence — the reference mockup's own is.
+ */
+function citationEvidence(text: string): string {
+  const at = text.indexOf('\u2014');
+  return at === -1 ? text : text.slice(0, at);
+}
+
+type PalaceRef = { palace: ChartData['palaces'][number]; name: string };
+
+/**
+ * Words that mark a palace label as belonging to the đại vận or lưu niên ring
+ * rather than to the natal chart.
+ *
+ * `大限官祿宮 (寅)` is NOT the natal 官祿宮. The overlay relabels the twelve
+ * palaces onto different branches, so its 官祿 sits wherever the decade put it
+ * — and judging its stars against the natal 官祿 reported four correct
+ * citations as fabrications on the D1 run. The stars never move; only the
+ * labels do. So an overlay citation is resolved by the BRANCH it names, which
+ * is why the reference mockup's own citation carries one ("Mệnh · Dậu").
+ */
+const OVERLAY_MARKERS = [
+  '大限', '大運', '流年', '流月', '대한', '유년', '유월',
+  'đại vận', 'đại hạn', 'lưu niên', 'lưu nguyệt', 'decadal', 'annual',
+];
+
+/**
+ * Words that mark a star as SHINING IN rather than sitting there.
+ *
+ * "戌宮 · 大限貪狼化祿照會" does not claim 貪狼 is at 戌; 照會 / chiếu is the
+ * tam phương tứ chính frame the prompt itself asks the reading to work in
+ * ("đối cung chứa sao gì chiếu vào? Tam hợp bổ sung hay phá?"). Judging such a
+ * star as a placement reported a correct citation as a fabrication.
+ *
+ * The allowance is bounded: it opens the đối cung and the two tam hợp corners,
+ * and nothing else. A star from outside that frame still fails, which is the
+ * whole point of the check.
+ *
+ * WHAT IT COSTS, stated plainly: inside a marked citation the check can no
+ * longer tell "X sits in this palace" from "X shines into it", so a
+ * misattribution WITHIN tam phương tứ chính passes. That is four palaces'
+ * worth of stars, and it is the price of not flagging the frame the prompt
+ * asks the reading to use. The other eight palaces still gate.
+ */
+const INFLUENCE_MARKERS = ['照', '沖', '冲', '拱', '會', '会', 'chiếu', 'hội', '조회', '회조', '충조'];
+
+function isOverlayLabel(text: string): boolean {
+  const low = text.toLowerCase();
+  return OVERLAY_MARKERS.some((m) => low.includes(m.toLowerCase()));
+}
+
+/**
+ * Split a region at each palace it names, so a star is judged against the
+ * palace it FOLLOWS rather than against whichever palace the region mentioned
+ * first.
+ *
+ * This is not a refinement; without it the check is wrong on text both the
+ * reference and the model actually write. The mockup's own citation block is
+ *
+ *   > Căn cứ: Mệnh · Dậu · Liêm Trinh (Lộc) + Phá Quân (Quyền) · xung chiếu
+ *     Thiên Di (Mão) Thiên Tướng hãm.
+ *
+ * — two palaces in one line, each with its own stars, which is how Tử Vi
+ * reasoning actually works: the đối cung is part of the evidence. Judging
+ * Thiên Tướng against Mệnh would report a correct citation as a fabrication,
+ * and a check that fires on correct work is the one people learn to ignore.
+ * The same shape appears in section-2 headings — "兄弟宮 —— 空宮（受僕役宮
+ * 太陽 · 巨門 照會）" — and in the model's English citations.
+ */
+function segmentByPalace(text: string, palaceNames: PalaceRef[]): (PalaceRef & { text: string; lead: string })[] {
+  const hits: { at: number; ref: PalaceRef }[] = [];
+  for (const ref of palaceNames) {
+    for (const at of occurrences(text, ref.name)) hits.push({ at, ref });
+  }
+  // Earliest first; where two names start together the longer one wins, which
+  // is why overlapping hits are dropped rather than merged.
+  hits.sort((a, b) => a.at - b.at || b.ref.name.length - a.ref.name.length);
+
+  const kept: { at: number; ref: PalaceRef }[] = [];
+  let usedTo = -1;
+  for (const h of hits) {
+    if (h.at < usedTo) continue;
+    kept.push(h);
+    usedTo = h.at + h.ref.name.length;
+  }
+  // `text` is the segment's own scope — its name and the stars that follow it.
+  // `lead` is what sits BEFORE the name, which is where a "大限" / "lưu niên"
+  // qualifier lives; it must not be in `text`, or the previous palace's stars
+  // would be judged against this one.
+  return kept.map((h, i) => ({
+    ...h.ref,
+    text: text.slice(h.at, kept[i + 1]?.at),
+    lead: text.slice(i === 0 ? 0 : kept[i - 1].at + kept[i - 1].ref.name.length, h.at),
+  }));
+}
+
 // ── 1. Hallucination ────────────────────────────────────────────────────────
 
 export interface HallucinationOptions {
@@ -185,9 +313,11 @@ export interface HallucinationOptions {
    * The regions of the reading to check for MISPLACEMENT. Defaults to the
    * palace headings of section 2.
    *
-   * This is the seam for D1: once the citation blocks carry the cung and sao
-   * behind each judgement, they become additional regions and every claim in
-   * the reading is verifiable, not just the ones in section 2's headings.
+   * This was the seam for D1, and D1 now uses it: the citation lines carrying
+   * the cung and sao behind each judgement are checked by the same rule as the
+   * headings, so the reading is verifiable beyond section 2. Passing `regions`
+   * explicitly replaces both sets, which is how the checker is unit-tested
+   * without a reading.
    */
   regions?: string[];
 }
@@ -224,36 +354,83 @@ export function checkHallucination(
   const palaceNames = chart.palaces
     .map((p) => ({ palace: p, name: term(p.name, locale, 'palace') }))
     .sort((a, b) => b.name.length - a.name.length);
+  const branches = chart.palaces
+    .map((p) => ({ palace: p, name: term(p.earthlyBranch, locale, 'branch') }))
+    .sort((a, b) => b.name.length - a.name.length);
 
-  const headings = options.regions ?? palaceHeadings(reading);
+  // Two kinds of region, checked by the same rule but reported differently and
+  // gated differently. An explicit `regions` list replaces both.
+  const regions: { text: string; kind: 'heading' | 'citation' }[] = options.regions
+    ? options.regions.map((text) => ({ text, kind: 'heading' as const }))
+    : [
+        ...palaceHeadings(reading).map((text) => ({ text, kind: 'heading' as const })),
+        ...citationLines(reading).map((text) => ({ text, kind: 'citation' as const })),
+      ];
+
   const offenders: string[] = [];
   const notes: string[] = [];
   let verified = 0;
+  let citations = 0;
 
-  for (const heading of headings) {
-    const hit = palaceNames.find((p) => occurrences(heading, p.name).length > 0);
-    if (!hit) continue;
-    verified += 1;
+  for (const { text, kind } of regions) {
+    // A heading's separator IS an em-dash ("### 命宫 —— 廉贞 · 破军"), so only a
+    // citation is trimmed to its evidence head.
+    const subject = maskSystemNames(kind === 'citation' ? citationEvidence(text) : text);
+    const segments = segmentByPalace(subject, palaceNames);
+    // A region that names no palace at all makes no placement claim. It is not
+    // a misplacement, so it does not gate here.
+    if (!segments.length) continue;
+    if (kind === 'citation') citations += 1; else verified += 1;
 
-    const own = hit.palace.majorStars.map((st) => term(st.name, locale, 'majorStar'));
-    const borrowed = own.length
-      ? []
-      : starsOrBorrowed(chart, hit.palace.earthlyBranch).stars
-          .map((st) => term(st.name, locale, 'majorStar'));
-    const allowed = new Set([...own, ...borrowed]);
+    for (const seg of segments) {
+      // An overlay label names a ring, not a place. Re-anchor it on the branch
+      // the citation gives; with no branch there is nothing to check it
+      // against, and silence beats a false accusation.
+      let palace = seg.palace;
+      if (isOverlayLabel(seg.lead + seg.name)) {
+        const at = branches.find((b) => occurrences(seg.text, b.name).length > 0);
+        if (!at) continue;
+        palace = at.palace;
+      }
+      const own = palace.majorStars.map((st) => term(st.name, locale, 'majorStar'));
+      const borrowed = own.length
+        ? []
+        : starsOrBorrowed(chart, palace.earthlyBranch).stars
+            .map((st) => term(st.name, locale, 'majorStar'));
+      const allowed = new Set([...own, ...borrowed]);
 
-    for (const star of majors) {
-      if (allowed.has(star)) continue;
-      if (occurrences(heading, star).length === 0) continue;
-      offenders.push(
-        `"${star}" placed in ${hit.name}, which holds `
-        + `${own.length ? own.join(' · ') : `no major star (it borrows ${borrowed.join(' · ') || 'nothing'})`}`
-        + ` — heading: ${heading.trim().slice(0, 120)}`,
-      );
-    }
-    for (const star of own) {
-      if (occurrences(heading, star).length === 0) {
-        notes.push(`${hit.name}: "${star}" is in this palace but its heading does not name it (readings often abbreviate)`);
+      // Tam phương tứ chính, but only where the citation says so.
+      if (INFLUENCE_MARKERS.some((m) => seg.text.includes(m) || seg.lead.includes(m))) {
+        const at = BRANCH_LOOKUP[palace.earthlyBranch.trim()];
+        if (at !== undefined) {
+          const byBranch = buildBranchMap(chart.palaces);
+          for (const b of [xung(at), ...tamHopGroup(at)]) {
+            for (const st of byBranch.get(b)?.majorStars ?? []) {
+              allowed.add(term(st.name, locale, 'majorStar'));
+            }
+          }
+        }
+      }
+
+      for (const star of majors) {
+        if (allowed.has(star)) continue;
+        if (occurrences(seg.text, star).length === 0) continue;
+
+        offenders.push(
+          `"${star}" placed in ${term(palace.name, locale, 'palace')}, which holds `
+          + `${own.length ? own.join(' · ') : `no major star (it borrows ${borrowed.join(' · ') || 'nothing'})`}`
+          + ` — ${kind}: ${text.trim().slice(0, 140)}`,
+        );
+      }
+      // A citation names the one or two stars a judgement rests on, not the
+      // palace's whole roster, so "did not name every star" is only meaningful
+      // for a section-2 heading, and only for the palace it heads.
+      if (kind === 'heading' && seg === segments[0]) {
+        for (const star of own) {
+          if (occurrences(subject, star).length === 0) {
+            notes.push(`${seg.name}: "${star}" is in this palace but its heading does not name it (readings often abbreviate)`);
+          }
+        }
       }
     }
   }
@@ -281,8 +458,8 @@ export function checkHallucination(
     id: 'hallucination',
     pass: offenders.length === 0,
     summary: offenders.length === 0
-      ? `every major star named in the ${verified} parsed palace headings is in that palace`
-      : `${offenders.length} misplacement(s) across ${verified} parsed palace headings`,
+      ? `every major star named in ${verified} palace headings and ${citations} citations is in that palace`
+      : `${offenders.length} misplacement(s) across ${verified} palace headings and ${citations} citations`,
     offenders,
     notes: notes.length ? notes : undefined,
   };
@@ -298,6 +475,18 @@ export function palaceHeadings(reading: string): string[] {
   const body = reading.slice(secs[i].at, secs[i + 1]?.at);
   const deeper = new RegExp(`^#{${sectionLevel(reading) + 1},6}[ \\t]+(.+)$`, 'gm');
   return [...body.matchAll(deeper)].map((m) => m[1]);
+}
+
+/**
+ * The citation lines — D1.
+ *
+ * Every substantive judgement carries one, naming the cung and the sao it
+ * rests on. They are markdown blockquotes, which is the seam the reader
+ * already renders: `renderMarkdown` in `Interpretation.tsx` turns a `>` line
+ * into the `.sealq` block that P0–P4 built and left empty.
+ */
+export function citationLines(reading: string): string[] {
+  return [...reading.matchAll(/^>[ \t]*(.+)$/gm)].map((m) => m[1].trim()).filter(Boolean);
 }
 
 // ── 2. Coverage ─────────────────────────────────────────────────────────────
@@ -474,8 +663,33 @@ export interface StructureExpectation {
  * would fail a correct reading.
  */
 export function checkStructure(reading: string, expect: StructureExpectation): CheckResult {
-  const found = numberedSections(reading).map((s) => s.n);
+  const sections = numberedSections(reading);
+  const found = sections.map((s) => s.n);
   const offenders: string[] = [];
+
+  // D1 — the citation lines have to be THERE for check 1's verdict on them to
+  // mean anything. Accuracy is check 1's job; this is presence, which is a
+  // question about the reading's shape.
+  //
+  // Sections 4-7 are the prose judgement sections, where a standalone citation
+  // line is the right form. **8 and 9 are deliberately not gated**: they are
+  // itemised forecasts — ten predictions and twelve lunar months — and the
+  // template already requires their evidence per item and inline (self-check
+  // □12 "≥2 căn cứ sao/cung" per prediction, □13 per month). Twenty-two
+  // blockquotes interleaved through two lists is not the same instruction, and
+  // no locale read it that way on the D1 run.
+  //
+  // The prompt asks for two citations per section. This asks for one, on
+  // purpose: the check should fail a section that cites NOTHING, not police
+  // the difference between one and two.
+  for (let i = 0; i < sections.length; i++) {
+    const n = sections[i].n;
+    if (n < 4 || n > 7) continue;
+    const body = reading.slice(sections[i].at, sections[i + 1]?.at);
+    if (citationLines(body).length === 0) {
+      offenders.push(`section ${n} makes its judgements with no citation line`);
+    }
+  }
 
   const required = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   if (expect.bazi) required.push(10);

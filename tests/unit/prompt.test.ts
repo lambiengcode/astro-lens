@@ -3,7 +3,13 @@ import { _test as cacheInternals } from '@/lib/gemini-cache';
 import { getPrompt, renderTask } from '@/lib/prompt';
 import { buildAnalysisPrompt } from '@/lib/gemini';
 import { FIXTURE_INPUT, FIXTURE_RESULT } from '@/lib/fixture';
-import { LOCALES, DEFAULT_LOCALE, normalizeLocale, localeFromAcceptLanguage } from '@/lib/i18n/locales';
+import { LOCALES, DEFAULT_LOCALE, normalizeLocale, localeFromAcceptLanguage, type Locale } from '@/lib/i18n/locales';
+import { VOCABULARY, term } from '@/lib/i18n/vocabulary';
+import { splitCitation } from '@/lib/citation';
+
+const PALACE_NAMES = (locale: Locale) => Object.values(VOCABULARY)
+  .filter((row) => row[0] === 'palace')
+  .map((row) => term(row[1], locale, 'palace'));
 
 // ============================================================
 // TEST 9 — the Gemini cache key varies by locale. PLAN.md §13b.7
@@ -50,8 +56,16 @@ describe('prompt packs', () => {
       expect(headings).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
     });
 
-    it(`${locale}: keeps the seventeen-point self-check`, () => {
-      expect(pack.task.match(/^□ \d+\./gm)?.length).toBe(17);
+    it(`${locale}: keeps the eighteen-point self-check`, () => {
+      expect(pack.task.match(/^□ \d+\./gm)?.length).toBe(18);
+    });
+
+    it(`${locale}: demands a citation line and shows its exact form`, () => {
+      // D1. The rule lives in the TASK, not `system` — `system` is inside the
+      // per-locale context cache and an edit to it would be silently ignored.
+      const task = pack.task;
+      expect(task).toMatch(/^> .+ · .+$/m);   // the worked example
+      expect(task).toMatch(/^□ 16\./m);       // and the self-check that gates it
     });
 
     it(`${locale}: keeps the [A]–[K] reasoning pass`, () => {
@@ -110,8 +124,10 @@ describe('conditional sections are structural', () => {
       expect(out).not.toMatch(/^##\s*11\./m);
       expect(out).not.toMatch(/^\[J\]/m);
       expect(out).not.toMatch(/^\[K\]/m);
-      expect(out).not.toMatch(/^□ 16\./m);
       expect(out).not.toMatch(/^□ 17\./m);
+      expect(out).not.toMatch(/^□ 18\./m);
+      // 16 is the citation check: unconditional, so the list stays contiguous
+      expect(out).toMatch(/^□ 16\./m);
       // and the nine that are always required survive intact
       expect([...out.matchAll(/^##\s*(\d+)\./gm)].map((m) => Number(m[1])))
         .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
@@ -123,7 +139,7 @@ describe('conditional sections are structural', () => {
         .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
       expect([...out.matchAll(/^\[([A-K])\]/gm)].map((m) => m[1]))
         .toEqual(['A','B','C','D','E','F','G','H','I','J','K']);
-      expect(out.match(/^□ \d+\./gm)).toHaveLength(17);
+      expect(out.match(/^□ \d+\./gm)).toHaveLength(18);
     });
 
     it(`${locale}: Bazi only — section 10 kept, 11 dropped`, () => {
@@ -216,6 +232,32 @@ describe('classical sources are cited in the reader own conventions', () => {
   });
 });
 
+// P7 step 3 — D1. The citation is only worth having if it is checkable, which
+// means one palace per line and stars that are really in it.
+describe('the citation rule is stated in terms the checker can verify', () => {
+  for (const locale of LOCALES) {
+    const task = getPrompt(locale).task;
+
+    it(`${locale}: the worked example shows the two-palace form`, () => {
+      // The design's own citation names the cung and its đối cung, each with
+      // its own stars — see the segmentation note in tests/eval/checks.ts. An
+      // example showing only one palace taught a shape the reference does not
+      // use, and the model wrote two-palace citations regardless.
+      const example = /^> (.+)$/m.exec(task)?.[1];
+      expect(example, 'a worked example').toBeDefined();
+      const named = PALACE_NAMES(locale).filter((n) => example!.includes(n));
+      expect(named.length, `example cites: ${example}`).toBeGreaterThanOrEqual(2);
+      expect(example!.split('·').length).toBeGreaterThanOrEqual(3);
+    });
+
+    it(`${locale}: reserves the blockquote marker for citations`, () => {
+      // zh-Hans wrote its per-palace one-line summaries as "> " blockquotes,
+      // which land in the .sealq citation block and cite nothing.
+      expect(task).toMatch(/(CHỈ dùng cho dẫn chứng|只用于引证|只用於引證|전거에만|for citations only)/);
+    });
+  }
+});
+
 describe('locale resolution', () => {
   it('accepts the exact tags and the region forms browsers send', () => {
     expect(normalizeLocale('vi')).toBe('vi');
@@ -240,5 +282,37 @@ describe('locale resolution', () => {
     expect(localeFromAcceptLanguage('en;q=0.5, ko;q=0.9')).toBe('ko');
     expect(localeFromAcceptLanguage('fr-FR')).toBe(null);
     expect(localeFromAcceptLanguage(null)).toBe(null);
+  });
+});
+
+
+// P7 step 3 — the chat's citation goes in its own `.cite` row, so it has to be
+// separated from the answer text rather than left as a literal ">" in prose.
+describe('splitCitation', () => {
+  it('peels a trailing citation off the answer', () => {
+    const { reply, cite } = splitCitation(
+      'Năm nay hợp chuyển việc.\n\n> Cung Quan Lộc · Vũ Khúc (Miếu) · Hóa Khoa',
+    );
+    expect(reply).toBe('Năm nay hợp chuyển việc.');
+    expect(cite).toBe('Cung Quan Lộc · Vũ Khúc (Miếu) · Hóa Khoa');
+  });
+
+  it('joins a citation the model split over two lines', () => {
+    const { reply, cite } = splitCitation('Trả lời.\n> Cung Mệnh · Liêm Trinh\n> Cung Thiên Di · Thiên Tướng');
+    expect(reply).toBe('Trả lời.');
+    expect(cite).toBe('Cung Mệnh · Liêm Trinh · Cung Thiên Di · Thiên Tướng');
+  });
+
+  it('leaves a mid-answer quote alone — that is the model quoting, not citing', () => {
+    const text = 'Sách viết:\n> Tham Vũ mộ trung cư\nNghĩa là muộn phát.';
+    expect(splitCitation(text)).toEqual({ reply: text });
+  });
+
+  it('returns the answer unchanged when the model did not cite', () => {
+    expect(splitCitation('  Không có dẫn chứng.  ')).toEqual({ reply: 'Không có dẫn chứng.' });
+  });
+
+  it('does not leave an empty citation behind a bare angle bracket', () => {
+    expect(splitCitation('Trả lời.\n>   ').cite).toBeUndefined();
   });
 });

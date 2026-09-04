@@ -221,11 +221,12 @@ STEP 2 — SELF-CHECK (do NOT print)
 □ 13. Do all twelve lunar months have their cycle + transformations + dominant domain + advice?
 □ 14. Is the whole reading 5000 words or more, deep enough, never cursory?
 □ 15. Is there no repetition between sections — does each carry its own view?
+□ 16. Do sections 4-9 each carry at least two "> " citation lines, each naming one palace, with stars that match the data?
 ⟦BAZI⟧
-□ 16. Has the Ba Zi been analysed (where the data exists) — Day Master, strength, favourable element, comparison with Zi Wei?
+□ 17. Has the Ba Zi been analysed (where the data exists) — Day Master, strength, favourable element, comparison with Zi Wei?
 ⟦/BAZI⟧
 ⟦SELF⟧
-□ 17. Has the self-description been compared (where present) — matches + mismatches + explanation?
+□ 18. Has the self-description been compared (where present) — matches + mismatches + explanation?
 ⟦/SELF⟧
 
 Only when every applicable point holds → begin writing.
@@ -235,6 +236,19 @@ This reading is in English. Cite classical texts and verses by their standard En
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 STEP 3 — WRITE THE READING (this is the output)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+━━━ CITATIONS — REQUIRED ━━━
+Every substantive judgement carries ONE citation line of its own, beginning "> ", in exactly this form:
+
+> Spouse Palace (Phu Thê) · Tian Fu (gained) [Merit] · opposed by Career Palace (Quan Lộc) · Qi Sha (exalted) — a steady partner, but a shared life unsettled by work.
+
+Rules, without exception:
+- Name the palace FIRST, then the stars that sit IN it. If the judgement also rests on the opposite or trine palace, name that palace and only then its stars — NEVER attribute a star to a palace it is not in.
+- "> " is for citations only. A one-line summary, a quotation from a classic, or a note must not be written as "> ".
+- Name only stars that ACTUALLY sit in that palace per the chart data above. For an empty palace, name the opposite palace's stars and write "borrowed from [palace]".
+- A citation naming a star that is not in that palace is WORSE than no citation at all. If unsure, leave the line out.
+- Sections 4 through 9 each carry at least two citation lines.
+- A citation line stands alone; never put one inside a bullet list.
 
 ---
 
