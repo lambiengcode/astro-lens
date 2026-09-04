@@ -14,7 +14,6 @@ import { runChecks, type CheckResult } from './checks';
 //   npm run eval -- --tag baseline    label the run (EVAL.md and out/ folder)
 //   npm run eval -- --reuse           re-run the CHECKS on saved readings,
 //                                     spending no API quota
-//   PROMPT_FORMAT=toon npm run eval   run the TOON arm (P6 Part B)
 //
 // Deliberately NOT wired into `npm run test` or CI. A full run is ten model
 // calls at roughly three minutes each; that is real time and real quota, and it
@@ -172,7 +171,6 @@ function report(rows: Row[], elapsed: number): string {
   L.push(`Produced by \`npm run eval\`; see \`tests/eval/\`. **Not** part of`);
   L.push(`\`npm run test\` — a full run is ${rows.length} model calls and real quota.`, '');
   L.push(`- **Run:** \`${tag}\`${reuse ? ' (checks re-run on saved readings, no API calls)' : ''}`);
-  L.push(`- **Prompt format:** \`${process.env.PROMPT_FORMAT === 'toon' ? 'toon' : 'text'}\``);
   L.push(`- **When:** ${when} UTC`);
   L.push(`- **Wall clock:** ${(elapsed / 60).toFixed(1)} min at concurrency ${concurrency}`);
   L.push(`- **Readings:** \`tests/eval/out/${tag}/\` — every one saved, so a failure can be read`);

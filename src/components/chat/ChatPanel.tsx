@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { ChartData } from '@/types';
 import { useI18n } from '@/lib/i18n/context';
+import { renderMarkdown } from '@/lib/markdown';
 
 interface ChatMessage {
   role: 'user' | 'ai';
@@ -18,15 +19,6 @@ interface ChatPanelProps {
   /** `inline` sits in the vận hạn column; `floating` is the FAB panel. */
   variant?: 'inline' | 'floating';
   onClose?: () => void;
-}
-
-
-function renderMarkdownInline(text: string): string {
-  return text
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/\n/g, '<br/>');
 }
 
 export default function ChatPanel({ chart, name, variant = 'floating', onClose }: ChatPanelProps) {
@@ -100,7 +92,7 @@ export default function ChatPanel({ chart, name, variant = 'floating', onClose }
             <div className="msg u" key={i}>{m.content}</div>
           ) : (
             <div className="msg a" key={i}>
-              <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(m.content) }} />
+              <div className="mbody" dangerouslySetInnerHTML={{ __html: renderMarkdown(m.content, 'bubble') }} />
               {m.cite && <span className="cite">↳ {m.cite}</span>}
             </div>
           )

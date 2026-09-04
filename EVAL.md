@@ -13,15 +13,14 @@ npm run eval                       every locale, every golden chart
 npm run eval -- --locale ko        one locale
 npm run eval -- --chart a-tuvi-ty  one chart
 npm run eval -- --reuse            re-run the CHECKS on saved readings, no quota
-PROMPT_FORMAT=toon npm run eval    the TOON arm
 ```
 
 **Deliberately not part of `npm run test` or CI.** A full run is ten model calls
 at roughly four minutes each — about twenty minutes of wall clock and real
 quota. It is run on purpose. The *checkers* are unit-tested separately and do
 run in `npm run test`, because proving a checker works should never cost an API
-call: `tests/unit/eval-checks.test.ts` (50 tests) and
-`tests/unit/toon-context.test.ts` (34 tests).
+call: `tests/unit/eval-checks.test.ts` (50 tests). The TOON encoder's own 34
+tests went with the encoder — see §4.
 
 ---
 
@@ -202,14 +201,26 @@ except that sweep covers the interface, and this is the reading.
 
 ## 4. TOON — Part B
 
+> **The code is gone; the measurement is why.** The encoder, the
+> `PROMPT_FORMAT` switch, its branch in `buildAnalysisPrompt`, the
+> `@toon-format/toon` dependency and the encoder's 34 unit tests were all
+> deleted after this section was written. Nothing was wrong with the
+> implementation — the numbers below simply say it is not worth carrying: 22.6%
+> off a context that is 4.3% of the prompt, 1.79% of the call, 0% of the wall
+> clock. **This section is the reason not to build it again.** If a future
+> change makes the chart data context a much larger share of the prompt, the
+> arithmetic in §4.3 is what to redo first; until then, re-implementing it is
+> re-running a finished experiment. Recovering the code, should that day come:
+> `git show bb38bc9:src/lib/prompt/toon-context.ts`.
+
 `@toon-format/toon` **v4.1.1**, MIT, zero dependencies — the reference
 implementation from the format's own maintainers. No format was hand-rolled;
 the brief's stop-and-report condition did not arise.
 
 Applied to **the chart data context only** (`buildToonDataContext`). Not the
 system instruction, which lives in the context cache and is not re-sent; not the
-reasoning-and-task layer; not the output. Selected with `PROMPT_FORMAT=toon`,
-**default off**, so nothing in the app changes unless it is asked for.
+reasoning-and-task layer; not the output. Was selected with `PROMPT_FORMAT=toon`,
+**default off**, so nothing in the app ever changed unless it was asked for.
 
 TOON's win is tabular arrays of uniform objects, and the twelve palaces are
 exactly that shape:
@@ -313,16 +324,16 @@ noise.**
 
 ## 6. Recommendation — Part C
 
-### Revert Part B.
+### Revert Part B. — done
 
 TOON buys **1.79% of tokens and none of the four minutes**, in exchange for a
 second encoding of the chart context that has to be kept correct alongside the
 first. That is not a good trade, and the measurement says so plainly rather than
 letting "implemented as requested" stand in for a result.
 
-Nothing needs undoing to leave things safe: `PROMPT_FORMAT` defaults to `text`,
-so **the app already behaves exactly as it did before P6**. Reverting is
-deleting, not changing:
+Nothing needed undoing to leave things safe: `PROMPT_FORMAT` defaulted to
+`text`, so **the app already behaved exactly as it did before P6**. Reverting
+was deleting, not changing, and it has since been done:
 
 ```
 src/lib/prompt/toon-context.ts        the encoder
@@ -331,6 +342,10 @@ package.json                          the @toon-format/toon dependency
 src/lib/gemini.ts                     PromptFormat, defaultPromptFormat,
                                       and the `format` parameter of buildAnalysisPrompt
 ```
+
+The unit-test count dropped by 34 with the encoder. That is the deletion, not a
+regression. A flagged-off code path rots because nothing exercises it; a
+measured negative result in a document does not.
 
 `buildAnalysisPrompt` stays — the harness needs it to count tokens, and
 measuring a reconstruction instead of the real prompt is how a token
@@ -407,7 +422,8 @@ Chinese reader's prompt literally contained:
 ```
 
 The model was quoting us back, faithfully. Fixed in all three places that
-build it (`gemini.ts`, `prompt/toon-context.ts`, `api/chat/route.ts`) by
+build it (`gemini.ts`, the since-deleted `prompt/toon-context.ts`, and
+`api/chat/route.ts`) by
 splitting on the first space only, with a regression test per locale in
 `tests/unit/prompt.test.ts`.
 

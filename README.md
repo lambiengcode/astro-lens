@@ -1,6 +1,6 @@
 # astro-lens
 
-**English** · [Tiếng Việt](README.vi.md) · [简体中文](README.zh-Hans.md)
+**English** · [Tiếng Việt](README.vi.md) · [简体中文](README.zh-Hans.md) · [繁體中文](README.zh-Hant.md) · [한국어](README.ko.md)
 
 A Tử Vi Đẩu Số (Zi Wei Dou Shu) chart calculator and reading generator. You
 enter a birth date, time and gender; the app computes the twelve-palace natal
@@ -56,7 +56,6 @@ To look at the UI without spending an API call, append `?fixture=tuvi-ty` to
 | Variable | Required | Purpose |
 |---|---|---|
 | `GEMINI_API_KEY` | for readings | Google Gemini key. Put it in `.env`, which is gitignored. Use your own — never commit a key. |
-| `PROMPT_FORMAT` | no | `toon` switches the chart data context to TOON encoding. Defaults to `text`. Measured and **not** recommended; see [EVAL.md](EVAL.md) §4. |
 | `PARITY_PORT` | no | Port for the parity harness's own dev server. Default `3100`. |
 | `SHOT_PORT` | no | Port for the screenshot harness's own dev server. Default `3200`. |
 | `SHOT_ONLY` | no | Comma-separated shot names, to re-take only some screenshots. |
@@ -72,7 +71,7 @@ To look at the UI without spending an API call, append `?fixture=tuvi-ty` to
 | `npm start` | Serves a production build. |
 | `npm run lint` | ESLint. Green means *only* the three known errors below. |
 | `npm run typecheck` | `tsc --noEmit`. |
-| `npm run test` | Vitest — 272 unit tests. Fast, no network, safe to run constantly. |
+| `npm run test` | Vitest — 245 unit tests. Fast, no network, safe to run constantly. |
 | `npm run test:watch` | The same in watch mode. |
 | `npm run parity` | Playwright. Compares twelve rendered screens against the design reference, plus per-locale layout stress and reduced-motion suites. Owns its own dev server. |
 | `npm run eval` | **Reading quality.** Real Gemini calls, ~20 minutes, real money. Never wired into `test` or CI. See below. |
@@ -134,7 +133,13 @@ Every substantive judgement in a reading carries a citation line naming the
 palace and stars behind it. In the reading these are markdown blockquotes,
 rendered into the inset blocks visible in the screenshot. In chat the answer's
 trailing citation is split off by `src/lib/citation.ts` and shown on its own
-row, because the chat bubble has no blockquote renderer.
+row, because the chat bubble deliberately does not render blockquotes.
+
+Both surfaces share one block-markdown parser, `src/lib/markdown.ts`, so an
+answer's headings and lists are laid out rather than shown as literal `###` and
+`*`. They differ only by variant: the `document` variant emits real headings and
+the `.sealq` citation block; the `bubble` variant makes a heading a bold lead-in
+line at the bubble's own size and renders a `>` line as prose.
 
 A citation may name a second palace — the đối cung is part of the evidence in
 this tradition — so anything parsing one must attribute each star to the palace
@@ -189,7 +194,7 @@ selector in the app bar. The choice is remembered in a cookie.
 
 ## Testing
 
-### `npm run test` — 272 unit tests
+### `npm run test` — 245 unit tests
 
 Relationship arithmetic, branch mapping, đại vận progress, the vocabulary
 table's completeness, the prompt packs' structure, the print variant, and the
@@ -276,11 +281,6 @@ you do not have to rediscover them.
 - **`next build` and `next dev` share `.next`.** Running a build and then a dev
   server in the same directory can leave the dev server returning 404 for every
   route. `rm -rf .next` and restart.
-- **The chat renders markdown only partially.** `renderMarkdownInline` in
-  `src/components/chat/ChatPanel.tsx` handles bold, italic and line breaks, so a
-  model answer containing headings or bullet lists shows its `###` and `*`
-  literally. It is visible in the chat screenshot above. The reading surface has
-  a fuller renderer; the chat does not share it.
 - **CJK fonts are loaded from a Google Fonts stylesheet, not `next/font`.**
   `next/font/google` has no CJK subset for the Noto families and would self-host
   every unicode-range slice at build time. The root layout links one stylesheet
@@ -288,10 +288,10 @@ you do not have to rediscover them.
 - **Vietnamese diacritics need care.** Fonts must load the `vietnamese` subset,
   and a bare `overflow: hidden` on animated Vietnamese text clips dấu nặng and
   dấu hỏi — use the padding / negative-margin pair already in `globals.css`.
-- **TOON encoding is implemented but off.** `PROMPT_FORMAT=toon` works and is
-  measured in [EVAL.md](EVAL.md) §4: it compresses the data context 22.6%, which
-  is only 4.3% of the prompt and 1.79% of total tokens, and saves no wall-clock
-  time. It is kept behind the flag pending a decision to remove it.
+- **TOON encoding was tried and removed.** [EVAL.md](EVAL.md) §4 has the
+  measurement: it compresses the chart data context 22.6%, but that context is
+  only 4.3% of the prompt, so the whole call moves 1.79% and the wall clock does
+  not move at all. Read §4 before considering it again.
 
 ---
 
@@ -314,6 +314,7 @@ src/
     chart-derived.ts   borrowed stars for empty palaces
     rel-overlay.ts     the relationship linework
     citation.ts        splits a chat answer's citation out
+    markdown.ts        the block markdown both surfaces share
     gemini.ts          prompt assembly
     gemini-cache.ts    per-locale context caches
     prompt/            the five prompt packs

@@ -697,6 +697,18 @@ textarea.inp { resize: none; line-height: 1.6; }
 .msg.u { align-self: flex-end; background: var(--n3); border: 1px solid var(--line2); color: var(--tx); }
 .msg.a { align-self: flex-start; background: var(--n1); border: 1px solid var(--line); color: var(--tx2); }
 .msg.a b, .msg.a strong { color: var(--amber); font-weight: 600; }
+/* The bubble renders the same block markdown as the reading (`renderMarkdown`,
+   variant `bubble`), so headings and lists in an answer are laid out rather
+   than shown as literal `###` and `*`. Document sizing would be wrong here:
+   the bubble stays at its own 13px, a heading is only a bold lead-in line. */
+.mbody > :first-child { margin-top: 0; }
+.mbody > :last-child { margin-bottom: 0; }
+.mbody p { margin: 0 0 7px; }
+.mbody p.mh { margin: 11px 0 4px; }
+.mbody ul { margin: 0 0 7px; padding-left: 17px; }
+.mbody li { margin-bottom: 3px; }
+.mbody li::marker { color: var(--cyan); }
+.mbody hr { border: none; border-top: 1px solid var(--line); margin: 9px 0; }
 .msg .cite {
   display: block; margin-top: 7px; padding-top: 7px; border-top: 1px solid var(--line);
   font-family: var(--font-plex-mono), var(--cjk-mono), ui-monospace, monospace;

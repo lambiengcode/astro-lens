@@ -4,7 +4,6 @@ import { getCachedContentName } from './gemini-cache';
 import { DEFAULT_LOCALE, INTL_LOCALE, type Locale } from './i18n/locales';
 import { term } from './i18n/vocabulary';
 import { getPrompt, renderTask } from './prompt';
-import { buildToonDataContext } from './prompt/toon-context';
 import type { DataLabels } from './prompt/types';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
@@ -168,21 +167,6 @@ ${selfSection}`;
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * How the chart data is encoded into the prompt. `text` is the prose form this
- * app has always used; `toon` is the P6 Part B experiment.
- *
- * A switch rather than a replacement, because Part C's acceptance bar is
- * whether TOON is worth having at all — and a measurement you cannot re-run
- * against both arms is not a measurement. `PROMPT_FORMAT=toon` selects it.
- * EVAL.md carries the numbers and the recommendation.
- */
-export type PromptFormat = 'text' | 'toon';
-
-export function defaultPromptFormat(): PromptFormat {
-  return process.env.PROMPT_FORMAT === 'toon' ? 'toon' : 'text';
-}
-
-/**
  * The complete per-request prompt: the chart's data context followed by the
  * locale's reasoning-and-task layer. The system instruction is NOT here — it
  * lives in the context cache and is not re-sent.
@@ -196,12 +180,9 @@ export function buildAnalysisPrompt(
   locale: Locale = DEFAULT_LOCALE,
   name?: string,
   selfDescription?: string,
-  format: PromptFormat = defaultPromptFormat(),
 ): string {
   const pack = getPrompt(locale);
-  const context = format === 'toon'
-    ? buildToonDataContext(chart, locale, pack.labels, name, selfDescription)
-    : buildDataContext(chart, locale, pack.labels, name, selfDescription);
+  const context = buildDataContext(chart, locale, pack.labels, name, selfDescription);
   // Sections 10 and 11 are removed from the template outright when their data
   // is absent, rather than left present with an instruction to skip them —
   // EVAL.md §3.2 measured four of five locales ignoring that instruction.

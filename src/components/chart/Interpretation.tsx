@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useI18n } from '@/lib/i18n/context';
 import { INTL_LOCALE, type Locale } from '@/lib/i18n/locales';
+import { renderMarkdown } from '@/lib/markdown';
 
 /** The paper ground. Captured images and PDF pages use the same value. */
 export const PAPER = '#fbf8f1';
@@ -16,74 +17,6 @@ interface InterpretationProps {
   generatedOn?: string;
   onExportPdf?: () => void;
   pdfExporting?: boolean;
-}
-
-const INLINE: [RegExp, string][] = [
-  [/\*\*(.+?)\*\*/g, '<strong>$1</strong>'],
-  [/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>'],
-];
-
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function inline(text: string): string {
-  return INLINE.reduce((acc, [re, to]) => acc.replace(re, to), escapeHtml(text));
-}
-
-/**
- * Block-level markdown, line by line. The previous regex chain dropped the last
- * item of any list that was not followed by a blank-line-plus-<br>, which silently
- * lost a line of the reading.
- */
-function renderMarkdown(text: string): string {
-  const out: string[] = [];
-  let list: string[] | null = null;
-  let para: string[] | null = null;
-
-  const flushList = () => {
-    if (list) { out.push(`<ul>${list.join('')}</ul>`); list = null; }
-  };
-  const flushPara = () => {
-    if (para) { out.push(`<p>${para.join('<br/>')}</p>`); para = null; }
-  };
-  const flush = () => { flushList(); flushPara(); };
-
-  for (const raw of text.split('\n')) {
-    const line = raw.trim();
-
-    if (!line) { flush(); continue; }
-
-    const heading = /^(#{1,3})\s+(.*)$/.exec(line);
-    if (heading) {
-      flush();
-      const tag = heading[1].length >= 3 ? 'h3' : 'h2';
-      out.push(`<${tag}>${inline(heading[2])}</${tag}>`);
-      continue;
-    }
-
-    if (line === '---') { flush(); out.push('<hr/>'); continue; }
-
-    const quote = /^>\s*(.*)$/.exec(line);
-    if (quote) {
-      flush();
-      out.push(`<blockquote class="sealq">${inline(quote[1])}</blockquote>`);
-      continue;
-    }
-
-    const item = /^(?:[-*]|\d+\.)\s+(.*)$/.exec(line);
-    if (item) {
-      flushPara();
-      (list ??= []).push(`<li>${inline(item[1])}</li>`);
-      continue;
-    }
-
-    flushList();
-    (para ??= []).push(inline(line));
-  }
-
-  flush();
-  return out.join('');
 }
 
 /**

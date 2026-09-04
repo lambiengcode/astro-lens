@@ -11,8 +11,8 @@ import type { StructureExpectation } from './checks';
 // Two charts, not one: a single chart cannot tell a reading that handles vô
 // chính diệu well from one that never met it. Both are FROZEN — `generateChart`
 // calls `astrolabe.horoscope(today)`, so a live chart drifts with the calendar,
-// and a baseline run and a post-TOON run must see byte-identical input or the
-// comparison means nothing.
+// and two runs being compared must see byte-identical input or the comparison
+// means nothing.
 
 export interface GoldenChart {
   id: string;

@@ -1,6 +1,6 @@
 # astro-lens
 
-[English](README.md) · [Tiếng Việt](README.vi.md) · **简体中文**
+[English](README.md) · [Tiếng Việt](README.vi.md) · **简体中文** · [繁體中文](README.zh-Hant.md) · [한국어](README.ko.md)
 
 一个紫微斗数排盘与命盘解读生成器。你输入出生日期、时辰与性别；应用在本地排出十二宫
 命盘并渲染出来，再交给 Gemini 生成一篇结构化的长篇解读。全部内容——界面、术语，以及
@@ -52,7 +52,6 @@ npm run dev                                             # http://localhost:3000
 | 变量 | 是否必需 | 用途 |
 |---|---|---|
 | `GEMINI_API_KEY` | 生成解读时必需 | Google Gemini 密钥。放进 `.env`（已被 gitignore）。请使用你自己的密钥——绝不要把密钥提交进仓库。 |
-| `PROMPT_FORMAT` | 否 | 设为 `toon` 会把命盘数据部分改用 TOON 编码。默认 `text`。已实测，**不建议**开启；见 [EVAL.md](EVAL.md) §4。 |
 | `PARITY_PORT` | 否 | 视觉比对工具自带 dev server 的端口，默认 `3100`。 |
 | `SHOT_PORT` | 否 | 截图工具自带 dev server 的端口，默认 `3200`。 |
 | `SHOT_ONLY` | 否 | 以逗号分隔的截图名称，用于只重拍其中几张。 |
@@ -68,7 +67,7 @@ npm run dev                                             # http://localhost:3000
 | `npm start` | 运行生产构建。 |
 | `npm run lint` | ESLint。「干净」的含义是*只*剩下文列出的三个已知错误。 |
 | `npm run typecheck` | `tsc --noEmit`。 |
-| `npm run test` | Vitest——272 个单元测试。快、不联网，可以随时反复跑。 |
+| `npm run test` | Vitest——245 个单元测试。快、不联网，可以随时反复跑。 |
 | `npm run test:watch` | 同上，监听模式。 |
 | `npm run parity` | Playwright。将十二个渲染出的界面与设计参照稿比对，另含各语言的布局压力测试与减弱动效测试。自带 dev server。 |
 | `npm run eval` | **解读质量评测。**真实调用 Gemini，约 20 分钟，花真钱。绝不接入 `test` 或 CI。详见下文。 |
@@ -117,7 +116,12 @@ npm run dev                                             # http://localhost:3000
 
 解读中每一项实质判断都带有一行引证，写明其依据的宫与星。在解读正文里它们是 markdown
 引用块，渲染成截图中看到的缩进区块。在追问对话里，答案末尾的引证由
-`src/lib/citation.ts` 拆出，单独占一行显示，因为对话气泡没有引用块渲染器。
+`src/lib/citation.ts` 拆出，单独占一行显示，因为对话气泡刻意不渲染引用块。
+
+两个界面共用同一个块级 markdown 解析器 `src/lib/markdown.ts`，所以答案里的标题和列表
+会被排版出来，而不是把 `###` 和 `*` 原样显示。它们只在变体上有区别：`document` 输出真正的
+标题和 `.sealq` 引证块；`bubble` 把标题变成气泡自身字号的一行加粗引导句，并把 `>` 行按
+普通正文渲染。
 
 一条引证可能写到两个宫——在这门术数里对宫本就是依据的一部分——所以任何解析引证的代码
 都必须把每颗星归给它*紧随其后*的那个宫，而不是行首的第一个宫。
@@ -165,7 +169,7 @@ npm run dev                                             # http://localhost:3000
 
 ## 测试
 
-### `npm run test` —— 272 个单元测试
+### `npm run test` —— 245 个单元测试
 
 宫位关系运算、地支映射、大限进度、术语表的完整性、提示词包的结构、打印变体，以及解读
 质量检查器本身。不联网。这是你应当频繁运行的那一个。
@@ -236,19 +240,15 @@ npm run dev                                             # http://localhost:3000
   「干净」。除此之外的任何输出都是你引入的。
 - **`next build` 与 `next dev` 共用 `.next`。**先构建再在同一目录启动 dev server，可能
   导致 dev server 对所有路由都返回 404。`rm -rf .next` 后重启即可。
-- **追问对话只渲染了部分 markdown。**`src/components/chat/ChatPanel.tsx` 中的
-  `renderMarkdownInline` 只处理粗体、斜体和换行，所以当模型的答案里含有标题或列表时，
-  `###` 和 `*` 会原样显示出来。上面的对话截图里就能看到。解读那一面有更完整的渲染器，
-  对话没有共用它。
 - **CJK 字体来自 Google Fonts 样式表，而非 `next/font`。**`next/font/google` 没有
   Noto 系列的 CJK 子集，会在构建时把每一个 unicode-range 切片都自托管一遍。根布局改为
   按当前语言引入一份样式表，后面兜底一套系统 CJK 字体栈。
 - **越南语声调符号需要留意。**字体必须加载 `vietnamese` 子集；给带动画的越南语文本直接
   加 `overflow: hidden` 会把 dấu nặng 和 dấu hỏi 裁掉——请使用 `globals.css` 里已有的
   padding／负 margin 组合。
-- **TOON 编码已实现但默认关闭。**`PROMPT_FORMAT=toon` 可用，并已在
-  [EVAL.md](EVAL.md) §4 中实测：它把数据上下文压缩了 22.6%，但那只占提示词的 4.3%、
-  总 token 的 1.79%，而且没有节省任何实际耗时。它被保留在开关之后，等待是否移除的决定。
+- **TOON 编码试过，已删除。**[EVAL.md](EVAL.md) §4 留下了实测数字：它把命盘数据上下文
+  压缩了 22.6%，但那部分只占提示词的 4.3%，整次调用因此只动了 1.79%，实际耗时纹丝不动。
+  若要重新考虑，请先读 §4。
 
 ---
 
@@ -271,6 +271,7 @@ src/
     chart-derived.ts   空宫借星
     rel-overlay.ts     宫位关系连线
     citation.ts        从对话答案中拆出引证
+    markdown.ts        两个界面共用的块级 markdown 解析器
     gemini.ts          提示词拼装
     gemini-cache.ts    按语言划分的 context cache
     prompt/            五套提示词包

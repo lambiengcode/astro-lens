@@ -1,6 +1,6 @@
 # astro-lens
 
-[English](README.md) · **Tiếng Việt** · [简体中文](README.zh-Hans.md)
+[English](README.md) · **Tiếng Việt** · [简体中文](README.zh-Hans.md) · [繁體中文](README.zh-Hant.md) · [한국어](README.ko.md)
 
 Ứng dụng lập lá số Tử Vi Đẩu Số và sinh luận giải. Bạn nhập ngày sinh, giờ sinh
 và giới tính; ứng dụng tính lá số mười hai cung ngay tại máy, hiển thị nó, rồi
@@ -55,7 +55,6 @@ hoặc `/result` — xem [lá số mẫu](#lá-số-mẫu-dành-cho-phát-triể
 | Biến | Bắt buộc | Công dụng |
 |---|---|---|
 | `GEMINI_API_KEY` | có, để luận giải | Khoá Google Gemini. Đặt trong `.env` (đã được gitignore). Dùng khoá của chính bạn — tuyệt đối không commit khoá. |
-| `PROMPT_FORMAT` | không | `toon` chuyển phần dữ liệu lá số sang mã hoá TOON. Mặc định `text`. Đã đo và **không** khuyến nghị bật; xem [EVAL.md](EVAL.md) §4. |
 | `PARITY_PORT` | không | Cổng cho dev server riêng của bộ kiểm tra đối chiếu. Mặc định `3100`. |
 | `SHOT_PORT` | không | Cổng cho dev server riêng của bộ chụp ảnh màn hình. Mặc định `3200`. |
 | `SHOT_ONLY` | không | Danh sách tên ảnh, phân tách bằng dấu phẩy, để chụp lại chỉ một số ảnh. |
@@ -71,7 +70,7 @@ hoặc `/result` — xem [lá số mẫu](#lá-số-mẫu-dành-cho-phát-triể
 | `npm start` | Chạy bản dựng production. |
 | `npm run lint` | ESLint. "Sạch" nghĩa là *chỉ* còn ba lỗi đã biết nêu bên dưới. |
 | `npm run typecheck` | `tsc --noEmit`. |
-| `npm run test` | Vitest — 272 kiểm thử đơn vị. Nhanh, không cần mạng, chạy thoải mái. |
+| `npm run test` | Vitest — 245 kiểm thử đơn vị. Nhanh, không cần mạng, chạy thoải mái. |
 | `npm run test:watch` | Như trên nhưng ở chế độ theo dõi. |
 | `npm run parity` | Playwright. Đối chiếu mười hai màn hình với bản thiết kế tham chiếu, kèm bộ kiểm tra bố cục theo từng ngôn ngữ và bộ giảm chuyển động. Tự khởi động dev server riêng. |
 | `npm run eval` | **Chất lượng bài luận giải.** Gọi Gemini thật, khoảng 20 phút, tốn tiền thật. Không bao giờ được đưa vào `test` hay CI. Xem bên dưới. |
@@ -131,7 +130,13 @@ Mỗi nhận định quan trọng trong bài luận giải đều kèm một dò
 và sao đứng sau nó. Trong bài luận giải, đó là các khối trích dẫn markdown, được
 hiển thị thành những khối thụt vào thấy trong ảnh chụp. Trong phần hỏi đáp, dẫn
 chứng ở cuối câu trả lời được `src/lib/citation.ts` tách ra và đặt trên một dòng
-riêng, vì bong bóng chat không có bộ hiển thị khối trích dẫn.
+riêng, vì bong bóng chat cố ý không hiển thị khối trích dẫn.
+
+Hai mặt dùng chung một bộ đọc markdown khối, `src/lib/markdown.ts`, nên tiêu đề
+và danh sách trong câu trả lời được dàn ra chứ không hiện `###` và `*` nguyên
+văn. Chúng chỉ khác nhau ở biến thể: `document` cho tiêu đề thật và khối dẫn
+chứng `.sealq`; `bubble` biến tiêu đề thành một dòng dẫn in đậm đúng cỡ chữ của
+bong bóng, và hiển thị dòng `>` như văn xuôi.
 
 Một dẫn chứng có thể nêu hai cung — trong môn này, cung đối là một phần của căn
 cứ — nên bất cứ đoạn mã nào phân tích dẫn chứng đều phải gán mỗi sao cho cung
@@ -188,7 +193,7 @@ bộ chọn trên thanh ứng dụng. Lựa chọn được ghi nhớ trong cook
 
 ## Kiểm thử
 
-### `npm run test` — 272 kiểm thử đơn vị
+### `npm run test` — 245 kiểm thử đơn vị
 
 Tính toán quan hệ giữa các cung, ánh xạ địa chi, tiến độ đại vận, tính đầy đủ
 của bảng thuật ngữ, cấu trúc các gói prompt, biến thể bản in, và các bộ kiểm tra
@@ -277,11 +282,6 @@ ra để bạn khỏi phải tự phát hiện lại.
 - **`next build` và `next dev` dùng chung `.next`.** Chạy build rồi chạy dev
   server trong cùng thư mục có thể khiến dev server trả 404 cho mọi route.
   `rm -rf .next` rồi khởi động lại.
-- **Phần hỏi đáp chỉ hiển thị markdown một phần.** `renderMarkdownInline` trong
-  `src/components/chat/ChatPanel.tsx` chỉ xử lý in đậm, in nghiêng và xuống dòng,
-  nên câu trả lời có tiêu đề hay danh sách sẽ hiện `###` và `*` nguyên văn. Có
-  thể thấy điều này trong ảnh chụp phần hỏi đáp ở trên. Mặt luận giải có bộ hiển
-  thị đầy đủ hơn; phần hỏi đáp không dùng chung bộ đó.
 - **Phông CJK nạp từ biểu định kiểu Google Fonts, không phải `next/font`.**
   `next/font/google` không có tập con CJK cho họ Noto và sẽ tự lưu trữ từng lát
   unicode-range lúc build. Layout gốc nạp một biểu định kiểu cho ngôn ngữ đang
@@ -290,10 +290,10 @@ ra để bạn khỏi phải tự phát hiện lại.
   `overflow: hidden` trần trụi đặt lên chữ tiếng Việt có hoạt ảnh sẽ cắt mất dấu
   nặng và dấu hỏi — hãy dùng cặp padding / margin âm đã có sẵn trong
   `globals.css`.
-- **Mã hoá TOON đã làm xong nhưng đang tắt.** `PROMPT_FORMAT=toon` chạy được và
-  đã được đo trong [EVAL.md](EVAL.md) §4: nó nén phần dữ liệu lá số 22,6%, nhưng
-  đó chỉ là 4,3% của prompt và 1,79% tổng token, và không tiết kiệm chút thời
-  gian thực nào. Nó được giữ sau cờ này trong khi chờ quyết định có gỡ hay không.
+- **Mã hoá TOON đã thử và đã gỡ.** [EVAL.md](EVAL.md) §4 giữ số đo: nó nén phần
+  dữ liệu lá số 22,6%, nhưng phần đó chỉ chiếm 4,3% của prompt, nên cả lệnh gọi
+  chỉ nhúc nhích 1,79% và thời gian thực không đổi chút nào. Hãy đọc §4 trước
+  khi tính chuyện làm lại.
 
 ---
 
@@ -316,6 +316,7 @@ src/
     chart-derived.ts   sao mượn cho cung vô chính diệu
     rel-overlay.ts     đường nối quan hệ giữa các cung
     citation.ts        tách dẫn chứng khỏi câu trả lời hỏi đáp
+    markdown.ts        bộ đọc markdown khối dùng chung hai mặt
     gemini.ts          ghép prompt
     gemini-cache.ts    context cache theo từng ngôn ngữ
     prompt/            năm gói prompt
