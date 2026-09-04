@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "parity": "node tests/parity/run.mjs",
-    "eval": "vite-node --config tests/eval/vite.config.mts tests/eval/run.ts --"
+    "eval": "vite-node --config tests/eval/vite.config.mts tests/eval/run.ts --",
+    "screenshots": "node tests/tools/screenshots.mjs"
   },
   "dependencies": {
     "@aharris02/bazi-calculator-by-alvamind": "^1.0.16",
