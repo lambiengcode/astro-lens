@@ -58,8 +58,22 @@ Two things that will save a future session real money and real embarrassment:
   in the wrong palace. `EVAL.md` §2.3 has the reasoning and the false positives
   that produced it.
 
-Known open finding: on a chart with no Bazi data, **four of five locales write
-section 10 anyway** and invent the Four Pillars. `EVAL.md` §3.2.
+Three things about the prompt that are easy to get wrong:
+
+- **Editing `pack.system` has NO EFFECT while a cache exists.** The context
+  cache is found by `displayName` only (`gemini-cache.ts`), never by comparing
+  its content, and the TTL is 90 days. A changed system instruction is
+  therefore silently ignored. Put per-request rules in `pack.task`, which is
+  sent every time — or change the cache's display name deliberately.
+- **A conditional section must be removed, not discouraged.** Sections 10 and
+  11 are wrapped in `⟦BAZI⟧` / `⟦SELF⟧` markers and stripped by `renderTask`
+  when their data is absent, because an instruction saying "skip this section"
+  was measured being ignored by four of five locales. The markers are authoring
+  syntax and never reach the model; `prompt.test.ts` asserts that.
+- **Vietnamese in a `ko`/`zh` reading is almost always OUR bug.** `term()` looks
+  up a whole value, so any code that splits a field before translating it must
+  split exactly right — a tứ hóa entry is `"<hoá> <sao>"` and the sao is usually
+  two words. Read the assembled prompt before blaming the model. `EVAL.md` §7.3.
 
 ## Before changing anything visual
 

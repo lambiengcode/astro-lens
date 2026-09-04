@@ -20,10 +20,11 @@ const CHART = FIXTURE_RESULT.chart;
 describe('check 1 — hallucination (placement)', () => {
   // Section 2 of the reading, in the shape the prompt mandates:
   // `### <palace> — <its major stars>`.
-  function section2(headings: string[]): string {
-    return `## 1. Mở đầu\n\n## 2. PHÂN TÍCH 12 CUNG\n\n`
-      + headings.map((h) => `### ${h}\n\nnội dung\n`).join('\n')
-      + `\n## 3. Ngũ hành\n`;
+  function section2(headings: string[], level = 2): string {
+    const h = '#'.repeat(level);
+    return `${h} 1. Mở đầu\n\n${h} 2. PHÂN TÍCH 12 CUNG\n\n`
+      + headings.map((x) => `${h}# ${x}\n\nnội dung\n`).join('\n')
+      + `\n${h} 3. Ngũ hành\n`;
   }
 
   /** Every palace heading, correct, in one locale. */
@@ -62,6 +63,18 @@ describe('check 1 — hallucination (placement)', () => {
     expect(r.pass, r.offenders.join('; ')).toBe(true);
     const phuThe = correctHeadings('vi').find((h) => h.startsWith('Phu Thê'))!;
     expect(phuThe).toContain('Vũ Khúc');
+  });
+
+  it('parses palace headings at whichever level the reading used', () => {
+    const r = checkHallucination(section2(correctHeadings('vi'), 3), CHART, 'vi');
+    expect(r.pass, r.offenders.join('; ')).toBe(true);
+  });
+
+  it('does not stop at a palace that happens to be numbered 3', () => {
+    // Slicing section 2 at the first `3.` heading ended it after two palaces.
+    const numbered = correctHeadings('vi').map((h, i) => `${i + 1}. ${h}`);
+    const r = checkHallucination(section2(numbered), CHART, 'vi');
+    expect(r.pass, r.offenders.join('; ')).toBe(true);
   });
 
   it('refuses to vouch for a reading whose section 2 it cannot parse', () => {
@@ -173,6 +186,15 @@ describe('check 3 — language', () => {
     expect(checkLanguage('Mệnh cung (命宮) có Tử Vi (紫微) miếu địa.', 'vi').pass).toBe(true);
   });
 
+  it("excludes the reader's own self-description, quoted back verbatim", () => {
+    // The reader wrote this in Vietnamese; returning it unaltered is correct.
+    const self = 'Ngại nhờ người khác, hay ôm việc một mình.';
+    const reading = `명궁에 자미가 있습니다. 「${self}」라고 하셨습니다. 이는 명궁의 구조와 부합합니다.`;
+    expect(checkLanguage(reading, 'ko', '', self).pass).toBe(true);
+    // …but unrelated Vietnamese is still leakage.
+    expect(checkLanguage(`명궁에 자미가 있습니다. Mệnh cung có Tử Vi rất tốt.`, 'ko', '', self).pass).toBe(false);
+  });
+
   it("excludes the subject's own name, which is not the model's to translate", () => {
     const r = checkLanguage('명궁에 자미가 있습니다. Nguyễn Minh Anh 님의 명반입니다.', 'ko', 'Nguyễn Minh Anh');
     expect(r.pass).toBe(true);
@@ -231,6 +253,35 @@ describe('check 5 — structure', () => {
     const r = checkStructure(sections([1, 2, 3, 4, 5, 6, 7, 9, 8]), { bazi: false, selfDescription: false });
     expect(r.pass).toBe(false);
     expect(r.offenders.join(' ')).toContain('out of order');
+  });
+
+  it('ignores numbered SUB-headings such as 4.1', () => {
+    // Measured: every locale writes these, and reading them as section 4 five
+    // times over reported a correct reading as "sections out of order".
+    const r = checkStructure(
+      [1,2,3,4,5,6,7,8,9].map((n) => `## ${n}. Phần ${n}\n\n### ${n}.1 Chi tiết\n\n### ${n}.2 Chi tiết\n`).join('\n'),
+      { bazi: false, selfDescription: false },
+    );
+    expect(r.pass, r.offenders.join('; ')).toBe(true);
+  });
+
+  it('does not read a NUMBERED palace heading as a section', () => {
+    // "### 10. Property Palace" under section 2 was reported as a fabricated
+    // section 10 on a chart that carried no Bazi.
+    const body = [1,2].map((n) => `## ${n}. Phần ${n}\n`).join('')
+      + [1,2,3,4,5,6,7,8,9,10,11,12].map((n) => `### ${n}. Cung số ${n}\n`).join('')
+      + [3,4,5,6,7,8,9].map((n) => `## ${n}. Phần ${n}\n`).join('');
+    const r = checkStructure(body, { bazi: false, selfDescription: false });
+    expect(r.pass, r.offenders.join('; ')).toBe(true);
+  });
+
+  it('does not care which heading LEVEL the model chose', () => {
+    // Measured: a run shifted every heading down one level. The readings were
+    // correct in substance; an earlier version of this check said they had no
+    // sections at all.
+    const deep = [1,2,3,4,5,6,7,8,9].map((n) => `### ${n}. Phần ${n}\n\nnội dung\n`).join('\n');
+    const r = checkStructure(deep, { bazi: false, selfDescription: false });
+    expect(r.pass, r.offenders.join('; ')).toBe(true);
   });
 
   it('requires 11 when a self-description was supplied', () => {

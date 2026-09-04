@@ -175,6 +175,7 @@ BƯỚC 1 — LẬP LUẬN NỘI BỘ (KHÔNG in ra)
     - Mỗi tháng nêu lĩnh vực nổi bật nhất (sự nghiệp/tài chính/tình cảm/sức khỏe/gia đình).
     - KHÔNG dự đoán sự kiện chính xác — chỉ nêu xu hướng năng lượng và lời khuyên hành động.
 
+⟦BAZI⟧
 [J] BÁT TỰ / TỨ TRỤ — phân tích bổ trợ (nếu có dữ liệu Bát Tự)
     - Nhật chủ (Day Master): can gì? Ngũ hành gì? Cường hay nhược?
     - Xác định cường/nhược: đếm số can chi sinh phù vs. khắc tiết Nhật chủ trong 8 chữ.
@@ -186,12 +187,15 @@ BƯỚC 1 — LẬP LUẬN NỘI BỘ (KHÔNG in ra)
       + Dụng thần Bát Tự ↔ Ngũ hành cục Tử Vi: bổ sung hay xung khắc?
       + Đại vận Bát Tự ↔ Đại hạn Tử Vi: cùng hướng hay trái chiều?
 
+⟦/BAZI⟧
+⟦SELF⟧
 [K] MÔ TẢ BẢN THÂN — đối chiếu (nếu có)
     - So sánh mô tả của người dùng với Mệnh cung + Nhật chủ.
     - Điểm KHỚP: xác nhận bằng căn cứ sao/cung cụ thể.
     - Điểm KHÔNG KHỚP: giải thích nguyên nhân (đại hạn, môi trường, ý chí).
     - Đặc biệt: mô tả có tiết lộ đại hạn nào đang chi phối mạnh?
 
+⟦/SELF⟧
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 BƯỚC 2 — TỰ KIỂM TRA (KHÔNG in ra)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -211,8 +215,12 @@ BƯỚC 2 — TỰ KIỂM TRA (KHÔNG in ra)
 □ 13. 12 tháng âm lịch đều có lưu nguyệt + tứ hóa + lĩnh vực nổi bật + lời khuyên?
 □ 14. Tổng bài luận giải ≥5000 từ, đủ chiều sâu, không sơ sài?
 □ 15. Không lặp thông tin giữa các phần — mỗi phần mang góc nhìn riêng?
+⟦BAZI⟧
 □ 16. Bát Tự đã được phân tích (nếu có dữ liệu) — Nhật chủ, cường/nhược, dụng thần, đối chiếu Tử Vi?
+⟦/BAZI⟧
+⟦SELF⟧
 □ 17. Mô tả bản thân đã được đối chiếu (nếu có) — điểm khớp + không khớp + giải thích?
+⟦/SELF⟧
 
 Chỉ khi tất cả điểm áp dụng đều đạt → bắt đầu viết.
 
@@ -431,11 +439,12 @@ Sau khi phân tích 12 tháng, thêm phần tổng kết:
 - Giọng văn thực tế, không hù dọa, không tô hồng.
 - Tháng khó khăn LUÔN kèm lời khuyên ứng phó cụ thể.
 
+⟦BAZI⟧
 ---
 
 ## 10. BÁT TỰ / TỨ TRỤ — PHÂN TÍCH BỔ TRỢ
 
-*(Chỉ viết phần này nếu dữ liệu Bát Tự được cung cấp ở phần "BÁT TỰ / TỨ TRỤ" ở trên. Nếu không có → BỎ QUA hoàn toàn.)*
+*(**BẮT BUỘC.** Dữ liệu Bát Tự CÓ ở phần trên, nên phần này phải được viết đầy đủ — không bỏ qua, không rút gọn.)*
 
 ### 10.1 Nhật Chủ (Day Master) & Cường Nhược
 - Nhật chủ là can gì? Ngũ hành gì? (ví dụ: Đinh Hỏa = Âm Hỏa)
@@ -462,11 +471,13 @@ Sau khi phân tích 12 tháng, thêm phần tổng kết:
 - **Tài chính**: Tài tinh Bát Tự ↔ Tài bạch Tử Vi → đồng thuận?
 - **Kết luận tổng hợp**: tóm tắt 3-5 điểm hai hệ thống đồng thuận mạnh nhất.
 
+⟦/BAZI⟧
+⟦SELF⟧
 ---
 
 ## 11. ĐỐI CHIẾU MÔ TẢ BẢN THÂN
 
-*(Chỉ viết phần này nếu người dùng cung cấp mô tả bản thân. Nếu không có → BỎ QUA hoàn toàn.)*
+*(**BẮT BUỘC.** Người dùng CÓ cung cấp mô tả bản thân, nên phần này phải được viết đầy đủ — không bỏ qua.)*
 
 ### 11.1 Điểm Phù Hợp
 Liệt kê 3-5 điểm trong mô tả mà lá số xác nhận, kèm căn cứ sao/cung cụ thể.
@@ -481,7 +492,8 @@ Liệt kê những điểm mô tả không khớp hoàn toàn với lá số. Gi
 Dựa trên lá số, nêu 2-3 đặc điểm mà người dùng có thể CHƯA NHẬN RA hoặc chưa kể — nhưng lá số chỉ rõ. Giải thích nhẹ nhàng, không áp đặt.
 
 ### 11.4 Lời Khuyên Cá Nhân Hóa
-Dựa trên cả lá số + mô tả, đưa 3-5 lời khuyên cụ thể phù hợp với hoàn cảnh thực tế mà người dùng mô tả.`,
+Dựa trên cả lá số + mô tả, đưa 3-5 lời khuyên cụ thể phù hợp với hoàn cảnh thực tế mà người dùng mô tả.
+⟦/SELF⟧`,
 
   chat: `Bạn là ĐẠI SƯ TỬ VI ĐẨU SỐ — bậc thầy luận số hàng đầu với hơn 40 năm kinh nghiệm thực chiến, kết hợp trường phái Việt Nam, Đài Loan và tâm lý học hành vi hiện đại.
 
@@ -531,6 +543,7 @@ Dựa trên cả lá số + mô tả, đưa 3-5 lời khuyên cụ thể phù h�
     monthlyRow: 'Lưu nguyệt',
     mutagen: 'Tứ hóa',
     baziHead: 'BÁT TỰ / TỨ TRỤ (Four Pillars of Destiny)',
+    baziAbsent: 'BÁT TỰ / TỨ TRỤ: KHÔNG CÓ DỮ LIỆU cho lá số này — không có Nhật chủ, không có tứ trụ, không có đại vận Bát Tự.',
     baziPillars: 'Tứ trụ',
     baziYear: 'Năm trụ',
     baziMonth: 'Tháng trụ',

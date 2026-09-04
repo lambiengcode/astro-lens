@@ -351,3 +351,121 @@ and two bugs in itself. It costs nothing until it is run.
 3. **Then D1**, which upgrades check 1 from "the section-2 headings are right"
    to "every claim in the reading is traceable", using the seam that is already
    built and tested.
+
+---
+
+## 7. P7 step 2 — the two fixes, and what they moved
+
+Run tags on disk: `baseline` (unchanged, the readings from §3) and `p7-step2`.
+**Both were re-scored with the same checker**, for the reason in §7.4 — a
+before/after where the two sides were measured differently is not a
+measurement.
+
+### 7.1 The result
+
+| Check | Baseline | After step 2 | |
+|---|---:|---:|---|
+| 1 · hallucination | 10/10 | **9/10** | ▼ one worse |
+| 2 · coverage | 10/10 | 10/10 | — |
+| 3 · language | 7/10 | **10/10** | ▲ fixed |
+| 4 · length | 10/10 | 10/10 | — |
+| 5 · structure | 5/10 | **10/10** | ▲ fixed |
+| **Cells passing all five** | **3/10** | **9/10** | |
+
+### 7.2 Section 10 — fixed, and the instruction was never the problem
+
+§3.2: four of five locales wrote a Bát Tự section and invented the Four Pillars
+for a chart that carries none, *despite* the prompt saying to skip it. The fix
+is that the conditional is now **structural** — `renderTask()` in
+`src/lib/prompt/index.ts` deletes the `⟦BAZI⟧` and `⟦SELF⟧` regions from the
+task before it is sent, so on a chart with no Bát Tự the model never sees
+section 10's heading, its `[J]` reasoning step, or its `□ 16` self-check line.
+There is nothing left to copy.
+
+Two smaller things went with it, both from reading the failures rather than
+guessing:
+
+- The data context now **states the absence** (`labels.baziAbsent`) instead of
+  leaving a silence where the Bazi block used to be. Silence is what got filled
+  in.
+- Sections 10 and 11, when they *are* present, carry a mandatory subtitle. They
+  were the only conditional sections and read as optional throughout.
+
+Structure went 5/10 → 10/10. No cell fabricates a section it was not given data
+for.
+
+### 7.3 The language failures were **our bug**, not the model's
+
+§3.3 read as the model lapsing into Vietnamese. It was not. A tứ hóa entry is
+`"<transformation> <star>"`, and a star name is usually two words
+(`"Lộc Thiên Đồng"`). `mutagenList` split on **every** space and looked each
+word up in the vocabulary alone, so no multi-word star ever matched and a
+Chinese reader's prompt literally contained:
+
+```
+四化: 禄 Thiên Đồng · 权 Thiên Cơ
+```
+
+The model was quoting us back, faithfully. Fixed in all three places that
+build it (`gemini.ts`, `prompt/toon-context.ts`, `api/chat/route.ts`) by
+splitting on the first space only, with a regression test per locale in
+`tests/unit/prompt.test.ts`.
+
+The second half was real: the model cited *Tử Vi Đẩu Số Toàn Thư* in Vietnamese
+romanisation to a Korean reader. The rule against that had to go in the **task**
+layer, not `system` — `system` lives in the per-locale context cache and an edit
+to it does nothing while that cache exists.
+
+Language went 7/10 → 10/10.
+
+### 7.4 What got worse, and it is not nothing
+
+**Hallucination went 10/10 → 9/10.** `a-tuvi-ty` at `ko` heads 형제궁 as
+borrowing 천기 · 천량. It borrows 태양 · 거문 — 천기 · 천량 sit in 질액궁. The
+đối cung is wrong.
+
+This is the same failure the baseline produced on chart B (§3, chart-B
+finding), in a different cell: the model is intermittently wrong about which
+palace an empty palace borrows from. Nothing in step 2 addresses it, and one
+cell is not enough to call it a regression rather than variance — but it moved
+in the wrong direction and it is the failure D1 exists to catch, so it is
+recorded as a miss, not explained away.
+
+`b-vcd-tan` at `ko` errored on the first pass (transport) and was re-run
+single-cell into the same tag. Same prompt, same code.
+
+### 7.5 The checker had a third bug, and it flattered nothing
+
+The run first scored **6/10**, with `a-tuvi-ty` at `vi` reported as having no
+sections at all. It had all of them: the model had shifted every heading down
+one level (`###` for sections, `####` for palaces), and the checks matched a
+fixed `##`.
+
+Heading *level* is not part of the contract; the *relative* level is. Widening
+the regex to `#{2,4}` was worse than the bug — it read `#### 4.1` as section 4
+five times over ("sections out of order"), and `### 10. Property Palace` inside
+section 2 as a fabricated section 10 on a chart with no Bazi. It also sliced
+section 2 shut at `#### 3. 夫妻宮`, seeing 2 palaces of 12.
+
+The checks now find sections by **shape**: a numbered heading is `#…# <n>.`
+followed by a space (which excludes `4.1`), and the sections are those at the
+shallowest numbered level (which excludes a numbered palace nested under
+section 2). Everything deeper inside section 2 is a palace heading. Four
+regression tests, one per shape the model actually produced.
+
+Both sides of §7.1 were re-scored with the corrected checker, and it is worth
+saying which way that cut:
+
+| | old checker (fixed `##`) | widened `#{2,4}` | corrected |
+|---|---:|---:|---:|
+| `baseline` | 3/10 | — | **3/10** |
+| `p7-step2` | 6/10 | 1/10 | **9/10** |
+
+**The baseline did not move.** Its readings happen not to contain the shapes
+that tripped the old checker, so re-scoring it returned the §3 numbers
+unchanged, check for check. The whole correction lands on the after-run, which
+is the uncomfortable direction — a checker bug that only ever flattered the
+new work would be the one to distrust. The evidence that it is a real bug and
+not a convenient one is in the readings themselves: `a-tuvi-ty` at `vi` is
+47KB with all nine sections and all twelve palaces correctly placed, and the
+old checker called it structureless.

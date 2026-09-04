@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { _test as cacheInternals } from '@/lib/gemini-cache';
-import { getPrompt } from '@/lib/prompt';
+import { getPrompt, renderTask } from '@/lib/prompt';
+import { buildAnalysisPrompt } from '@/lib/gemini';
+import { FIXTURE_INPUT, FIXTURE_RESULT } from '@/lib/fixture';
 import { LOCALES, DEFAULT_LOCALE, normalizeLocale, localeFromAcceptLanguage } from '@/lib/i18n/locales';
 
 // ============================================================
@@ -84,6 +86,134 @@ describe('prompt packs', () => {
       });
     }
   }
+});
+
+// ============================================================
+// P7 step 2 — sections 10 and 11 are REMOVED, not merely discouraged.
+//
+// EVAL.md §3.2: on a chart with no Bazi data, four of five locales wrote
+// section 10 anyway and invented the Four Pillars, despite the prompt saying
+// to skip it. An instruction the model can talk itself past is not a
+// constraint, so the conditional is structural now.
+// ============================================================
+
+describe('conditional sections are structural', () => {
+  const NEITHER = { bazi: false, selfDescription: false };
+  const BOTH = { bazi: true, selfDescription: true };
+
+  for (const locale of LOCALES) {
+    const task = getPrompt(locale).task;
+
+    it(`${locale}: with no Bazi and no self-description, 10 and 11 do not exist`, () => {
+      const out = renderTask(task, NEITHER);
+      expect(out).not.toMatch(/^##\s*10\./m);
+      expect(out).not.toMatch(/^##\s*11\./m);
+      expect(out).not.toMatch(/^\[J\]/m);
+      expect(out).not.toMatch(/^\[K\]/m);
+      expect(out).not.toMatch(/^□ 16\./m);
+      expect(out).not.toMatch(/^□ 17\./m);
+      // and the nine that are always required survive intact
+      expect([...out.matchAll(/^##\s*(\d+)\./gm)].map((m) => Number(m[1])))
+        .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    });
+
+    it(`${locale}: with both, all eleven sections and [A]–[K] are present`, () => {
+      const out = renderTask(task, BOTH);
+      expect([...out.matchAll(/^##\s*(\d+)\./gm)].map((m) => Number(m[1])))
+        .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+      expect([...out.matchAll(/^\[([A-K])\]/gm)].map((m) => m[1]))
+        .toEqual(['A','B','C','D','E','F','G','H','I','J','K']);
+      expect(out.match(/^□ \d+\./gm)).toHaveLength(17);
+    });
+
+    it(`${locale}: Bazi only — section 10 kept, 11 dropped`, () => {
+      const out = renderTask(task, { bazi: true, selfDescription: false });
+      expect(out).toMatch(/^##\s*10\./m);
+      expect(out).not.toMatch(/^##\s*11\./m);
+      expect(out).toMatch(/^\[J\]/m);
+      expect(out).not.toMatch(/^\[K\]/m);
+    });
+
+    it(`${locale}: self-description only — section 11 kept, 10 dropped`, () => {
+      const out = renderTask(task, { bazi: false, selfDescription: true });
+      expect(out).not.toMatch(/^##\s*10\./m);
+      expect(out).toMatch(/^##\s*11\./m);
+    });
+
+    it(`${locale}: no authoring marker ever reaches the model`, () => {
+      for (const has of [NEITHER, BOTH, { bazi: true, selfDescription: false },
+                         { bazi: false, selfDescription: true }]) {
+        const out = renderTask(task, has);
+        expect(out, JSON.stringify(has)).not.toMatch(/⟦/);
+        expect(out, JSON.stringify(has)).not.toMatch(/⟧/);
+      }
+    });
+  }
+
+  it('the assembled prompt drops section 10 for a chart with no Bazi', () => {
+    // The fixture carries no Bazi and FIXTURE_INPUT no self-description.
+    const chart = FIXTURE_RESULT.chart;
+    expect(chart.bazi).toBeUndefined();
+    const prompt = buildAnalysisPrompt(chart, 'vi', FIXTURE_INPUT.name);
+    expect(prompt).not.toMatch(/^##\s*10\./m);
+    expect(prompt).not.toMatch(/⟦/);
+  });
+
+  it('the assembled prompt STATES the absence instead of leaving a silence', () => {
+    const prompt = buildAnalysisPrompt(FIXTURE_RESULT.chart, 'vi', FIXTURE_INPUT.name);
+    expect(prompt).toContain(getPrompt('vi').labels.baziAbsent);
+  });
+
+  it('a self-description brings section 11 back', () => {
+    const prompt = buildAnalysisPrompt(
+      FIXTURE_RESULT.chart, 'vi', FIXTURE_INPUT.name, 'Tôi hay ôm việc một mình.',
+    );
+    expect(prompt).toMatch(/^##\s*11\./m);
+    expect(prompt).not.toMatch(/^##\s*10\./m);
+  });
+});
+
+// P7 step 2 — the data context itself was leaking Vietnamese. A tứ hóa entry
+// is "<transformation> <star>", and the star is usually two words
+// ("Thiên Đồng"); splitting on every space looked each word up alone, so no
+// multi-word star ever matched the vocabulary and a Chinese reader's prompt
+// literally said `四化: 禄 Thiên Đồng`. The model was quoting us back.
+describe('the data context carries no Vietnamese into another locale', () => {
+  const VI = /[ăâđêôơư]/i;
+
+  for (const locale of LOCALES.filter((l) => l !== 'vi' && l !== 'en')) {
+    it(`${locale}: tứ hóa entries are fully translated`, () => {
+      const chart = FIXTURE_RESULT.chart;
+      // The fixture's yearly mutagens are multi-word: "Lộc Thiên Đồng".
+      expect(chart.horoscope?.yearly.mutagen.join(' ')).toMatch(/Thiên Đồng/);
+      const prompt = buildAnalysisPrompt(chart, locale, FIXTURE_INPUT.name);
+      const line = prompt.split('\n').find((l) => l.includes(getPrompt(locale).labels.yearlyRow));
+      expect(line, 'yearly horoscope line').toBeDefined();
+      expect(VI.test(line!), `leaked: ${line}`).toBe(false);
+    });
+
+    it(`${locale}: no Vietnamese anywhere in the assembled data context`, () => {
+      const prompt = buildAnalysisPrompt(FIXTURE_RESULT.chart, locale, 'X');
+      // The data context is everything before the task layer's first banner.
+      const context = prompt.slice(0, prompt.indexOf('━━━━'));
+      const offenders = context.split('\n').filter((l) => VI.test(l));
+      expect(offenders).toEqual([]);
+    });
+  }
+});
+
+// P7 step 2 — the model cited a classical text in Vietnamese romanisation to a
+// Korean reader (EVAL.md §3.3). The rule lives in the TASK layer, which is sent
+// per request; `system` lives in the context cache and would not take effect.
+describe('classical sources are cited in the reader own conventions', () => {
+  for (const locale of LOCALES.filter((l) => l !== 'vi')) {
+    it(`${locale}: the task forbids Vietnamese romanisation of classical texts`, () => {
+      expect(getPrompt(locale).task).toContain('Tử Vi Đẩu Số Toàn Thư');
+    });
+  }
+  it('vi does not carry the rule, having no reason to', () => {
+    expect(getPrompt('vi').task).not.toContain('Tham Vũ mộ trung cư');
+  });
 });
 
 describe('locale resolution', () => {

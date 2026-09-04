@@ -3,7 +3,7 @@ import type { ChartData } from '@/types';
 import { getCachedContentName } from './gemini-cache';
 import { DEFAULT_LOCALE, INTL_LOCALE, type Locale } from './i18n/locales';
 import { term } from './i18n/vocabulary';
-import { getPrompt } from './prompt';
+import { getPrompt, renderTask } from './prompt';
 import { buildToonDataContext } from './prompt/toon-context';
 import type { DataLabels } from './prompt/types';
 
@@ -63,7 +63,16 @@ function buildDataContext(
 
   // A tứ hóa entry is "<transformation> <star>" — both are vocabulary.
   const mutagenList = (items: string[]) =>
-    items.map((m) => m.split(' ').map((part, i) => v(part, i === 0 ? 'mutagen' : undefined)).join(' '))
+    // Split on the FIRST space only: an entry is "<tứ hóa> <star>" and a star
+    // name is usually two words ("Thiên Đồng"). Splitting on every space looked
+    // each word up alone, so no multi-word star ever matched and the Chinese
+    // and Korean data contexts carried Vietnamese — which the model then
+    // faithfully quoted back. Found by the eval, EVAL.md §4.
+    items.map((m) => {
+      const at = m.indexOf(' ');
+      if (at === -1) return v(m, 'mutagen');
+      return `${v(m.slice(0, at), 'mutagen')} ${v(m.slice(at + 1))}`;
+    })
       .join(' · ') || L.none;
 
   let horoscopeSection = '';
@@ -85,8 +94,10 @@ function buildDataContext(
     hour: '2-digit', minute: '2-digit', hour12: false,
   });
 
-  // Bazi (Four Pillars) section
-  let baziSection = '';
+  // Bazi (Four Pillars) section. When it is absent the absence is STATED:
+  // an empty space in the data context is what the model filled in with an
+  // invented Four Pillars reading (EVAL.md §3.2).
+  let baziSection = `\n━━━ ${L.baziAbsent} ━━━`;
   if (chart.bazi) {
     const b = chart.bazi;
     const toEl = (e: string) => L.elements[e as keyof typeof L.elements] || e;
@@ -191,7 +202,14 @@ export function buildAnalysisPrompt(
   const context = format === 'toon'
     ? buildToonDataContext(chart, locale, pack.labels, name, selfDescription)
     : buildDataContext(chart, locale, pack.labels, name, selfDescription);
-  return `${context}\n${pack.task}`;
+  // Sections 10 and 11 are removed from the template outright when their data
+  // is absent, rather than left present with an instruction to skip them —
+  // EVAL.md §3.2 measured four of five locales ignoring that instruction.
+  const task = renderTask(pack.task, {
+    bazi: !!chart.bazi,
+    selfDescription: !!selfDescription?.trim(),
+  });
+  return `${context}\n${task}`;
 }
 
 export async function analyzeChart(

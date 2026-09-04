@@ -128,7 +128,9 @@ async function evaluate(golden: GoldenChart, locale: Locale): Promise<Row> {
 
   const checks = runChecks({
     reading, chart: golden.chart, locale,
-    subjectName: golden.input.name, expect: golden.expect,
+    subjectName: golden.input.name,
+    selfDescription: golden.input.selfDescription,
+    expect: golden.expect,
   });
   const ok = checks.every((c) => c.pass);
   console.log(`  ${label}: ${ok ? 'PASS' : 'FAIL'} — ${checks.filter((c) => !c.pass).map((c) => c.id).join(', ') || 'all five checks'} (${seconds.toFixed(0)}s)`);

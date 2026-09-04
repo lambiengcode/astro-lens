@@ -45,6 +45,8 @@ export interface DataLabels {
   monthlyRow: string;
   mutagen: string;
   baziHead: string;
+  /** Stated when the chart carries no Bazi — silence is what got filled in. */
+  baziAbsent: string;
   baziPillars: string;
   baziYear: string;
   baziMonth: string;

@@ -77,6 +77,43 @@ function starsIn(domains: Domain[], locale: Locale): string[] {
   return [...out];
 }
 
+// ── Heading structure ───────────────────────────────────────────────────────
+//
+// Heading LEVEL is not part of the contract; the RELATIVE level is. Measured
+// across the eval runs, the model writes the same reading four different ways:
+// sections at `##` with palaces at `###`, everything shifted down one level,
+// palaces numbered (`### 10. Property Palace`) or not, and sub-headings
+// numbered `### 4.1`. All four are faithful to the template.
+//
+// So sections are found by SHAPE rather than by a fixed hash count: a numbered
+// heading is `#…# <n>.` followed by a space, which excludes `4.1`, and the
+// sections are those at the shallowest numbered level, which excludes a
+// numbered palace nested under section 2. Anything deeper than that level
+// inside section 2 is a palace heading.
+//
+// An earlier version fixed the level at `##`, and a run in which the model
+// shifted every heading down one reported readings that were correct in every
+// substantive way as having no sections at all. Widening the regex without the
+// level rule was worse: it read `#### 4.1` as section 4 and
+// `### 10. Property Palace` as section 10, inventing an out-of-order reading
+// and a fabricated Bazi section that were not there.
+
+const NUMBERED_HEADING = /^(#{1,6})[ \t]*(\d+)\.(?=[ \t]|$)/gm;
+
+/** The heading level at which this reading numbers its sections. */
+function sectionLevel(reading: string): number {
+  const levels = [...reading.matchAll(NUMBERED_HEADING)].map((m) => m[1].length);
+  return levels.length ? Math.min(...levels) : 2;
+}
+
+/** The numbered section headings, in the order written. */
+function numberedSections(reading: string): { n: number; at: number }[] {
+  const level = sectionLevel(reading);
+  return [...reading.matchAll(NUMBERED_HEADING)]
+    .filter((m) => m[1].length === level)
+    .map((m) => ({ n: Number(m[2]), at: m.index }));
+}
+
 /** The fourteen chính tinh — the stars whose placement is verified. */
 export function knownStars(locale: Locale): string[] {
   return starsIn(GATING_STAR_DOMAINS, locale);
@@ -251,14 +288,16 @@ export function checkHallucination(
   };
 }
 
-/** The `### <palace> — <stars>` lines of section 2. */
+/**
+ * The per-palace headings of section 2 — every heading BELOW the section level.
+ */
 export function palaceHeadings(reading: string): string[] {
-  const from = reading.search(/^##\s*2\./m);
-  if (from === -1) return [];
-  const rest = reading.slice(from + 1);
-  const to = rest.search(/^##\s*3\./m);
-  const body = to === -1 ? rest : rest.slice(0, to);
-  return [...body.matchAll(/^###\s+(.+)$/gm)].map((m) => m[1]);
+  const secs = numberedSections(reading);
+  const i = secs.findIndex((s) => s.n === 2);
+  if (i === -1) return [];
+  const body = reading.slice(secs[i].at, secs[i + 1]?.at);
+  const deeper = new RegExp(`^#{${sectionLevel(reading) + 1},6}[ \\t]+(.+)$`, 'gm');
+  return [...body.matchAll(deeper)].map((m) => m[1]);
 }
 
 // ── 2. Coverage ─────────────────────────────────────────────────────────────
@@ -326,9 +365,18 @@ export function checkLanguage(
   reading: string,
   locale: Locale,
   subjectName = '',
+  selfDescription = '',
 ): CheckResult {
   const offenders: string[] = [];
-  const body = subjectName ? reading.split(subjectName).join(' ') : reading;
+  // The reader's own words are not the model's prose and must not count
+  // toward "is this written in the right language" — a Korean reading that
+  // quotes a Vietnamese self-description is still a Korean reading.
+  const readerOwn = `${subjectName}\n${selfDescription}`.toLowerCase();
+  let body = reading;
+  for (const own of [subjectName, ...selfDescription.split(/[.!?\n]+/)]) {
+    const t = own.trim();
+    if (t.length > 2) body = body.split(t).join(' ');
+  }
   const { dominant, forbidsVietnamese } = SCRIPT_EXPECTATION[locale];
 
   const letters = [...body].filter((c) => /\p{L}/u.test(c));
@@ -342,11 +390,26 @@ export function checkLanguage(
   }
 
   if (forbidsVietnamese) {
-    const lines = body.split('\n');
+    // Text the READER supplied is theirs, and quoting it back verbatim is
+    // correct rather than leakage — their name, and the self-description they
+    // typed. The model quotes FRAGMENTS of it ("ôm một mình"), not whole
+    // sentences, so membership is tested per Vietnamese run rather than by
+    // stripping sentences. Measured on the P7 step 2 run, where zh-Hant was
+    // failed for returning a Chinese reader's own Vietnamese words.
+    const isQuoted = (run: string) =>
+      run.trim().length > 2 && readerOwn.includes(run.trim().toLowerCase());
+
+    // Scanned on the RAW reading, because the model quotes fragments of the
+    // reader's words rather than whole sentences, and each run is tested for
+    // membership individually below.
+    const lines = reading.split('\n');
     for (let i = 0; i < lines.length && offenders.length < 12; i++) {
-      if (VIETNAMESE.test(lines[i])) {
-        offenders.push(`line ${i + 1}: ${lines[i].trim().slice(0, 120)}`);
-      }
+      if (!VIETNAMESE.test(lines[i])) continue;
+      // Maximal Latin runs, so each quoted phrase is tested as a whole.
+      const runs = (lines[i].match(/[A-Za-zÀ-ỹ][A-Za-zÀ-ỹ0-9 ,'’-]*/g) ?? [])
+        .filter((r) => VIETNAMESE.test(r));
+      if (runs.length && runs.every(isQuoted)) continue;
+      offenders.push(`line ${i + 1}: ${lines[i].trim().slice(0, 120)}`);
     }
   }
 
@@ -411,7 +474,7 @@ export interface StructureExpectation {
  * would fail a correct reading.
  */
 export function checkStructure(reading: string, expect: StructureExpectation): CheckResult {
-  const found = [...reading.matchAll(/^##\s*(\d+)\./gm)].map((m) => Number(m[1]));
+  const found = numberedSections(reading).map((s) => s.n);
   const offenders: string[] = [];
 
   const required = [1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -451,6 +514,8 @@ export interface EvalInput {
   chart: ChartData;
   locale: Locale;
   subjectName?: string;
+  /** The reader's own words, which the model may quote back verbatim. */
+  selfDescription?: string;
   expect: StructureExpectation;
 }
 
@@ -458,7 +523,7 @@ export function runChecks(input: EvalInput): CheckResult[] {
   return [
     checkHallucination(input.reading, input.chart, input.locale),
     checkCoverage(input.reading, input.chart, input.locale),
-    checkLanguage(input.reading, input.locale, input.subjectName),
+    checkLanguage(input.reading, input.locale, input.subjectName, input.selfDescription),
     checkLength(input.reading, input.locale),
     checkStructure(input.reading, input.expect),
   ];

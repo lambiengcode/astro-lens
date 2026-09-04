@@ -57,7 +57,16 @@ export function buildToonDataContext(
   };
 
   const mutagenList = (items: string[]) =>
-    items.map((m) => m.split(' ').map((part, i) => v(part, i === 0 ? 'mutagen' : undefined)).join(' '))
+    // Split on the FIRST space only: an entry is "<tứ hóa> <star>" and a star
+    // name is usually two words ("Thiên Đồng"). Splitting on every space looked
+    // each word up alone, so no multi-word star ever matched and the Chinese
+    // and Korean data contexts carried Vietnamese — which the model then
+    // faithfully quoted back. Found by the eval, EVAL.md §4.
+    items.map((m) => {
+      const at = m.indexOf(' ');
+      if (at === -1) return v(m, 'mutagen');
+      return `${v(m.slice(0, at), 'mutagen')} ${v(m.slice(at + 1))}`;
+    })
       .join(' · ') || L.none;
 
   const K = palaceKeys(L);

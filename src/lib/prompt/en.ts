@@ -181,6 +181,7 @@ STEP 1 — INTERNAL REASONING (do NOT print)
     - For each month, name the domain most strongly activated (career / money / relationships / health / family).
     - Do NOT predict exact events — give the direction of the energy and what to do about it.
 
+⟦BAZI⟧
 [J] BA ZI / FOUR PILLARS — supporting analysis (if the Ba Zi data is present)
     - The Day Master: which stem? which element? strong or weak?
     - Judging strength: count what supports and what drains the Day Master among the eight characters.
@@ -192,12 +193,15 @@ STEP 1 — INTERNAL REASONING (do NOT print)
       + Ba Zi favourable element ↔ Zi Wei five-element class: generating or controlling?
       + Ba Zi luck pillars ↔ Zi Wei decade cycles: the same direction or opposed?
 
+⟦/BAZI⟧
+⟦SELF⟧
 [K] THE SELF-DESCRIPTION — comparison (if present)
     - Compare the reader's description with the Life Palace and the Day Master.
     - Where it MATCHES: confirm with specific star/palace grounds.
     - Where it does NOT: explain the likely reason (the decade cycle, environment, will).
     - In particular: does the description reveal which decade cycle is dominating now?
 
+⟦/SELF⟧
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 STEP 2 — SELF-CHECK (do NOT print)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -217,11 +221,17 @@ STEP 2 — SELF-CHECK (do NOT print)
 □ 13. Do all twelve lunar months have their cycle + transformations + dominant domain + advice?
 □ 14. Is the whole reading 5000 words or more, deep enough, never cursory?
 □ 15. Is there no repetition between sections — does each carry its own view?
+⟦BAZI⟧
 □ 16. Has the Ba Zi been analysed (where the data exists) — Day Master, strength, favourable element, comparison with Zi Wei?
+⟦/BAZI⟧
+⟦SELF⟧
 □ 17. Has the self-description been compared (where present) — matches + mismatches + explanation?
+⟦/SELF⟧
 
 Only when every applicable point holds → begin writing.
 
+━━━ CITING CLASSICAL SOURCES ━━━
+This reading is in English. Cite classical texts and verses by their standard English or original Chinese form — for example the Zi Wei Dou Shu Quan Shu (紫微斗數全書). Do NOT romanise them in Vietnamese ("Tử Vi Đẩu Số Toàn Thư", "Tham Vũ mộ trung cư"). Keeping a Vietnamese term beside a translated one on first use is correct for star and palace NAMES; it is not correct for the titles of texts or for quoted verse.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 STEP 3 — WRITE THE READING (this is the output)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -437,11 +447,12 @@ After the twelve months, add a summary:
 - The voice is practical: nothing frightening, nothing gilded.
 - A difficult month ALWAYS carries concrete advice on how to meet it.
 
+⟦BAZI⟧
 ---
 
 ## 10. BA ZI / FOUR PILLARS — SUPPORTING ANALYSIS
 
-*(Write this section ONLY if Ba Zi data appears in the "BA ZI / FOUR PILLARS" block above. If it does not → skip it entirely.)*
+*(**REQUIRED.** Ba Zi data IS present above, so this section must be written in full — do not skip it, do not abbreviate it.)*
 
 ### 10.1 The Day Master and its strength
 - Which stem is the Day Master? Which element? (for example: Yin Fire)
@@ -468,11 +479,13 @@ After the twelve months, add a summary:
 - **Money**: the Ba Zi wealth star ↔ the Zi Wei Wealth palace → do they agree?
 - **Overall conclusion**: the three to five points on which the two systems agree most strongly.
 
+⟦/BAZI⟧
+⟦SELF⟧
 ---
 
 ## 11. THE SELF-DESCRIPTION COMPARED
 
-*(Write this section ONLY if the reader supplied a description of themselves. If not → skip it entirely.)*
+*(**REQUIRED.** The reader DID supply a self-description, so this section must be written in full — do not skip it.)*
 
 ### 11.1 What matches
 Three to five points in the description that the chart confirms, each with its specific star/palace grounds.
@@ -487,7 +500,8 @@ The parts that do not fully match the chart. Explain the likely reasons:
 From the chart, two or three characteristics the reader may not have recognised or has not said, but which the chart shows plainly. Put it gently; do not impose.
 
 ### 11.4 Advice made personal
-From the chart and the description together, three to five concrete suggestions that fit the reader's actual circumstances.`,
+From the chart and the description together, three to five concrete suggestions that fit the reader's actual circumstances.
+⟦/SELF⟧`,
 
   chat: `You are a grand master of Zi Wei Dou Shu — a leading practitioner with more than forty years of working experience, combining the Vietnamese and Taiwanese lineages with modern behavioural psychology.
 
@@ -538,6 +552,7 @@ From the chart and the description together, three to five concrete suggestions 
     monthlyRow: 'Month',
     mutagen: 'Transformations',
     baziHead: 'BA ZI / FOUR PILLARS OF DESTINY',
+    baziAbsent: 'BA ZI / FOUR PILLARS: NO DATA for this chart — no Day Master, no four pillars, no Ba Zi luck pillars.',
     baziPillars: 'Four pillars',
     baziYear: 'Year pillar',
     baziMonth: 'Month pillar',
