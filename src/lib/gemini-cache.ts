@@ -1,76 +1,108 @@
 import { GoogleGenAI } from '@google/genai';
 import path from 'path';
+import { DEFAULT_LOCALE, type Locale } from './i18n/locales';
+import { getPrompt } from './prompt';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 const CACHE_DISPLAY_NAME = 'horoscopes-knowledge-base';
+const FILE_DISPLAY_NAME = 'horoscopes-reference-book';
 const CACHE_MODEL = 'gemini-3.1-pro-preview';
 // 90 days in seconds — near-permanent for this project
 const CACHE_TTL = '7776000s';
 
-let cachedContentName: string | null = null;
-let initPromise: Promise<string | null> | null = null;
+// ============================================================
+// PER-LOCALE CONTEXT CACHE — PLAN.md §13b.4
+// ============================================================
+//
+// The cache bundles the reference PDF with the system instruction, and the
+// system instruction is now per locale. A single cache would serve a Korean
+// reader a Vietnamese preamble, so the cache is keyed by locale.
+//
+// This does NOT make a reading slower, which §13b.4 is explicit about:
+//
+//   - The PDF is uploaded ONCE and the five caches reference the same file
+//     URI. `_findExistingFile` looks for it before uploading anything, so the
+//     second locale to be asked for pays no upload.
+//   - A cache is created once per locale and then lives for ninety days, so
+//     only the very first request in a locale pays a cache creation. Every
+//     request after it is a cache hit, exactly as before this phase.
+//   - `vi` keeps the ORIGINAL display name, so the cache that already exists
+//     in the deployed project is found and reused rather than rebuilt. The
+//     default locale's ~3-minute analysis is untouched.
+
+function displayNameFor(locale: Locale): string {
+  return locale === DEFAULT_LOCALE ? CACHE_DISPLAY_NAME : `${CACHE_DISPLAY_NAME}-${locale}`;
+}
+
+const cachedContentNames = new Map<Locale, string>();
+const initPromises = new Map<Locale, Promise<string | null>>();
 
 /**
- * Get or create the cached content name for the horoscopes PDF.
- * Uses singleton pattern — only one cache is created and reused.
- * The cache includes: PDF knowledge base + system instruction.
+ * Get or create the cached content name for a locale. One in-flight
+ * initialisation per locale; the result is memoised for the process.
  */
-export function getCachedContentName(): Promise<string | null> {
-  if (cachedContentName) return Promise.resolve(cachedContentName);
-  if (initPromise) return initPromise;
-  initPromise = _initCache();
-  return initPromise;
+export function getCachedContentName(locale: Locale = DEFAULT_LOCALE): Promise<string | null> {
+  const ready = cachedContentNames.get(locale);
+  if (ready) return Promise.resolve(ready);
+
+  const inFlight = initPromises.get(locale);
+  if (inFlight) return inFlight;
+
+  const promise = _initCache(locale);
+  initPromises.set(locale, promise);
+  return promise;
 }
 
-async function _getSystemInstruction(): Promise<string> {
-  // Dynamic import to avoid circular dependency
-  const { SYSTEM_INSTRUCTION } = await import('./gemini');
-  return SYSTEM_INSTRUCTION;
-}
-
-async function _initCache(): Promise<string | null> {
+async function _initCache(locale: Locale): Promise<string | null> {
+  const displayName = displayNameFor(locale);
   try {
-    // 1. Check if cache already exists
-    const existing = await _findExistingCache();
+    // 1. Check if this locale's cache already exists
+    const existing = await _findExistingCache(displayName);
     if (existing) {
-      cachedContentName = existing;
-      console.log('[Cache] Reusing existing cache:', existing);
+      cachedContentNames.set(locale, existing);
+      console.log('[Cache] Reusing existing cache:', locale, existing);
       return existing;
     }
 
-    // 2. Upload PDF
-    const pdfPath = path.join(process.cwd(), 'horoscopes.pdf');
-    console.log('[Cache] Uploading PDF:', pdfPath);
+    // 2. Reuse the uploaded PDF if it is already there; upload it only once.
+    let readyFile = await _findExistingFile();
 
-    const file = await ai.files.upload({
-      file: pdfPath,
-      config: {
-        mimeType: 'application/pdf',
-        displayName: 'horoscopes-reference-book',
-      },
-    });
-
-    console.log('[Cache] File uploaded:', file.name, 'state:', file.state);
-
-    // 3. Wait for file to be processed (ACTIVE state)
-    const readyFile = await _waitForFileReady(file.name!);
     if (!readyFile) {
-      console.error('[Cache] File processing failed or timed out');
-      return null;
+      const pdfPath = path.join(process.cwd(), 'horoscopes.pdf');
+      console.log('[Cache] Uploading PDF:', pdfPath);
+
+      const file = await ai.files.upload({
+        file: pdfPath,
+        config: {
+          mimeType: 'application/pdf',
+          displayName: FILE_DISPLAY_NAME,
+        },
+      });
+
+      console.log('[Cache] File uploaded:', file.name, 'state:', file.state);
+
+      // 3. Wait for file to be processed (ACTIVE state)
+      readyFile = await _waitForFileReady(file.name!);
+      if (!readyFile) {
+        console.error('[Cache] File processing failed or timed out');
+        return null;
+      }
+    } else {
+      console.log('[Cache] Reusing uploaded PDF:', readyFile.name);
     }
 
-    // 4. Get system instruction to bundle into cache
-    const systemInstruction = await _getSystemInstruction();
+    // 4. This locale's system instruction and cache seed
+    const pack = getPrompt(locale);
 
     // 5. Create cache with PDF + system instruction
-    console.log('[Cache] Creating cached content with TTL:', CACHE_TTL);
+    console.log('[Cache] Creating cached content for', locale, 'with TTL:', CACHE_TTL);
     const cache = await ai.caches.create({
       model: CACHE_MODEL,
       config: {
-        displayName: CACHE_DISPLAY_NAME,
+        displayName,
         ttl: CACHE_TTL,
-        systemInstruction: systemInstruction,
+        systemInstruction: pack.system,
         contents: [
           {
             role: 'user',
@@ -81,31 +113,30 @@ async function _initCache(): Promise<string | null> {
                   mimeType: 'application/pdf',
                 },
               },
-              {
-                text: 'Đây là tài liệu tham khảo chuyên sâu về Tử Vi Đẩu Số. Hãy sử dụng kiến thức từ tài liệu này để phân tích lá số chính xác và chi tiết hơn. Khi phân tích, ưu tiên phương pháp và quy tắc trong tài liệu này.',
-              },
+              { text: pack.cacheSeed },
             ],
           },
         ],
       },
     });
 
-    cachedContentName = cache.name!;
-    console.log('[Cache] Created successfully:', cachedContentName);
+    const name = cache.name!;
+    cachedContentNames.set(locale, name);
+    console.log('[Cache] Created successfully:', locale, name);
     console.log('[Cache] Token count:', cache.usageMetadata?.totalTokenCount);
-    return cachedContentName;
+    return name;
   } catch (e) {
-    console.error('[Cache] Initialization failed:', e);
-    initPromise = null; // Allow retry on next call
+    console.error('[Cache] Initialization failed for', locale, e);
+    initPromises.delete(locale); // Allow retry on next call
     return null;
   }
 }
 
-async function _findExistingCache(): Promise<string | null> {
+async function _findExistingCache(displayName: string): Promise<string | null> {
   try {
     const caches = await ai.caches.list();
     for await (const cache of caches) {
-      if (cache.displayName === CACHE_DISPLAY_NAME) {
+      if (cache.displayName === displayName) {
         if (cache.model?.includes('gemini-3.1-pro-preview')) {
           return cache.name ?? null;
         }
@@ -113,6 +144,21 @@ async function _findExistingCache(): Promise<string | null> {
     }
   } catch (e) {
     console.warn('[Cache] Failed to list caches:', e);
+  }
+  return null;
+}
+
+/** The uploaded reference PDF, if a previous locale already put it there. */
+async function _findExistingFile(): Promise<{ uri: string; name: string } | null> {
+  try {
+    const files = await ai.files.list();
+    for await (const file of files) {
+      if (file.displayName === FILE_DISPLAY_NAME && file.state === 'ACTIVE' && file.uri) {
+        return { uri: file.uri, name: file.name! };
+      }
+    }
+  } catch (e) {
+    console.warn('[Cache] Failed to list files:', e);
   }
   return null;
 }
@@ -136,3 +182,6 @@ async function _waitForFileReady(
   console.error('[Cache] File processing timed out after', maxAttempts * intervalMs / 1000, 'seconds');
   return null;
 }
+
+/** Exported for the cache-key test — PLAN.md §13b.7 item 9. */
+export const _test = { displayNameFor };

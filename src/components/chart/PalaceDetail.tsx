@@ -1,130 +1,132 @@
 'use client';
 
-import type { PalaceData } from '@/types';
+import type { PalaceData, StarData } from '@/types';
+import { BRANCH_LABELS, BRANCH_LOOKUP, buildBranchMap, xung, tamHop } from '@/lib/branches';
+import { useI18n } from '@/lib/i18n/context';
+import type { Domain } from '@/lib/i18n/vocabulary';
+
+type V = (value: string | undefined | null, domain?: Domain) => string;
+
+function starLine(v: V, domain: Domain) {
+  return function line(s: StarData, i: number) {
+    return (
+      <div className="li" key={i}>
+        <span className="star-a">{v(s.name, domain)}</span>
+        {s.brightness && <span className="bl">{v(s.brightness, 'brightness')}</span>}
+        {s.mutagen && (
+          <span className={`mut${s.mutagen === 'Kỵ' ? ' ky' : ''}`}>{v(s.mutagen, 'mutagen')}</span>
+        )}
+      </div>
+    );
+  };
+}
+
+function describe(v: V, noData: string, p: PalaceData | undefined, branch: number): string {
+  if (!p) return `${v(BRANCH_LABELS[branch], 'branch')} — ${noData}`;
+  const stars = p.majorStars.length
+    ? p.majorStars
+        .map((s) => [v(s.name, 'majorStar'), v(s.brightness, 'brightness')].filter(Boolean).join(' '))
+        .join(' · ')
+    : v('vô chính diệu', 'relation');
+  return `${v(p.name, 'palace')} (${v(p.earthlyBranch, 'branch')}) — ${stars}`;
+}
+
+/** One line naming both trine palaces, so it sits on a single row. */
+function trineLine(v: V, map: Map<number, PalaceData>, branches: number[]): string {
+  if (!branches.length) return '—';
+  return branches
+    .map((b) => {
+      const p = map.get(b);
+      return p
+        ? `${v(p.name, 'palace')} (${v(p.earthlyBranch, 'branch')})`
+        : v(BRANCH_LABELS[b], 'branch');
+    })
+    .join(' · ');
+}
 
 interface PalaceDetailProps {
   palace: PalaceData;
+  /** Full palace list — the relationship column is computed from it. */
+  palaces: PalaceData[];
   onClose: () => void;
 }
 
-export default function PalaceDetail({ palace, onClose }: PalaceDetailProps) {
+export default function PalaceDetail({ palace, palaces, onClose }: PalaceDetailProps) {
+  const { t, v } = useI18n();
+  const branchMap = buildBranchMap(palaces);
+  const branch = BRANCH_LOOKUP[palace.earthlyBranch.trim()];
+  const hasBranch = branch !== undefined;
+
+  const xungBranch = hasBranch ? xung(branch) : null;
+  const hopBranches = hasBranch ? tamHop(branch) : [];
+
+  const meta = [
+    `${v(palace.heavenlyStem, 'stem')} ${v(palace.earthlyBranch, 'branch')}`,
+    palace.decadalRange ? `${palace.decadalRange} ${t.palace.age}` : null,
+    v(palace.changsheng12, 'changsheng') || null,
+  ].filter(Boolean).join(' · ');
+
   return (
-    <div className="bg-[#0d1117] border border-[#3b5bdb]/30 rounded-xl p-6 sm:p-8 shadow-xl shadow-[#3b5bdb]/5">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h3 className="text-xl font-bold text-[#e8b339]">{palace.name}</h3>
-            {palace.isBodyPalace && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#3b5bdb]/15 text-[#5b8af5] border border-[#3b5bdb]/30">
-                Thân cung
-              </span>
-            )}
-            {palace.isOriginalPalace && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#e8b339]/15 text-[#e8b339] border border-[#e8b339]/30">
-                Lai nhân cung
-              </span>
-            )}
-          </div>
-          <p className="text-sm text-[#6b7a94]">{palace.heavenlyStem} {palace.earthlyBranch}</p>
-        </div>
-        <button
-          onClick={onClose}
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-[#4a5568] hover:text-[#8b9dc3] hover:bg-[#1a2236] transition-all"
-        >
-          ✕
-        </button>
+    <div className="drawer">
+      <div className="drawer-h">
+        <span className="bx">{v(palace.earthlyBranch, 'branch')}</span>
+        <h3>{t.palace.titlePre} {v(palace.name, 'palace')}</h3>
+        <span className="bl">{meta}</span>
+        {palace.isBodyPalace && (
+          <span className="bl" style={{ color: 'var(--cyan)' }}>{t.chart.thanMark}</span>
+        )}
+        <button type="button" className="x" onClick={onClose} aria-label={t.palace.close}>✕</button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {/* Major Stars */}
-        <div>
-          <h4 className="text-[11px] font-semibold text-[#5b8af5] uppercase tracking-wider mb-3">Chính tinh</h4>
-          {palace.majorStars.length > 0 ? (
-            <div className="space-y-2">
-              {palace.majorStars.map((star, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[#0a0e17] border border-[#1a2236]">
-                  <div className="w-8 h-8 rounded-lg bg-[#9775cd]/10 flex items-center justify-center shrink-0">
-                    <span className="text-[#9775cd] text-sm">★</span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-[#9775cd]">{star.name}</span>
-                    {star.brightness && (
-                      <span className="ml-2 text-sm text-[#4a5568]">({star.brightness})</span>
-                    )}
-                    {star.mutagen && (
-                      <span className="ml-2 text-sm font-bold px-1.5 py-0.5 rounded bg-[#e8b339]/15 text-[#e8b339]">
-                        {star.mutagen}
-                      </span>
-                    )}
-                  </div>
+      <div className="drawer-b">
+        <div className="dcol">
+          <h5>{t.palace.majorStars}</h5>
+          {palace.majorStars.length > 0
+            ? palace.majorStars.map(starLine(v, 'majorStar'))
+            : (
+              <div className="li g" style={{ fontStyle: 'italic' }}>
+                {v('vô chính diệu', 'relation')}
+              </div>
+            )}
+        </div>
+
+        <div className="dcol">
+          <h5>{t.palace.minorStars}</h5>
+          {palace.minorStars.length > 0
+            ? palace.minorStars.map((s, i) => (
+                <div className="li" key={i}>
+                  <span className="star-c">{v(s.name, 'minorStar')}</span>
+                  {s.brightness && <span className="bl">{v(s.brightness, 'brightness')}</span>}
+                  {s.mutagen && (
+                    <span className={`mut${s.mutagen === 'Kỵ' ? ' ky' : ''}`}>
+                      {v(s.mutagen, 'mutagen')}
+                    </span>
+                  )}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="p-3 rounded-lg bg-[#0a0e17] border border-[#1a2236] text-sm text-[#3d4a5c] italic">
-              Không có chính tinh (cung trống sao)
-            </div>
-          )}
+              ))
+            : <div className="li g">{t.palace.none}</div>}
         </div>
 
-        {/* Minor + Adjective Stars */}
-        <div>
-          <h4 className="text-[11px] font-semibold text-[#5b8af5] uppercase tracking-wider mb-3">Phụ tinh & Tạp diệu</h4>
-          <div className="space-y-3">
-            {palace.minorStars.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {palace.minorStars.map((star, i) => (
-                  <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#1a2236] text-[#7c8ba5] text-sm border border-[#2a3348]">
-                    {star.name}
-                    {star.brightness && <span className="text-[10px] text-[#4a5568]">({star.brightness})</span>}
-                    {star.mutagen && <span className="text-[10px] font-bold text-[#e8b339]">{star.mutagen}</span>}
-                  </span>
-                ))}
-              </div>
-            )}
-            {palace.adjectiveStars.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {palace.adjectiveStars.map((star, i) => (
-                  <span key={i} className="px-2.5 py-1 rounded-lg bg-[#0a0e17] text-[#4a5568] text-sm border border-[#1e2538]">
-                    {star.name}
-                  </span>
-                ))}
-              </div>
-            )}
-            {palace.minorStars.length === 0 && palace.adjectiveStars.length === 0 && (
-              <div className="p-3 rounded-lg bg-[#0a0e17] border border-[#1a2236] text-sm text-[#3d4a5c] italic">
-                Không có phụ tinh
-              </div>
-            )}
+        <div className="dcol">
+          <h5>{t.palace.adjectiveStars}</h5>
+          <div className="li g">
+            {palace.adjectiveStars.length > 0
+              ? palace.adjectiveStars.map((s) => v(s.name, 'adjectiveStar')).join(' · ')
+              : t.palace.none}
           </div>
         </div>
-      </div>
 
-      {/* Metadata */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-[#1e2538]">
-        <div className="p-2.5 rounded-lg bg-[#0a0e17]">
-          <span className="text-[9px] text-[#3d4a5c] uppercase tracking-wider">Trường sinh</span>
-          <p className="text-sm font-medium text-[#8b9dc3] mt-0.5">{palace.changsheng12 || '—'}</p>
-        </div>
-        <div className="p-2.5 rounded-lg bg-[#0a0e17]">
-          <span className="text-[9px] text-[#3d4a5c] uppercase tracking-wider">Bác sĩ</span>
-          <p className="text-sm font-medium text-[#8b9dc3] mt-0.5">{palace.boshi12 || '—'}</p>
-        </div>
-        {palace.decadalRange && (
-          <div className="p-2.5 rounded-lg bg-[#0a0e17]">
-            <span className="text-[9px] text-[#3d4a5c] uppercase tracking-wider">Đại hạn</span>
-            <p className="text-sm font-medium text-[#8b9dc3] mt-0.5">{palace.decadalRange} tuổi</p>
+        {/* The relationship view mirrored as text — DESIGN.md §9.3 keyboard parity */}
+        <div className="dcol">
+          <h5>{t.palace.opposite}</h5>
+          <div className="li q">
+            {xungBranch !== null
+              ? describe(v, t.palace.noData, branchMap.get(xungBranch), xungBranch)
+              : '—'}
           </div>
-        )}
-        {palace.ages.length > 0 && (
-          <div className="p-2.5 rounded-lg bg-[#0a0e17]">
-            <span className="text-[9px] text-[#3d4a5c] uppercase tracking-wider">Tiểu hạn</span>
-            <p className="text-sm font-medium text-[#8b9dc3] mt-0.5">
-              {palace.ages.slice(0, 4).join(', ')}{palace.ages.length > 4 ? '...' : ''}
-            </p>
-          </div>
-        )}
+          <h5 style={{ marginTop: 12 }}>{t.palace.trine}</h5>
+          <div className="li q">{trineLine(v, branchMap, hopBranches)}</div>
+        </div>
       </div>
     </div>
   );

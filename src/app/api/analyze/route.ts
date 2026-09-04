@@ -2,23 +2,31 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateChart } from '@/lib/iztro';
 import { analyzeChart } from '@/lib/gemini';
 import type { AnalyzeRequest, AnalyzeResponse } from '@/types';
+import { getMessages } from '@/lib/i18n/messages';
+import { LOCALE_HEADER, normalizeLocale } from '@/lib/i18n/locales';
 
 // Simple in-memory cache
 const cache = new Map<string, { data: AnalyzeResponse['data']; timestamp: number }>();
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
-function getCacheKey(input: AnalyzeRequest['input']): string {
-  return `${input.solarDate}-${input.birthHour}-${input.gender}`;
+// The reading is produced in the reader's language, so two locales are two
+// different results for the same birth data — the locale belongs in the key.
+function getCacheKey(input: AnalyzeRequest['input'], locale: string): string {
+  return `${locale}:${input.solarDate}-${input.birthHour}-${input.gender}`;
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeResponse>> {
   try {
     const body = (await request.json()) as AnalyzeRequest;
     const { input } = body;
+    // The body wins over the header so a client can ask for a locale
+    // explicitly; the header is what the proxy resolved for this request.
+    const locale = normalizeLocale(body.locale ?? request.headers.get(LOCALE_HEADER));
+    const t = getMessages(locale);
 
     if (!input.solarDate || input.birthHour === undefined || !input.gender) {
       return NextResponse.json(
-        { success: false, error: 'Vui lòng nhập đầy đủ ngày sinh, giờ sinh và giới tính.' },
+        { success: false, error: t.api.missingFields },
         { status: 400 }
       );
     }
@@ -26,20 +34,20 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(input.solarDate)) {
       return NextResponse.json(
-        { success: false, error: 'Định dạng ngày không hợp lệ. Vui lòng dùng YYYY-MM-DD.' },
+        { success: false, error: t.api.badDate },
         { status: 400 }
       );
     }
 
     if (input.birthHour < 0 || input.birthHour > 12) {
       return NextResponse.json(
-        { success: false, error: 'Giờ sinh không hợp lệ.' },
+        { success: false, error: t.api.badHour },
         { status: 400 }
       );
     }
 
     // Check cache
-    const cacheKey = getCacheKey(input);
+    const cacheKey = getCacheKey(input, locale);
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
       return NextResponse.json({ success: true, data: cached.data });
@@ -53,7 +61,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
     if (!chart.palaces || chart.palaces.length !== 12) {
       console.error('[API /analyze] Chart has', chart.palaces?.length, 'palaces');
       return NextResponse.json(
-        { success: false, error: 'Lá số không đầy đủ 12 cung. Vui lòng thử lại.' },
+        { success: false, error: t.api.incompleteChart },
         { status: 500 }
       );
     }
@@ -63,9 +71,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
     let interpretation: string;
 
     if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
-      interpretation = '⚠️ Chưa cấu hình GEMINI_API_KEY. Vui lòng thêm API key vào file .env.local để nhận luận giải chi tiết từ AI.\n\nLá số Tử Vi đã được tạo thành công.';
+      interpretation = t.api.noApiKey;
     } else {
-      interpretation = await analyzeChart(chart, input.name, input.selfDescription);
+      interpretation = await analyzeChart(chart, locale, input.name, input.selfDescription);
     }
 
     const data = { chart, interpretation, decadalPeriods };
@@ -75,9 +83,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
     return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error('Analysis error:', error);
-    const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định.';
+    const t = getMessages(normalizeLocale(request.headers.get(LOCALE_HEADER)));
+    const message = error instanceof Error ? error.message : t.api.unknownError;
     return NextResponse.json(
-      { success: false, error: `Lỗi phân tích: ${message}` },
+      { success: false, error: `${t.api.analysisErrorPrefix} ${message}` },
       { status: 500 }
     );
   }

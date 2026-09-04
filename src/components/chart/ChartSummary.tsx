@@ -1,76 +1,49 @@
 'use client';
 
 import type { ChartData } from '@/types';
+import { useI18n } from '@/lib/i18n/context';
 
 interface ChartSummaryProps {
   chart: ChartData;
   name?: string;
 }
 
-export default function ChartSummary({ chart, name }: ChartSummaryProps) {
-  const items = [
-    { label: 'Ngày dương', value: chart.solarDate },
-    { label: 'Ngày âm', value: chart.lunarDate },
-    { label: 'Can Chi', value: chart.chineseDate },
-    { label: 'Giờ sinh', value: `${chart.time} (${chart.timeRange})` },
-    { label: 'Cung giáp', value: chart.sign },
-    { label: 'Con giáp', value: chart.zodiac },
-    { label: 'Ngũ hành cục', value: chart.fiveElementsClass },
-    { label: 'Mệnh chủ', value: chart.soul },
-    { label: 'Thân chủ', value: chart.body },
-    { label: 'Giới tính', value: chart.gender },
+/**
+ * A lá số summary is a table of readings, so it looks like one — DESIGN.md §8.6.
+ * `mono` follows the rule in §6.2: a position, a cycle or a quantity is monospaced.
+ */
+export default function ChartSummary({ chart }: ChartSummaryProps) {
+  const { t, v } = useI18n();
+  // Dates and the can chi run stay as the chart produced them apart from the
+  // stems and branches themselves, which are vocabulary — DESIGN.md §15.2.
+  const canChi = chart.chineseDate.split(/(\s+|·)/).map((p) => v(p)).join('');
+  const rows: { k: string; v: string; mono?: boolean }[] = [
+    { k: t.summary.solarDate, v: chart.solarDate, mono: true },
+    { k: t.summary.lunarDate, v: chart.lunarDate, mono: true },
+    { k: t.summary.chineseDate, v: canChi },
+    { k: t.summary.birthHour, v: `${v(chart.time, 'branch')} · ${chart.timeRange}`, mono: true },
+    { k: t.summary.sign, v: v(chart.sign, 'sign') },
+    { k: t.summary.zodiac, v: v(chart.zodiac, 'zodiac') },
+    { k: t.summary.fiveElements, v: v(chart.fiveElementsClass, 'fiveElements') },
+    { k: t.summary.soulBody, v: `${v(chart.soul)} / ${v(chart.body)}` },
   ];
 
   return (
-    <div className="bg-[#0d1117] border border-[#1e2538] rounded-xl p-6">
-      <div className="flex items-center gap-3 mb-5">
-        <div className="w-10 h-10 rounded-lg bg-[#131c30] border border-[#3b5bdb]/30 flex items-center justify-center">
-          <span className="text-[#5b8af5] text-lg">☰</span>
-        </div>
-        <div>
-          <h2 className="text-lg font-bold text-foreground">
-            {name || 'Lá Số Tử Vi'}
-          </h2>
-          <p className="text-sm text-[#4a5568]">Thông tin tổng quan</p>
+    <div className="card">
+      <div className="card-h">
+        <span className="ix" aria-hidden="true">☰</span>
+        <h3>{t.summary.title}</h3>
+      </div>
+      <div className="card-b" style={{ paddingTop: 4 }}>
+        <div className="kv">
+          {rows.map((r) => (
+            <div key={r.k}>
+              <div className="k">{r.k}</div>
+              <div className={r.mono ? 'v mono' : 'v'}>{r.v}</div>
+            </div>
+          ))}
         </div>
       </div>
-
-      <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-        {items.map((item) => (
-          <div key={item.label} className="flex flex-col">
-            <span className="text-[10px] text-[#4a5568] uppercase tracking-wider">{item.label}</span>
-            <span className="text-sm font-medium text-[#8b9dc3]">{item.value}</span>
-          </div>
-        ))}
-      </div>
-
-      {chart.horoscope && (
-        <div className="mt-5 pt-5 border-t border-[#1e2538]">
-          <h3 className="text-sm font-semibold text-[#5b8af5] mb-3">Vận hạn hiện tại</h3>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] text-[#4a5568] uppercase tracking-wider">Đại hạn</span>
-              <span className="text-sm font-medium text-[#8b9dc3]">
-                {chart.horoscope.decadal.name} ({chart.horoscope.decadal.heavenlyStem} {chart.horoscope.decadal.earthlyBranch})
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] text-[#4a5568] uppercase tracking-wider">Lưu niên</span>
-              <span className="text-sm font-medium text-[#8b9dc3]">
-                {chart.horoscope.yearly.name} ({chart.horoscope.yearly.heavenlyStem} {chart.horoscope.yearly.earthlyBranch})
-              </span>
-            </div>
-            {chart.horoscope.decadal.mutagen.length > 0 && (
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] text-[#4a5568] uppercase tracking-wider">Tứ hóa đại hạn</span>
-                <span className="text-sm font-medium text-[#e8b339]">
-                  {chart.horoscope.decadal.mutagen.join(', ')}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

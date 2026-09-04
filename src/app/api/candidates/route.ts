@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { astro } from 'iztro';
 import { BIRTH_HOURS } from '@/types';
 import type { RectificationCandidate } from '@/types';
+import { getMessages } from '@/lib/i18n/messages';
+import { LOCALE_HEADER, normalizeLocale } from '@/lib/i18n/locales';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function str(val: any): string {
@@ -14,9 +16,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { solarDate, gender } = body as { solarDate: string; gender: 'male' | 'female' };
+    const t = getMessages(normalizeLocale(request.headers.get(LOCALE_HEADER)));
 
     if (!solarDate) {
-      return NextResponse.json({ success: false, error: 'Thiếu ngày sinh.' }, { status: 400 });
+      return NextResponse.json({ success: false, error: t.api.missingFields }, { status: 400 });
     }
 
     const [year, month, day] = solarDate.split('-').map(Number);
@@ -40,7 +43,7 @@ export async function POST(request: NextRequest) {
 
         candidates.push({
           timeIndex: hour.value,
-          hourLabel: hour.label,
+          hourBranch: hour.branch,
           hourRange: hour.range,
           menhEarthlyBranch: str(astrolabe.earthlyBranchOfSoulPalace),
           menhMajorStars,
@@ -55,7 +58,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, candidates });
   } catch (error) {
     console.error('Candidates error:', error);
-    const message = error instanceof Error ? error.message : 'Lỗi không xác định.';
+    const message = error instanceof Error
+      ? error.message
+      : getMessages(normalizeLocale(request.headers.get(LOCALE_HEADER))).api.unknownError;
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

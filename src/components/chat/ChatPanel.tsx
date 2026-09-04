@@ -2,55 +2,52 @@
 
 import { useState, useRef, useEffect } from 'react';
 import type { ChartData } from '@/types';
+import { useI18n } from '@/lib/i18n/context';
 
 interface ChatMessage {
   role: 'user' | 'ai';
   content: string;
+  /** Cung + sao behind the answer. The surface is built; populating it is a
+   *  Gemini prompt change, deferred as follow-up work (PLAN.md §11 D1). */
+  cite?: string;
 }
 
 interface ChatPanelProps {
   chart: ChartData;
   name?: string;
-  isOpen: boolean;
-  onClose: () => void;
+  /** `inline` sits in the vận hạn column; `floating` is the FAB panel. */
+  variant?: 'inline' | 'floating';
+  onClose?: () => void;
 }
 
-const SUGGESTIONS = [
-  'Tình duyên năm nay thế nào?',
-  'Tôi nên làm nghề gì phù hợp?',
-  'Sức khỏe cần lưu ý điều gì?',
-  'Tài chính giai đoạn này ra sao?',
-  'Phân tích mệnh cung chi tiết hơn',
-  'Đại hạn hiện tại ảnh hưởng thế nào?',
-];
 
 function renderMarkdownInline(text: string): string {
   return text
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/\n/g, '<br/>');
 }
 
-export default function ChatPanel({ chart, name, isOpen, onClose }: ChatPanelProps) {
+export default function ChatPanel({ chart, name, variant = 'floating', onClose }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { locale, t } = useI18n();
 
   useEffect(() => {
-    if (isOpen) inputRef.current?.focus();
-  }, [isOpen]);
+    if (variant === 'floating') inputRef.current?.focus();
+  }, [variant]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || loading) return;
-
-    const userMsg: ChatMessage = { role: 'user', content: text.trim() };
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev) => [...prev, { role: 'user', content: text.trim() }]);
     setInput('');
     if (inputRef.current) inputRef.current.style.height = '40px';
     setLoading(true);
@@ -59,25 +56,16 @@ export default function ChatPanel({ chart, name, isOpen, onClose }: ChatPanelPro
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: text.trim(),
-          chart,
-          name,
-          history: messages.slice(-6),
-        }),
+        body: JSON.stringify({ message: text.trim(), chart, name, history: messages.slice(-6), locale }),
       });
-
       const data = await res.json();
-
-      if (data.success) {
-        setMessages((prev) => [...prev, { role: 'ai', content: data.reply }]);
-      } else {
-        setMessages((prev) => [...prev, { role: 'ai', content: `Xin lỗi, có lỗi xảy ra: ${data.error}` }]);
-      }
+      setMessages((prev) => [...prev, {
+        role: 'ai',
+        content: data.success ? data.reply : `${t.chat.errPrefix} ${data.error}`,
+      }]);
     } catch {
-      setMessages((prev) => [...prev, { role: 'ai', content: 'Không thể kết nối. Vui lòng thử lại.' }]);
+      setMessages((prev) => [...prev, { role: 'ai', content: t.chat.errNetwork }]);
     }
-
     setLoading(false);
   };
 
@@ -86,133 +74,89 @@ export default function ChatPanel({ chart, name, isOpen, onClose }: ChatPanelPro
     sendMessage(input);
   };
 
-  if (!isOpen) return null;
+  const panel = (
+    <div className="chat" style={variant === 'floating' ? { maxWidth: '100%', height: '100%' } : undefined}>
+      <div className="chat-h">
+        <span className="mk" aria-hidden="true">✦</span>
+        <span>
+          <span className="t">{t.chat.title}</span><br />
+          <span className="s">{t.chat.subPre} {chart.palaces.length} {t.chat.subPost}</span>
+        </span>
+        {onClose && (
+          <button type="button" className="x" onClick={onClose} aria-label={t.chat.close}>✕</button>
+        )}
+      </div>
+
+      <div className="chat-b">
+        {messages.length === 0 && (
+          <div className="msg a">
+            {t.chat.emptyPre}{name ? ` ${t.chat.emptyOf} ${name}` : ''} {t.chat.emptyPost}
+          </div>
+        )}
+
+        {messages.map((m, i) => (
+          m.role === 'user' ? (
+            <div className="msg u" key={i}>{m.content}</div>
+          ) : (
+            <div className="msg a" key={i}>
+              <span dangerouslySetInnerHTML={{ __html: renderMarkdownInline(m.content) }} />
+              {m.cite && <span className="cite">↳ {m.cite}</span>}
+            </div>
+          )
+        ))}
+
+        {loading && (
+          <div className="typing" aria-label={t.chat.typing}>
+            <i /><i /><i />
+          </div>
+        )}
+        <div ref={endRef} />
+      </div>
+
+      {messages.length === 0 && (
+        <div className="sugg">
+          {t.chat.suggestions.map((q) => (
+            <button type="button" key={q} onClick={() => sendMessage(q)}>{q}</button>
+          ))}
+        </div>
+      )}
+
+      <form className="chat-f" onSubmit={handleSubmit}>
+        <textarea
+          ref={inputRef}
+          rows={1}
+          className="inp"
+          value={input}
+          onChange={(e) => {
+            setInput(e.target.value);
+            e.target.style.height = 'auto';
+            e.target.style.height = `${Math.min(e.target.scrollHeight, 80)}px`;
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSubmit(e as unknown as React.FormEvent);
+            }
+          }}
+          placeholder={t.chat.placeholder}
+          disabled={loading}
+          style={{ minHeight: 40, maxHeight: 80 }}
+          aria-label={t.chat.inputAria}
+        />
+        <button type="submit" className="btn pri" disabled={loading || !input.trim()} aria-label={t.chat.sendAria}>↑</button>
+      </form>
+      <div className="chat-note">{t.chat.note}</div>
+    </div>
+  );
+
+  if (variant === 'inline') return panel;
 
   return (
-    <div className="fixed bottom-0 right-0 sm:bottom-6 sm:right-6 z-50 w-full sm:w-[420px] h-[100dvh] sm:h-[600px] sm:max-h-[80vh] flex flex-col animate-slide-up-fade">
-      <div className="flex-1 flex flex-col bg-[#0b0f18] border border-[#1e2538] rounded-none sm:rounded-2xl overflow-hidden shadow-2xl shadow-black/60">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#1e2538] bg-[#0d1320]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#3b5bdb] to-[#9775cd] flex items-center justify-center">
-              <span className="text-white text-sm">✦</span>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-[#e2e8f0]">Hỏi Chuyên Gia Tử Vi</h3>
-              <p className="text-[10px] text-[#4a5568]">AI phân tích dựa trên lá số của bạn</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#4a5568] hover:text-[#e2e8f0] hover:bg-[#1a2236] transition-all"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-          {/* Welcome */}
-          {messages.length === 0 && (
-            <div className="animate-fade-in">
-              <div className="chat-bubble-ai rounded-2xl rounded-tl-md px-4 py-3 mb-4">
-                <p className="text-sm text-[#c9d1d9] leading-relaxed">
-                  Xin chào! Tôi là chuyên gia Tử Vi AI. Bạn có thể hỏi tôi bất kỳ điều gì về lá số
-                  {name ? ` của ${name}` : ''} — tình duyên, sự nghiệp, sức khỏe, tài chính...
-                </p>
-              </div>
-
-              {/* Suggestion chips */}
-              <div className="flex flex-wrap gap-2">
-                {SUGGESTIONS.map((s, i) => (
-                  <button
-                    key={i}
-                    onClick={() => sendMessage(s)}
-                    className="px-3 py-1.5 rounded-full text-xs bg-[#1a2236] border border-[#2a3348] text-[#7c8ba5] hover:text-[#5b8af5] hover:border-[#3b5bdb]/40 hover:bg-[#131c30] transition-all"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Message bubbles */}
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up-fade`}
-            >
-              <div className={`
-                max-w-[85%] rounded-2xl px-4 py-3
-                ${msg.role === 'user'
-                  ? 'chat-bubble-user rounded-br-md'
-                  : 'chat-bubble-ai rounded-bl-md'
-                }
-              `}>
-                {msg.role === 'ai' ? (
-                  <div
-                    className="text-sm text-[#c9d1d9] leading-relaxed [&_strong]:text-[#e8b339] [&_em]:text-[#9775cd]"
-                    dangerouslySetInnerHTML={{ __html: renderMarkdownInline(msg.content) }}
-                  />
-                ) : (
-                  <p className="text-sm text-[#e2e8f0]">{msg.content}</p>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {/* Typing indicator */}
-          {loading && (
-            <div className="flex justify-start animate-fade-in">
-              <div className="chat-bubble-ai rounded-2xl rounded-bl-md px-4 py-3">
-                <div className="typing-indicator flex gap-1.5">
-                  <span /><span /><span />
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input */}
-        <form onSubmit={handleSubmit} className="px-4 py-3 border-t border-[#1e2538] bg-[#080c14]">
-          <div className="flex gap-2 items-end">
-            <textarea
-              ref={inputRef}
-              rows={1}
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                // Auto-grow up to 3 lines
-                e.target.style.height = 'auto';
-                const lineHeight = 20;
-                const maxHeight = lineHeight * 3 + 20; // 3 lines + padding
-                e.target.style.height = Math.min(e.target.scrollHeight, maxHeight) + 'px';
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit(e as unknown as React.FormEvent);
-                }
-              }}
-              placeholder="Hỏi về lá số của bạn... (Shift+Enter để xuống dòng)"
-              disabled={loading}
-              className="flex-1 px-4 py-2.5 rounded-xl bg-[#0d1117] border border-[#1e2538] text-sm text-[#e2e8f0] placeholder:text-[#3d4a5c] focus:outline-none focus:border-[#3b5bdb]/50 focus:ring-1 focus:ring-[#3b5bdb]/20 transition-all disabled:opacity-50 resize-none overflow-y-auto leading-5"
-              style={{ minHeight: '40px', maxHeight: '80px' }}
-            />
-            <button
-              type="submit"
-              disabled={loading || !input.trim()}
-              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#3b5bdb] to-[#5b8af5] text-white text-sm font-medium hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-            >
-              Gửi
-            </button>
-          </div>
-          <p className="text-[10px] text-[#3d4a5c] mt-1.5 pl-1">Enter gửi · Shift+Enter xuống dòng</p>
-        </form>
-      </div>
+    <div
+      className="fixed z-50 flex flex-col"
+      style={{ bottom: 0, right: 0, width: 'min(100%, 440px)', height: 'min(100dvh, 620px)', padding: 16 }}
+    >
+      {panel}
     </div>
   );
 }

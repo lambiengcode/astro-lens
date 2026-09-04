@@ -1,298 +1,323 @@
 'use client';
 
-import type { PalaceData } from '@/types';
+import { useEffect, useRef, useState } from 'react';
+import type { ChartData, PalaceData, StarData } from '@/types';
+import {
+  BRANCH_LABELS, buildBranchMap, isSoulPalace, xung, tamHop, enDash,
+} from '@/lib/branches';
+import { drawRelationships, clearOverlay } from '@/lib/rel-overlay';
+import { prefersReducedMotion } from '@/lib/motion';
+import { useI18n } from '@/lib/i18n/context';
+import type { Domain } from '@/lib/i18n/vocabulary';
 
-interface ChartGridProps {
+type V = (value: string | undefined | null, domain?: Domain) => string;
+
+export interface ChartGridProps {
   palaces: PalaceData[];
   activePalace: number | null;
   onPalaceClick: (index: number) => void;
+  /** Subject details for the centre panel. Optional — omitted in previews. */
+  chart?: ChartData;
+  name?: string;
+  /** `print` renders the ink-on-paper variant: same anatomy, no motion. */
+  variant?: 'screen' | 'print';
 }
 
 // ============================================================
-// ZIWEI.PUB STYLE — Traditional 4×4 perimeter grid
+// 4×4 perimeter grid — layout unchanged
 // ============================================================
 //
 //   Col 0    Col 1    Col 2    Col 3
 //  ┌────────┬────────┬────────┬────────┐
-//  │ 巳(5)  │ 午(6)  │ 未(7)  │ 申(8)  │  Row 0
+//  │ Tỵ(5)  │ Ngọ(6) │ Mùi(7) │ Thân(8)│  Row 0
 //  ├────────┼────────┴────────┼────────┤
-//  │ 辰(4)  │     CENTER     │ 酉(9)  │  Row 1
-//  ├────────┤     INFO       ├────────┤
-//  │ 卯(3)  │                │ 戌(10) │  Row 2
+//  │ Thìn(4)│     CENTRE      │ Dậu(9) │  Row 1
+//  ├────────┤                 ├────────┤
+//  │ Mão(3) │                 │Tuất(10)│  Row 2
 //  ├────────┼────────┬────────┼────────┤
-//  │ 寅(2)  │ 丑(1)  │ 子(0)  │ 亥(11) │  Row 3
+//  │ Dần(2) │ Sửu(1) │ Tý(0)  │ Hợi(11)│  Row 3
 //  └────────┴────────┴────────┴────────┘
 
-const BRANCH_LOOKUP: Record<string, number> = {
-  '子': 0, 'Tý': 0, 'tý': 0,
-  '丑': 1, 'Sửu': 1, 'sửu': 1,
-  '寅': 2, 'Dần': 2, 'dần': 2,
-  '卯': 3, 'Mão': 3, 'mão': 3,
-  '辰': 4, 'Thìn': 4, 'thìn': 4,
-  '巳': 5, 'Tỵ': 5, 'tỵ': 5,
-  '午': 6, 'Ngọ': 6, 'ngọ': 6,
-  '未': 7, 'Mùi': 7, 'mùi': 7,
-  '申': 8, 'Thân': 8, 'thân': 8,
-  '酉': 9, 'Dậu': 9, 'dậu': 9,
-  '戌': 10, 'Tuất': 10, 'tuất': 10,
-  '亥': 11, 'Hợi': 11, 'hợi': 11,
-};
+/** The five grades the legend names, in descending order — DESIGN.md §8.9. */
+const BRIGHTNESS_SCALE = ['miếu', 'vượng', 'đắc', 'bình', 'hãm'];
 
-const BRANCH_LABELS = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
-
-// Perimeter cells: [row, col, branchIndex]
 const TOP_ROW = [5, 6, 7, 8];
 const BOTTOM_ROW = [2, 1, 0, 11];
-const LEFT_COL = [4, 3];   // row 1, row 2
-const RIGHT_COL = [9, 10]; // row 1, row 2
+const LEFT_COL = [4, 3];
+const RIGHT_COL = [9, 10];
 
-function buildBranchMap(palaces: PalaceData[]): Map<number, PalaceData> {
-  const map = new Map<number, PalaceData>();
-  for (const palace of palaces) {
-    const branch = palace.earthlyBranch.trim();
-    const idx = BRANCH_LOOKUP[branch];
-    if (idx !== undefined) {
-      map.set(idx, palace);
-    }
-  }
-  // Fallback: iztro returns palaces in order starting from 寅(2)
-  if (map.size < 12 && palaces.length === 12) {
-    for (let i = 0; i < 12; i++) {
-      const branchIdx = (i + 2) % 12;
-      if (!map.has(branchIdx)) map.set(branchIdx, palaces[i]);
-    }
-  }
-  return map;
+function isRunningDecadal(palace: PalaceData, currentDecadalIndex: number | null): boolean {
+  return currentDecadalIndex !== null && palace.index === currentDecadalIndex;
 }
 
-function isSoulPalace(palace: PalaceData): boolean {
-  const n = palace.name.toLowerCase();
-  return n.includes('mệnh') || n === '命宫' || n === '命宮';
-}
-
-// ============================================================
-// STAR RENDERING (ziwei.pub style)
-// ============================================================
-// Major stars: large, bold, purple (#531dab)
-// Mutagen stars: gold badge
-// Minor stars: small, blue-tinted
-// Adjective stars: small, muted
-
-function StarBadge({ star, size }: { star: { name: string; brightness?: string; mutagen?: string }; size: 'lg' | 'sm' }) {
-  const isBig = size === 'lg';
-  const hasMutagen = !!star.mutagen;
-
+function MajorStar({ star, v }: { star: StarData; v: V }) {
   return (
-    <span className="inline-flex items-center gap-0.5 shrink-0">
-      <span className={`
-        ${isBig ? 'text-[12px] sm:text-[13px] font-semibold' : 'text-[10px] sm:text-[11px]'}
-        ${hasMutagen ? 'text-[#e8b339]' : isBig ? 'text-[#9775cd]' : 'text-[#7c8ba5]'}
-        leading-none whitespace-nowrap
-      `}>
-        {star.name}
-      </span>
-      {star.brightness && (
-        <span className="text-[8px] sm:text-[9px] text-[#5a6577] leading-none">{star.brightness}</span>
-      )}
+    <div className="maj">
+      <span className="nm">{v(star.name, 'majorStar')}</span>
+      {star.brightness && <span className="br">{v(star.brightness, 'brightness')}</span>}
       {star.mutagen && (
-        <span className="text-[9px] sm:text-[10px] font-bold text-[#e8b339] leading-none">{star.mutagen}</span>
+        <span className={`mut${star.mutagen === 'Kỵ' ? ' ky' : ''}`}>
+          {v(star.mutagen, 'mutagen')}
+        </span>
       )}
-    </span>
+    </div>
   );
 }
 
-// ============================================================
-// PALACE CELL (ziwei.pub style)
-// ============================================================
-
 function PalaceCell({
-  palace,
-  branchLabel,
-  isActive,
-  onClick,
+  palace, branch, branchLabel, isMenh, isDv, relClass, relTag, borrowFrom,
+  interactive, onActivate, onDeactivate, onClick, t, v,
 }: {
   palace: PalaceData | undefined;
+  t: ReturnType<typeof useI18n>['t'];
+  v: V;
+  branch: number;
   branchLabel: string;
-  isActive: boolean;
+  isMenh: boolean;
+  isDv: boolean;
+  relClass: string;
+  relTag: string;
+  /** Branch label a vô chính diệu palace borrows its stars from. */
+  borrowFrom: string | null;
+  interactive: boolean;
+  onActivate: () => void;
+  onDeactivate: () => void;
   onClick: () => void;
 }) {
   if (!palace) {
     return (
-      <div className="border border-[#1e2538] bg-[#0d1117] min-h-[140px] sm:min-h-[170px] flex items-center justify-center">
-        <span className="text-[10px] text-[#2a3348]">{branchLabel}</span>
+      <div className="pal void" data-b={branch}>
+        <div className="pal-b">
+          <div className="empty">{t.chart.noData}</div>
+        </div>
+        <div className="pal-f">
+          <div className="lf" />
+          <div className="ct"><div className="pn">—</div></div>
+          <div className="rt">{branchLabel}</div>
+        </div>
       </div>
     );
   }
 
-  const isMenh = isSoulPalace(palace);
+  const cls = ['pal', isMenh ? 'menh' : '', isDv ? 'dv' : '', relClass].filter(Boolean).join(' ');
+  const body = (
+    <>
+      <span className="rel-tag">{relTag}</span>
+      <div className="pal-b">
+        <div className="majors">
+          {palace.majorStars.length > 0
+            ? palace.majorStars.map((s, i) => <MajorStar key={i} star={s} v={v} />)
+            : (
+              <>
+                <div className="empty">{v('vô chính diệu', 'relation')}</div>
+                {borrowFrom && (
+                  <div style={{ marginTop: 4 }}>
+                    <span className="borrow">{v('mượn', 'relation')} {borrowFrom}</span>
+                  </div>
+                )}
+              </>
+            )}
+        </div>
+        {palace.minorStars.length > 0 && (
+          <div className="minors">
+            {palace.minorStars.map((s, i) => <span key={i}>{v(s.name, 'minorStar')}</span>)}
+          </div>
+        )}
+        {palace.adjectiveStars.length > 0 && (
+          <div className="adjs">
+            {palace.adjectiveStars.map((s, i) => <span key={i}>{v(s.name, 'adjectiveStar')}</span>)}
+          </div>
+        )}
+      </div>
+      <div className="pal-f">
+        <div className="lf">
+          {v(palace.changsheng12, 'changsheng')}<br />{v(palace.boshi12, 'boshi')}
+        </div>
+        <div className="ct">
+          <div className="pn">{v(palace.name, 'palace')}</div>
+          {palace.isBodyPalace && <div className="than">{t.chart.thanMark}</div>}
+          {palace.decadalRange && <div className="dr">{enDash(palace.decadalRange)}</div>}
+        </div>
+        <div className="rt">
+          {v(palace.heavenlyStem, 'stem')}<br />{v(palace.earthlyBranch, 'branch')}
+        </div>
+      </div>
+    </>
+  );
+
+  if (!interactive) {
+    return <div className={cls} data-b={branch}>{body}</div>;
+  }
 
   return (
     <button
+      type="button"
+      className={cls}
+      data-b={branch}
       onClick={onClick}
-      className={`
-        relative w-full border text-left transition-all cursor-pointer
-        min-h-[140px] sm:min-h-[170px] flex flex-col
-        ${isActive
-          ? 'bg-[#141c2e] border-[#3b5bdb] z-10 shadow-[0_0_15px_rgba(59,91,219,0.15)]'
-          : isMenh
-            ? 'bg-[#131825] border-[#2a3348] hover:bg-[#161e30]'
-            : 'bg-[#0d1117] border-[#1e2538] hover:bg-[#111822]'
-        }
-      `}
+      onMouseEnter={onActivate}
+      onFocus={onActivate}
+      onBlur={onDeactivate}
+      aria-label={`${t.chart.cellAriaPre} ${v(palace.name, 'palace')}, ${t.chart.cellAriaBranch} ${v(palace.earthlyBranch, 'branch')}`}
     >
-      {/* Mệnh cung top indicator */}
-      {isMenh && (
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#e8b339] to-transparent" />
-      )}
-
-      {/* Main content area */}
-      <div className="flex-1 p-1.5 sm:p-2 space-y-1">
-        {/* Major stars */}
-        <div className="space-y-0.5">
-          {palace.majorStars.map((star, i) => (
-            <div key={i}>
-              <StarBadge star={star} size="lg" />
-            </div>
-          ))}
-          {palace.majorStars.length === 0 && (
-            <span className="text-[10px] text-[#2a3348] italic">—</span>
-          )}
-        </div>
-
-        {/* Minor stars */}
-        {palace.minorStars.length > 0 && (
-          <div className="flex flex-wrap gap-x-1 gap-y-0">
-            {palace.minorStars.map((star, i) => (
-              <StarBadge key={i} star={star} size="sm" />
-            ))}
-          </div>
-        )}
-
-        {/* Adjective stars */}
-        {palace.adjectiveStars.length > 0 && (
-          <div className="flex flex-wrap gap-x-1 gap-y-0">
-            {palace.adjectiveStars.map((star, i) => (
-              <span key={i} className="text-[9px] sm:text-[10px] text-[#3d4a5c] leading-none whitespace-nowrap">
-                {star.name}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Footer: changsheng | palace name + branch | decadal */}
-      <div className="border-t border-[#1e2538] grid grid-cols-3 items-end">
-        {/* Left: changsheng12 + boshi12 */}
-        <div className="p-1 sm:p-1.5 text-left space-y-0">
-          <div className="text-[9px] sm:text-[10px] text-[#4a5568] leading-tight">{palace.changsheng12}</div>
-          <div className="text-[9px] sm:text-[10px] text-[#4a5568] leading-tight">{palace.boshi12}</div>
-        </div>
-
-        {/* Center: palace name + body indicator */}
-        <div className="p-1 sm:p-1.5 text-center">
-          <div className={`text-[11px] sm:text-[12px] font-bold leading-tight ${isMenh ? 'text-[#e8b339]' : 'text-[#8b9dc3]'}`}>
-            {palace.name}
-          </div>
-          {palace.isBodyPalace && (
-            <div className="text-[8px] sm:text-[9px] text-[#3b82f6] leading-tight">[ Thân ]</div>
-          )}
-          {palace.decadalRange && (
-            <div className="text-[8px] sm:text-[9px] text-[#3b5bdb] leading-tight mt-0.5">
-              {palace.decadalRange}
-            </div>
-          )}
-        </div>
-
-        {/* Right: heavenly stem + earthly branch */}
-        <div className="p-1 sm:p-1.5 text-right">
-          <div className="text-[10px] sm:text-[11px] text-[#6b7a94] leading-tight">
-            {palace.heavenlyStem}{palace.earthlyBranch}
-          </div>
-        </div>
-      </div>
+      {body}
     </button>
   );
 }
 
-// ============================================================
-// MAIN GRID COMPONENT
-// ============================================================
+export default function ChartGrid({
+  palaces, activePalace, onPalaceClick, chart, name, variant = 'screen',
+}: ChartGridProps) {
+  const { t, v } = useI18n();
+  const isPrint = variant === 'print';
+  const chartRef = useRef<HTMLDivElement>(null);
+  const ovRef = useRef<SVGSVGElement>(null);
+  const [relBranch, setRelBranch] = useState<number | null>(null);
+  const [lit, setLit] = useState(isPrint);
+  const [scan, setScan] = useState(false);
 
-export default function ChartGrid({ palaces, activePalace, onPalaceClick }: ChartGridProps) {
   const branchMap = buildBranchMap(palaces);
-
   const missing: string[] = [];
-  for (let i = 0; i < 12; i++) {
-    if (!branchMap.has(i)) missing.push(BRANCH_LABELS[i]);
-  }
+  for (let i = 0; i < 12; i++) if (!branchMap.has(i)) missing.push(v(BRANCH_LABELS[i], 'branch'));
+
+  const currentDecadalIndex = chart?.horoscope?.decadal.index ?? null;
+
+  // arrival: scan line crosses, then the cells resolve behind it — PLAN §7.4
+  // Under reduced motion these classes are inert: the media block forces the
+  // cells, the rules and the scan to their final state regardless.
+  useEffect(() => {
+    if (isPrint) return;
+    const kick = requestAnimationFrame(() => setScan(true));
+    const settle = setTimeout(() => setLit(true), 260);
+    return () => { cancelAnimationFrame(kick); clearTimeout(settle); };
+  }, [isPrint]);
+
+  // relationship linework, recomputed on every activation
+  useEffect(() => {
+    const ov = ovRef.current;
+    const el = chartRef.current;
+    if (!ov || !el || isPrint) return;
+    if (relBranch === null) { clearOverlay(ov); return; }
+    drawRelationships(el, ov, relBranch, prefersReducedMotion());
+  }, [relBranch, isPrint]);
+
+  // the grid box moves inside its scroller — never cache the base rect
+  useEffect(() => {
+    if (isPrint) return;
+    const drop = () => setRelBranch(null);
+    window.addEventListener('resize', drop);
+    return () => window.removeEventListener('resize', drop);
+  }, [isPrint]);
+
+  const relatives = relBranch === null
+    ? null
+    : { xung: xung(relBranch), hop: tamHop(relBranch) };
 
   const renderCell = (branch: number) => {
     const palace = branchMap.get(branch);
+    let relClass = '';
+    let relTag = '';
+    if (relatives) {
+      if (branch === relBranch) relClass = 'self';
+      else if (branch === relatives.xung) { relClass = 'xung'; relTag = t.chart.tagXung; }
+      else if (relatives.hop.includes(branch)) { relClass = 'hop'; relTag = t.chart.tagHop; }
+    }
     return (
       <PalaceCell
         key={`b-${branch}`}
         palace={palace}
-        branchLabel={BRANCH_LABELS[branch]}
-        isActive={palace ? activePalace === palace.index : false}
+        branch={branch}
+        t={t}
+        v={v}
+        branchLabel={v(BRANCH_LABELS[branch], 'branch')}
+        isMenh={!!palace && isSoulPalace(palace)}
+        isDv={!!palace && isRunningDecadal(palace, currentDecadalIndex)}
+        relClass={relClass}
+        relTag={relTag}
+        borrowFrom={
+          // Vô chính diệu mượn sao đối cung: the borrowed stars come from the
+          // xung chiếu palace — the tradition's own rule, DESIGN.md §12.
+          palace && palace.majorStars.length === 0
+            ? v(BRANCH_LABELS[xung(branch)], 'branch')
+            : null
+        }
+        interactive={!isPrint && !!palace}
+        onActivate={() => setRelBranch(branch)}
+        onDeactivate={() => setRelBranch(null)}
         onClick={() => palace && onPalaceClick(palace.index)}
       />
     );
   };
 
+  const chartCls = [
+    'chart',
+    isPrint ? 'print lit' : '',
+    !isPrint && lit ? 'lit' : '',
+    !isPrint && scan ? 'scan' : '',
+    relBranch !== null ? 'rel' : '',
+  ].filter(Boolean).join(' ');
+
+  const activeName = activePalace !== null
+    ? v(palaces.find((p) => p.index === activePalace)?.name, 'palace') || undefined
+    : undefined;
+
+  const grid = (
+    <div
+      className={chartCls}
+      ref={chartRef}
+      onMouseLeave={isPrint ? undefined : () => setRelBranch(null)}
+    >
+      <div className="crow">{TOP_ROW.map(renderCell)}</div>
+      <div className="cmid">
+        <div className="col">{LEFT_COL.map(renderCell)}</div>
+        <div className="centre">
+          <span className="ring r1" />
+          <span className="ring r2" />
+          <div className="cn">{t.chart.centre}</div>
+          <div className="han">紫微斗數</div>
+          {chart && (
+            <div className="who">
+              {name && <div className="nm">{name}</div>}
+              <div className="dl">
+                {chart.solarDate} · {t.chart.hour} {v(chart.time, 'branch')}<br />
+                {v(chart.gender, 'gender')} · {v(chart.fiveElementsClass, 'fiveElements')}<br />
+                {t.chart.menh} {v(chart.earthlyBranchOfSoulPalace, 'branch')} · {t.chart.than}{' '}
+                {v(chart.earthlyBranchOfBodyPalace, 'branch')}
+              </div>
+            </div>
+          )}
+          {!isPrint && (
+            <div className="hint">
+              {activeName ? `${t.chart.hintActivePre} ${activeName}` : t.chart.hint}
+            </div>
+          )}
+        </div>
+        <div className="col">{RIGHT_COL.map(renderCell)}</div>
+      </div>
+      <div className="crow">{BOTTOM_ROW.map(renderCell)}</div>
+      {!isPrint && <svg className="rel-ov" ref={ovRef} aria-hidden="true" />}
+    </div>
+  );
+
   return (
     <div className="w-full">
       {missing.length > 0 && (
-        <div className="mb-3 p-2.5 rounded bg-[#2a1a1a] border border-[#5c2828] text-[#ef4444] text-xs">
-          Thiếu cung: {missing.join(', ')}
-        </div>
+        <div className="err">{t.chart.missing} {missing.join(', ')}</div>
       )}
 
-      <div className="overflow-x-auto">
-        <div className="min-w-[620px] sm:min-w-[740px] border border-[#1e2538] bg-[#0a0e17] rounded-lg overflow-hidden">
-          {/* Row 0: top 4 */}
-          <div className="grid grid-cols-4">
-            {TOP_ROW.map(renderCell)}
-          </div>
+      {isPrint ? grid : <div className="chart-scroll">{grid}</div>}
 
-          {/* Rows 1-2: left | center | right */}
-          <div className="grid grid-cols-4">
-            {/* Left column */}
-            <div className="col-span-1 flex flex-col">
-              {LEFT_COL.map(renderCell)}
-            </div>
-
-            {/* Center 2×2 */}
-            <div className="col-span-2 border-x border-[#1e2538] flex flex-col items-center justify-center bg-[#0a0e17] min-h-[280px] sm:min-h-[340px] relative">
-              {/* Decorative circles */}
-              <div className="absolute inset-6 sm:inset-10 rounded-full border border-[#1a2236] opacity-60" />
-              <div className="absolute inset-12 sm:inset-16 rounded-full border border-[#1a2236] opacity-30" />
-
-              <div className="relative z-10 text-center px-4">
-                <div className="text-3xl sm:text-4xl mb-3 animate-float select-none">✦</div>
-                <h3 className="text-sm sm:text-base font-bold bg-gradient-to-r from-[#9775cd] to-[#e8b339] bg-clip-text text-transparent">
-                  Tử Vi Đẩu Số
-                </h3>
-                <p className="text-[10px] sm:text-xs text-[#3d4a5c] mt-1">紫微斗數</p>
-
-                <div className="mt-4 space-y-1 text-[10px] sm:text-xs text-[#3d4a5c]">
-                  <p>{palaces.length}/12 cung</p>
-                  <p className="text-[#3b5bdb]/60">Nhấn vào cung để xem chi tiết</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Right column */}
-            <div className="col-span-1 flex flex-col">
-              {RIGHT_COL.map(renderCell)}
-            </div>
-          </div>
-
-          {/* Row 3: bottom 4 */}
-          <div className="grid grid-cols-4">
-            {BOTTOM_ROW.map(renderCell)}
-          </div>
+      {!isPrint && (
+        <div className="legend">
+          <span><i className="sw" style={{ background: 'var(--amber)' }} />{t.chart.legendMajor}</span>
+          <span><i className="sw" style={{ background: 'var(--cyan)' }} />{t.chart.legendMinor}</span>
+          <span><i className="sw" style={{ background: 'var(--tx4)' }} />{t.chart.legendAdjective}</span>
+          <span><i className="sw" style={{ background: 'var(--sig)' }} />{t.chart.legendKy}</span>
+          <span className="mono" style={{ color: 'var(--tx4)' }}>
+            {BRIGHTNESS_SCALE.map((b) => v(b, 'brightness')).join(' · ')}
+          </span>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,985 @@
+{
+  "input": {
+    "name": "Trần Quốc Bảo",
+    "solarDate": "1991-06-19",
+    "birthHour": 5,
+    "gender": "male",
+    "location": "Việt Nam"
+  },
+  "chart": {
+    "gender": "Nam",
+    "solarDate": "1991-6-19",
+    "lunarDate": "一九九一年五月初八",
+    "chineseDate": "Tân Mùi - Giáp Ngọ - Canh Thân - Tân Tỵ",
+    "time": "Giờ tỵ",
+    "timeRange": "09:00~11:00",
+    "sign": "Cung Song Tử",
+    "zodiac": "Dê",
+    "fiveElementsClass": "Thổ Ngũ Cục",
+    "earthlyBranchOfSoulPalace": "Sửu",
+    "earthlyBranchOfBodyPalace": "Hợi",
+    "soul": "Cự Môn",
+    "body": "Thiên Tướng",
+    "palaces": [
+      {
+        "index": 0,
+        "name": "Phụ Mẫu",
+        "heavenlyStem": "Canh",
+        "earthlyBranch": "Dần",
+        "majorStars": [
+          {
+            "name": "Thái Dương",
+            "type": "major",
+            "brightness": "Vượng",
+            "mutagen": "Quyền"
+          },
+          {
+            "name": "Cự Môn",
+            "type": "major",
+            "brightness": "Miếu",
+            "mutagen": "Lộc"
+          }
+        ],
+        "minorStars": [
+          {
+            "name": "Thiên Việt",
+            "type": "soft"
+          },
+          {
+            "name": "Hỏa Tinh",
+            "type": "tough",
+            "brightness": "Miếu"
+          }
+        ],
+        "adjectiveStars": [
+          {
+            "name": "Thiên Hỷ",
+            "type": "flower"
+          }
+        ],
+        "isBodyPalace": false,
+        "isOriginalPalace": false,
+        "changsheng12": "Bệnh",
+        "boshi12": "Hỷ Thần",
+        "decadalRange": "115-124",
+        "decadalHeavenlyStem": "Canh",
+        "decadalEarthlyBranch": "Dần",
+        "ages": [
+          2,
+          14,
+          26,
+          38,
+          50,
+          62,
+          74,
+          86,
+          98,
+          110
+        ],
+        "suiqian12": "Long Đức",
+        "jiangqian12": "Vong Thần"
+      },
+      {
+        "index": 1,
+        "name": "Phúc Đức",
+        "heavenlyStem": "Tân",
+        "earthlyBranch": "Mão",
+        "majorStars": [
+          {
+            "name": "Thiên Tướng",
+            "type": "major",
+            "brightness": "Hạn"
+          }
+        ],
+        "minorStars": [
+          {
+            "name": "Linh Tinh",
+            "type": "tough",
+            "brightness": "Lợi"
+          }
+        ],
+        "adjectiveStars": [
+          {
+            "name": "Tam Thai",
+            "type": "adjective"
+          },
+          {
+            "name": "Thiên Quý",
+            "type": "adjective"
+          },
+          {
+            "name": "Phụng Các",
+            "type": "adjective"
+          },
+          {
+            "name": "Phi Liêm",
+            "type": "adjective"
+          },
+          {
+            "name": "Niên Giải",
+            "type": "helper"
+          }
+        ],
+        "isBodyPalace": false,
+        "isOriginalPalace": true,
+        "changsheng12": "Suy",
+        "boshi12": "Phi Liêm",
+        "decadalRange": "105-114",
+        "decadalHeavenlyStem": "Tân",
+        "decadalEarthlyBranch": "Mão",
+        "ages": [
+          3,
+          15,
+          27,
+          39,
+          51,
+          63,
+          75,
+          87,
+          99,
+          111
+        ],
+        "suiqian12": "Bạch Hổ",
+        "jiangqian12": "Tướng Tinh"
+      },
+      {
+        "index": 2,
+        "name": "Điền Trạch",
+        "heavenlyStem": "Nhâm",
+        "earthlyBranch": "Thìn",
+        "majorStars": [
+          {
+            "name": "Thiên Cơ",
+            "type": "major",
+            "brightness": "Lợi"
+          },
+          {
+            "name": "Thiên Lương",
+            "type": "major",
+            "brightness": "Miếu"
+          }
+        ],
+        "minorStars": [
+          {
+            "name": "Địa Kiếp",
+            "type": "tough"
+          }
+        ],
+        "adjectiveStars": [
+          {
+            "name": "Thiên Đức",
+            "type": "adjective"
+          },
+          {
+            "name": "Triệt Lộ",
+            "type": "adjective"
+          },
+          {
+            "name": "Quả Tú",
+            "type": "adjective"
+          }
+        ],
+        "isBodyPalace": false,
+        "isOriginalPalace": false,
+        "changsheng12": "Đế Vượng",
+        "boshi12": "Tấu Thư",
+        "decadalRange": "95-104",
+        "decadalHeavenlyStem": "Nhâm",
+        "decadalEarthlyBranch": "Thìn",
+        "ages": [
+          4,
+          16,
+          28,
+          40,
+          52,
+          64,
+          76,
+          88,
+          100,
+          112
+        ],
+        "suiqian12": "Thiên Đức",
+        "jiangqian12": "Phan Án"
+      },
+      {
+        "index": 3,
+        "name": "Quan Lộc",
+        "heavenlyStem": "Quý",
+        "earthlyBranch": "Tỵ",
+        "majorStars": [
+          {
+            "name": "Tử Vi",
+            "type": "major",
+            "brightness": "Vượng"
+          },
+          {
+            "name": "Thất Sát",
+            "type": "major",
+            "brightness": "Bình"
+          }
+        ],
+        "minorStars": [
+          {
+            "name": "Văn Xương",
+            "type": "soft",
+            "brightness": "Miếu",
+            "mutagen": "Kỵ"
+          },
+          {
+            "name": "Thiên Mã",
+            "type": "tianma"
+          }
+        ],
+        "adjectiveStars": [
+          {
+            "name": "Thiên Diêu",
+            "type": "flower"
+          },
+          {
+            "name": "Thiên Vu",
+            "type": "adjective"
+          },
+          {
+            "name": "Thiên Phúc",
+            "type": "adjective"
+          },
+          {
+            "name": "Không Vong",
+            "type": "adjective"
+          }
+        ],
+        "isBodyPalace": false,
+        "isOriginalPalace": false,
+        "changsheng12": "Lâm Quan",
+        "boshi12": "Tướng Quân",
+        "decadalRange": "85-94",
+        "decadalHeavenlyStem": "Quý",
+        "decadalEarthlyBranch": "Tỵ",
+        "ages": [
+          5,
+          17,
+          29,
+          41,
+          53,
+          65,
+          77,
+          89,
+          101,
+          113
+        ],
+        "suiqian12": "Điếu Khách",
+        "jiangqian12": "Tuế Dịch"
+      },
+      {
+        "index": 4,
+        "name": "Nô Bộc",
+        "heavenlyStem": "Giáp",
+        "earthlyBranch": "Ngọ",
+        "majorStars": [],
+        "minorStars": [
+          {
+            "name": "Hữu Bật",
+            "type": "soft"
+          },
+          {
+            "name": "Thiên Khôi",
+            "type": "soft"
+          },
+          {
+            "name": "Địa Không",
+            "type": "tough"
+          }
+        ],
+        "adjectiveStars": [
+          {
+            "name": "Thiên Thọ",
+            "type": "adjective"
+          },
+          {
+            "name": "Thiên Trù",
+            "type": "adjective"
+          },
+          {
+            "name": "Âm Sát",
+            "type": "adjective"
+          },
+          {
+            "name": "Thiên Thương",
+            "type": "adjective"
+          }
+        ],
+        "isBodyPalace": false,
+        "isOriginalPalace": false,
+        "changsheng12": "Quan Đới",
+        "boshi12": "Tiểu Hao",
+        "decadalRange": "75-84",
+        "decadalHeavenlyStem": "Giáp",
+        "decadalEarthlyBranch": "Ngọ",
+        "ages": [
+          6,
+          18,
+          30,
+          42,
+          54,
+          66,
+          78,
+          90,
+          102,
+          114
+        ],
+        "suiqian12": "Bệnh Phù",
+        "jiangqian12": "Tức Thần"
+      },
+      {
+        "index": 5,
+        "name": "Thiên Di",
+        "heavenlyStem": "Ất",
+        "earthlyBranch": "Mùi",
+        "majorStars": [],
+        "minorStars": [],
+        "adjectiveStars": [
+          {
+            "name": "Phong Cáo",
+            "type": "adjective"
+          },
+          {
+            "name": "Hoa Cái",
+            "type": "adjective"
+          },
+          {
+            "name": "Thiên Nguyệt",
+            "type": "adjective"
+          }
+        ],
+        "isBodyPalace": false,
+        "isOriginalPalace": false,
+        "changsheng12": "Mục Dục",
+        "boshi12": "Thanh Long",
+        "decadalRange": "65-74",
+        "decadalHeavenlyStem": "Ất",
+        "decadalEarthlyBranch": "Mùi",
+        "ages": [
+          7,
+          19,
+          31,
+          43,
+          55,
+          67,
+          79,
+          91,
+          103,
+          115
+        ],
+        "suiqian12": "Tuế Kiện",
+        "jiangqian12": "Hoa Cái"
+      },
+      {
+        "index": 6,
+        "name": "Tật Ách",
+        "heavenlyStem": "Bính",
+        "earthlyBranch": "Thân",
+        "majorStars": [],
+        "minorStars": [
+          {
+            "name": "Tả Phù",
+            "type": "soft"
+          },
+          {
+            "name": "Đà La",
+            "type": "tough",
+            "brightness": "Hạn"
+          }
+        ],
+        "adjectiveStars": [
+          {
+            "name": "Hồng Loan",
+            "type": "flower"
+          },
+          {
+            "name": "Thiên Tài",
+            "type": "adjective"
+          },
+          {
+            "name": "Thiên Không",
+            "type": "adjective"
+          },
+          {
+            "name": "Cô Thần",
+            "type": "adjective"
+          },
+          {
+            "name": "Thiên Sứ",
+            "type": "adjective"
+          }
+        ],
+        "isBodyPalace": false,
+        "isOriginalPalace": false,
+        "changsheng12": "Trường Sinh",
+        "boshi12": "Lực Sỹ",
+        "decadalRange": "55-64",
+        "decadalHeavenlyStem": "Bính",
+        "decadalEarthlyBranch": "Thân",
+        "ages": [
+          8,
+          20,
+          32,
+          44,
+          56,
+          68,
+          80,
+          92,
+          104,
+          116
+        ],
+        "suiqian12": "Hối Khí",
+        "jiangqian12": "Kiếp Sát"
+      },
+      {
+        "index": 7,
+        "name": "Tài Bạch",
+        "heavenlyStem": "Đinh",
+        "earthlyBranch": "Dậu",
+        "majorStars": [
+          {
+            "name": "Liêm Trinh",
+            "type": "major",
+            "brightness": "Bình"
+          },
+          {
+            "name": "Phá Quân",
+            "type": "major",
+            "brightness": "Hạn"
+          }
+        ],
+        "minorStars": [
+          {
+            "name": "Văn Khúc",
+            "type": "soft",
+            "brightness": "Miếu",
+            "mutagen": "Khoa"
+          },
+          {
+            "name": "Lộc Tồn",
+            "type": "lucun"
+          }
+        ],
+        "adjectiveStars": [
+          {
+            "name": "Thiên Quan",
+            "type": "adjective"
+          }
+        ],
+        "isBodyPalace": false,
+        "isOriginalPalace": false,
+        "changsheng12": "Dưỡng",
+        "boshi12": "Bác Sỹ",
+        "decadalRange": "45-54",
+        "decadalHeavenlyStem": "Đinh",
+        "decadalEarthlyBranch": "Dậu",
+        "ages": [
+          9,
+          21,
+          33,
+          45,
+          57,
+          69,
+          81,
+          93,
+          105,
+          117
+        ],
+        "suiqian12": "Tang Môn",
+        "jiangqian12": "Tai Sát"
+      },
+      {
+        "index": 8,
+        "name": "Tử Nữ",
+        "heavenlyStem": "Mậu",
+        "earthlyBranch": "Tuất",
+        "majorStars": [],
+        "minorStars": [
+          {
+            "name": "Kình Dương",
+            "type": "tough",
+            "brightness": "Miếu"
+          }
+        ],
+        "adjectiveStars": [],
+        "isBodyPalace": false,
+        "isOriginalPalace": false,
+        "changsheng12": "Thai",
+        "boshi12": "Quan Phủ",
+        "decadalRange": "35-44",
+        "decadalHeavenlyStem": "Mậu",
+        "decadalEarthlyBranch": "Tuất",
+        "ages": [
+          10,
+          22,
+          34,
+          46,
+          58,
+          70,
+          82,
+          94,
+          106,
+          118
+        ],
+        "suiqian12": "Quán Tác",
+        "jiangqian12": "Thiên Sát"
+      },
+      {
+        "index": 9,
+        "name": "Phu Thê",
+        "heavenlyStem": "Kỷ",
+        "earthlyBranch": "Hợi",
+        "majorStars": [
+          {
+            "name": "Thiên Phủ",
+            "type": "major",
+            "brightness": "Đắc"
+          }
+        ],
+        "minorStars": [],
+        "adjectiveStars": [
+          {
+            "name": "Bát Tọa",
+            "type": "adjective"
+          },
+          {
+            "name": "Ân Quang",
+            "type": "adjective"
+          },
+          {
+            "name": "Long Trì",
+            "type": "adjective"
+          },
+          {
+            "name": "Đài Phụ",
+            "type": "adjective"
+          },
+          {
+            "name": "Tuần Không",
+            "type": "adjective"
+          },
+          {
+            "name": "Thiên Khốc",
+            "type": "adjective"
+          }
+        ],
+        "isBodyPalace": true,
+        "isOriginalPalace": false,
+        "changsheng12": "Tuyệt",
+        "boshi12": "Phục Binh",
+        "decadalRange": "25-34",
+        "decadalHeavenlyStem": "Kỷ",
+        "decadalEarthlyBranch": "Hợi",
+        "ages": [
+          11,
+          23,
+          35,
+          47,
+          59,
+          71,
+          83,
+          95,
+          107,
+          119
+        ],
+        "suiqian12": "Quan Phù",
+        "jiangqian12": "Chỉ Bối"
+      },
+      {
+        "index": 10,
+        "name": "Huynh Đệ",
+        "heavenlyStem": "Canh",
+        "earthlyBranch": "Tý",
+        "majorStars": [
+          {
+            "name": "Thiên Đồng",
+            "type": "major",
+            "brightness": "Vượng"
+          },
+          {
+            "name": "Thái Âm",
+            "type": "major",
+            "brightness": "Miếu"
+          }
+        ],
+        "minorStars": [],
+        "adjectiveStars": [
+          {
+            "name": "Hàm Trì",
+            "type": "flower"
+          },
+          {
+            "name": "Giải Thần",
+            "type": "helper"
+          },
+          {
+            "name": "Nguyệt Đức",
+            "type": "adjective"
+          }
+        ],
+        "isBodyPalace": false,
+        "isOriginalPalace": false,
+        "changsheng12": "Mộ",
+        "boshi12": "Đại Hao",
+        "decadalRange": "15-24",
+        "decadalHeavenlyStem": "Canh",
+        "decadalEarthlyBranch": "Tý",
+        "ages": [
+          12,
+          24,
+          36,
+          48,
+          60,
+          72,
+          84,
+          96,
+          108,
+          120
+        ],
+        "suiqian12": "Tiểu Hao",
+        "jiangqian12": "Hàm Trì"
+      },
+      {
+        "index": 11,
+        "name": "Mệnh",
+        "heavenlyStem": "Tân",
+        "earthlyBranch": "Sửu",
+        "majorStars": [
+          {
+            "name": "Vũ Khúc",
+            "type": "major",
+            "brightness": "Miếu"
+          },
+          {
+            "name": "Tham Lang",
+            "type": "major",
+            "brightness": "Miếu"
+          }
+        ],
+        "minorStars": [],
+        "adjectiveStars": [
+          {
+            "name": "Phá Toái",
+            "type": "adjective"
+          },
+          {
+            "name": "Thiên Hình",
+            "type": "adjective"
+          },
+          {
+            "name": "Thiên Hư",
+            "type": "adjective"
+          }
+        ],
+        "isBodyPalace": false,
+        "isOriginalPalace": false,
+        "changsheng12": "Tử",
+        "boshi12": "Bệnh Phù",
+        "decadalRange": "5-14",
+        "decadalHeavenlyStem": "Tân",
+        "decadalEarthlyBranch": "Sửu",
+        "ages": [
+          1,
+          13,
+          25,
+          37,
+          49,
+          61,
+          73,
+          85,
+          97,
+          109
+        ],
+        "suiqian12": "Đại Hao",
+        "jiangqian12": "Nguyệt Sát"
+      }
+    ],
+    "horoscope": {
+      "decadal": {
+        "index": 8,
+        "name": "Đại Hạn",
+        "heavenlyStem": "Mậu",
+        "earthlyBranch": "Tuất",
+        "palaceNames": [
+          "Quan Lộc",
+          "Nô Bộc",
+          "Thiên Di",
+          "Tật Ách",
+          "Tài Bạch",
+          "Tử Nữ",
+          "Phu Thê",
+          "Huynh Đệ",
+          "Mệnh",
+          "Phụ Mẫu",
+          "Phúc Đức",
+          "Điền Trạch"
+        ],
+        "mutagen": [
+          "Tham Lang",
+          "Thái Âm",
+          "Hữu Bật",
+          "Thiên Cơ"
+        ]
+      },
+      "yearly": {
+        "index": 4,
+        "name": "Lưu Niên",
+        "heavenlyStem": "Bính",
+        "earthlyBranch": "Ngọ",
+        "palaceNames": [
+          "Tài Bạch",
+          "Tử Nữ",
+          "Phu Thê",
+          "Huynh Đệ",
+          "Mệnh",
+          "Phụ Mẫu",
+          "Phúc Đức",
+          "Điền Trạch",
+          "Quan Lộc",
+          "Nô Bộc",
+          "Thiên Di",
+          "Tật Ách"
+        ],
+        "mutagen": [
+          "Thiên Đồng",
+          "Thiên Cơ",
+          "Văn Xương",
+          "Liêm Trinh"
+        ]
+      },
+      "monthly": {
+        "index": 11,
+        "name": "Lưu Nguyệt",
+        "heavenlyStem": "Bính",
+        "earthlyBranch": "Thân",
+        "palaceNames": [
+          "Phụ Mẫu",
+          "Phúc Đức",
+          "Điền Trạch",
+          "Quan Lộc",
+          "Nô Bộc",
+          "Thiên Di",
+          "Tật Ách",
+          "Tài Bạch",
+          "Tử Nữ",
+          "Phu Thê",
+          "Huynh Đệ",
+          "Mệnh"
+        ],
+        "mutagen": [
+          "Thiên Đồng",
+          "Thiên Cơ",
+          "Văn Xương",
+          "Liêm Trinh"
+        ]
+      }
+    },
+    "bazi": {
+      "pillarsString": "辛未年 甲午月 己未日 己巳時",
+      "yearPillar": {
+        "chinese": "辛未",
+        "element": "METAL",
+        "animal": "Goat",
+        "branchElement": "EARTH"
+      },
+      "monthPillar": {
+        "chinese": "甲午",
+        "element": "WOOD",
+        "animal": "Horse",
+        "branchElement": "FIRE"
+      },
+      "dayPillar": {
+        "chinese": "己未",
+        "element": "EARTH",
+        "animal": "Goat",
+        "branchElement": "EARTH"
+      },
+      "hourPillar": {
+        "chinese": "己巳",
+        "element": "EARTH",
+        "animal": "Snake",
+        "branchElement": "FIRE"
+      },
+      "dayMaster": {
+        "stem": "己",
+        "element": "EARTH",
+        "nature": "Yin"
+      },
+      "dayMasterStrength": {
+        "strength": "Strong",
+        "score": 51.5
+      },
+      "fiveElements": {
+        "WOOD": 10,
+        "FIRE": 35,
+        "EARTH": 43,
+        "METAL": 12,
+        "WATER": 0
+      },
+      "favorableElements": [
+        "METAL",
+        "WATER",
+        "WOOD"
+      ],
+      "unfavorableElements": [
+        "FIRE",
+        "EARTH"
+      ],
+      "nobleman": [
+        "子",
+        "申"
+      ],
+      "peachBlossom": "子",
+      "skyHorse": "巳",
+      "intelligence": "酉",
+      "interactions": [
+        {
+          "type": "Branch6Combo",
+          "participants": [
+            "Year(未)",
+            "Month(午)"
+          ]
+        },
+        {
+          "type": "StemCombination",
+          "participants": [
+            "Month(甲)",
+            "Day(己)"
+          ]
+        },
+        {
+          "type": "Branch6Combo",
+          "participants": [
+            "Month(午)",
+            "Day(未)"
+          ]
+        },
+        {
+          "type": "StemCombination",
+          "participants": [
+            "Month(甲)",
+            "Hour(己)"
+          ]
+        },
+        {
+          "type": "DirectionalCombo",
+          "participants": [
+            "Year(未)",
+            "Month(午)",
+            "Hour(巳)"
+          ]
+        },
+        {
+          "type": "DirectionalCombo",
+          "participants": [
+            "Month(午)",
+            "Day(未)",
+            "Hour(巳)"
+          ]
+        },
+        {
+          "type": "DirectionalCombo",
+          "participants": [
+            "Month(午)",
+            "Hour(巳)"
+          ]
+        },
+        {
+          "type": "DirectionalCombo",
+          "participants": [
+            "Year(未)",
+            "Month(午)"
+          ]
+        },
+        {
+          "type": "DirectionalCombo",
+          "participants": [
+            "Month(午)",
+            "Day(未)"
+          ]
+        },
+        {
+          "type": "DirectionalCombo",
+          "participants": [
+            "Year(未)",
+            "Hour(巳)"
+          ]
+        },
+        {
+          "type": "DirectionalCombo",
+          "participants": [
+            "Day(未)",
+            "Hour(巳)"
+          ]
+        }
+      ],
+      "luckPillars": [
+        {
+          "chinese": "甲午",
+          "element": "WOOD",
+          "startAge": 0
+        },
+        {
+          "chinese": "癸巳",
+          "element": "WATER",
+          "startAge": 4
+        },
+        {
+          "chinese": "壬辰",
+          "element": "WATER",
+          "startAge": 14
+        },
+        {
+          "chinese": "辛卯",
+          "element": "METAL",
+          "startAge": 24
+        },
+        {
+          "chinese": "庚寅",
+          "element": "METAL",
+          "startAge": 34
+        },
+        {
+          "chinese": "己丑",
+          "element": "EARTH",
+          "startAge": 44
+        },
+        {
+          "chinese": "戊子",
+          "element": "EARTH",
+          "startAge": 54
+        },
+        {
+          "chinese": "丁亥",
+          "element": "FIRE",
+          "startAge": 64
+        },
+        {
+          "chinese": "丙戌",
+          "element": "FIRE",
+          "startAge": 74
+        },
+        {
+          "chinese": "乙酉",
+          "element": "WOOD",
+          "startAge": 84
+        },
+        {
+          "chinese": "甲申",
+          "element": "WOOD",
+          "startAge": 94
+        },
+        {
+          "chinese": "癸未",
+          "element": "WATER",
+          "startAge": 104
+        }
+      ],
+      "luckDirection": -1,
+      "luckStartAge": 4
+    }
+  }
+}

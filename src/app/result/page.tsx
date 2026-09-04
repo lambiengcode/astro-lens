@@ -1,25 +1,34 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback, useRef, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/ui/Header';
 import Footer from '@/components/ui/Footer';
 import ChartGrid from '@/components/chart/ChartGrid';
 import ChartSummary from '@/components/chart/ChartSummary';
 import PalaceDetail from '@/components/chart/PalaceDetail';
-import Interpretation, { InterpretationContent } from '@/components/chart/Interpretation';
+import Interpretation, { InterpretationContent, PAPER } from '@/components/chart/Interpretation';
 import DecadalView from '@/components/chart/DecadalView';
 import ChatPanel from '@/components/chat/ChatPanel';
-import type { AnalysisResult, BirthInput } from '@/types';
+import { isSoulPalace } from '@/lib/branches';
+import { natalMutagens, palaceAt, starsOrBorrowed } from '@/lib/chart-derived';
+import { loadFixture, FIXTURE_REFERENCE_YEAR, FIXTURE_REFERENCE_DATE, FIXTURE_ID } from '@/lib/fixture';
+import type { AnalysisResult, BirthInput, ChartData, HoroscopeItem, StarData } from '@/types';
+import { useI18n } from '@/lib/i18n/context';
+import type { Domain } from '@/lib/i18n/vocabulary';
+
+type V = (value: string | undefined | null, domain?: Domain) => string;
 
 type TabId = 'overview' | 'chart' | 'daivan' | 'interpretation' | 'horoscope';
 
-// ─── PDF EXPORT HELPER ───────────────────────────────────────────────────────
+// ─── EXPORT ──────────────────────────────────────────────────────────────────
+// The captured document is the paper surface. A dark PDF is an unreadable
+// printed document — PLAN.md §8.
 
 async function captureElement(el: HTMLElement) {
   const { default: html2canvas } = await import('html2canvas-pro');
   return html2canvas(el, {
-    backgroundColor: '#060a13',
+    backgroundColor: PAPER,
     scale: 2,
     useCORS: true,
     logging: false,
@@ -36,82 +45,175 @@ function addCanvasToPdf(
   const pageHeight = pdf.internal.pageSize.getHeight() - margin * 2;
   const scaledHeight = (canvas.height * contentWidth) / canvas.width;
 
-  if (!isFirstSection) {
-    pdf.addPage();
+  if (!isFirstSection) pdf.addPage();
+
+  // No page fill: the paper capture already carries the ground, and letting the
+  // white page show prints identically.
+  if (scaledHeight <= pageHeight) {
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin, contentWidth, scaledHeight);
+    return;
   }
 
-  if (scaledHeight <= pageHeight) {
-    pdf.setFillColor(6, 10, 19);
-    pdf.rect(0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight(), 'F');
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin, contentWidth, scaledHeight);
-  } else {
-    const totalPages = Math.ceil(scaledHeight / pageHeight);
-    const sliceHeightPx = (pageHeight / scaledHeight) * canvas.height;
+  const totalPages = Math.ceil(scaledHeight / pageHeight);
+  const sliceHeightPx = (pageHeight / scaledHeight) * canvas.height;
 
-    for (let i = 0; i < totalPages; i++) {
-      if (i > 0 || !isFirstSection) {
-        if (i > 0) pdf.addPage();
-      }
+  for (let i = 0; i < totalPages; i++) {
+    if (i > 0) pdf.addPage();
 
-      pdf.setFillColor(6, 10, 19);
-      pdf.rect(0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight(), 'F');
+    const sliceCanvas = document.createElement('canvas');
+    sliceCanvas.width = canvas.width;
+    const thisSliceH = Math.min(sliceHeightPx, canvas.height - i * sliceHeightPx);
+    sliceCanvas.height = thisSliceH;
+    const ctx = sliceCanvas.getContext('2d')!;
+    ctx.drawImage(canvas, 0, i * sliceHeightPx, canvas.width, thisSliceH, 0, 0, canvas.width, thisSliceH);
 
-      const sliceCanvas = document.createElement('canvas');
-      sliceCanvas.width = canvas.width;
-      const thisSliceH = Math.min(sliceHeightPx, canvas.height - i * sliceHeightPx);
-      sliceCanvas.height = thisSliceH;
-      const ctx = sliceCanvas.getContext('2d')!;
-      ctx.drawImage(canvas, 0, i * sliceHeightPx, canvas.width, thisSliceH, 0, 0, canvas.width, thisSliceH);
-
-      const sliceScaledH = (thisSliceH * contentWidth) / canvas.width;
-      pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', margin, margin, contentWidth, sliceScaledH);
-    }
+    const sliceScaledH = (thisSliceH * contentWidth) / canvas.width;
+    pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', margin, margin, contentWidth, sliceScaledH);
   }
 }
 
-// ─── PAGE COMPONENT ──────────────────────────────────────────────────────────
+// ─── HOROSCOPE CARD ──────────────────────────────────────────────────────────
 
-export default function ResultPage() {
+function mutagenChips(mutagen: string[], none: string, v: V) {
+  if (!mutagen.length) return <span style={{ color: 'var(--tx4)' }}>{none}</span>;
+  return mutagen.map((m, i) => {
+    // Each entry is "<tứ hóa> <star>", both vocabulary — DESIGN.md §15.2.
+    const [tag, ...rest] = m.split(' ');
+    const isKy = tag === 'Kỵ' || m.startsWith('Kỵ');
+    return (
+      <span key={i}>
+        {i > 0 && ' · '}
+        <span className={isKy ? 'mut ky' : 'mut'}>{v(tag, 'mutagen')}</span>
+        {rest.length > 0 && ` ${v(rest.join(' '))}`}
+      </span>
+    );
+  });
+}
+
+function HoroscopeCard({ glyph, title, meta, item, chart, stars: mode = 'natal' }: {
+  glyph: string; title: string; meta?: string; item: HoroscopeItem; chart: ChartData;
+  /**
+   * `borrow` — a ten-year window over a vô chính diệu palace reads the stars of
+   *   its đối cung, which is how đại vận is read.
+   * `natal`  — a one-year window names the palace as it stands.
+   * `none`   — lưu nguyệt carries no star reading of its own.
+   */
+  stars?: 'borrow' | 'natal' | 'none';
+}) {
+  const natal = mode === 'none' ? null : palaceAt(chart, item.earthlyBranch);
+  const borrowed = mode === 'borrow' && natal && !natal.majorStars.length
+    ? starsOrBorrowed(chart, item.earthlyBranch)
+    : null;
+  const stars = borrowed?.stars ?? natal?.majorStars ?? [];
+  const borrowedFrom = borrowed?.borrowedFrom ?? null;
+  const showEmpty = mode !== 'none' && !stars.length;
+  const { t, v } = useI18n();
+  return (
+    <div className="card">
+      <div className="card-h">
+        <span className="ix" aria-hidden="true">{glyph}</span>
+        <h3>{title}</h3>
+        {meta && <span className="sp">{meta}</span>}
+      </div>
+      <div className="card-b">
+        <div className="kv">
+          <div>
+            <div className="k">{t.result.kvPalace}</div>
+            <div className="v">
+              {v(item.name, 'palace')}
+              {borrowedFrom && ` · ${v('vô chính diệu', 'relation')}`}
+            </div>
+          </div>
+          <div>
+            <div className="k">{t.result.kvCanChi}</div>
+            <div className="v mono">
+              {v(item.heavenlyStem, 'stem')} {v(item.earthlyBranch, 'branch')}
+            </div>
+          </div>
+          {/* rows the item has nothing to say in are left out entirely */}
+          {(stars.length > 0 || showEmpty) && (
+            <div>
+              <div className="k">{borrowedFrom ? t.result.kvBorrowedStars : t.result.kvMajorStars}</div>
+              <div className="v">
+                {stars.length
+                  ? stars.map((s, i) => (
+                      <span key={i}>
+                        {i > 0 && ' · '}
+                        <span className="star-a">{v(s.name, 'majorStar')}</span>
+                        {s.mutagen && <> <span className={s.mutagen === 'Kỵ' ? 'mut ky' : 'mut'}>{v(s.mutagen, 'mutagen')}</span></>}
+                      </span>
+                    ))
+                  : <span style={{ color: 'var(--tx4)', fontStyle: 'italic' }}>{v('Vô chính diệu', 'relation')}</span>}
+              </div>
+            </div>
+          )}
+          {item.mutagen.length > 0 && (
+            <div>
+              <div className="k">{t.result.kvMutagen}</div>
+              <div className="v">{mutagenChips(item.mutagen, t.result.none, v)}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PAGE ────────────────────────────────────────────────────────────────────
+
+function ResultView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [input, setInput] = useState<BirthInput | null>(null);
   const [activePalace, setActivePalace] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [chatOpen, setChatOpen] = useState(false);
   const [pdfExporting, setPdfExporting] = useState(false);
+  const { t, v } = useI18n();
 
-  // Refs for off-screen PDF capture sections
+  const isFixture = searchParams.get('fixture') === FIXTURE_ID;
+
   const pdfSummaryRef = useRef<HTMLDivElement>(null);
   const pdfChartRef = useRef<HTMLDivElement>(null);
   const pdfInterpretationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const fixture = loadFixture(searchParams.get('fixture'));
+    if (fixture) {
+      setResult(fixture.result);
+      setInput(fixture.input);
+      return;
+    }
+
     const stored = sessionStorage.getItem('tuvi_result');
     const storedInput = sessionStorage.getItem('tuvi_input');
-
     if (!stored) {
       router.push('/');
       return;
     }
-
     setResult(JSON.parse(stored));
     if (storedInput) setInput(JSON.parse(storedInput));
-  }, [router]);
+  }, [router, searchParams]);
+
+  // the tab is part of the address so parity captures can target one directly
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['overview', 'chart', 'daivan', 'interpretation', 'horoscope'].includes(tab)) {
+      setActiveTab(tab as TabId);
+    }
+  }, [searchParams]);
 
   const handleExportPdf = useCallback(async () => {
     if (pdfExporting || !result) return;
     setPdfExporting(true);
-
     try {
       const { default: jsPDF } = await import('jspdf');
-
       const pdfWidth = 595.28;
       const margin = 30;
       const contentWidth = pdfWidth - margin * 2;
-
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
 
-      // Capture sections in parallel
       const captures = await Promise.all([
         pdfSummaryRef.current ? captureElement(pdfSummaryRef.current) : null,
         pdfChartRef.current ? captureElement(pdfChartRef.current) : null,
@@ -126,8 +228,7 @@ export default function ResultPage() {
       }
 
       const datePart = result.chart.solarDate || new Date().toISOString().split('T')[0];
-      const namePart = input?.name ? `_${input.name}` : '';
-      pdf.save(`tuvi${namePart}_${datePart}.pdf`);
+      pdf.save(`tuvi${input?.name ? `_${input.name}` : ''}_${datePart}.pdf`);
     } catch (e) {
       console.error('PDF export failed:', e);
     } finally {
@@ -137,286 +238,317 @@ export default function ResultPage() {
 
   if (!result) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#060a13]">
-        <div className="animate-float text-3xl">✦</div>
-      </div>
+      <main className="flex-1 grid place-items-center">
+        <p className="mono" style={{ color: 'var(--tx3)', fontSize: 12 }}>{t.result.loading}</p>
+      </main>
     );
   }
 
-  const tabs: { id: TabId; label: string; icon: string }[] = [
-    { id: 'overview', label: 'Tổng quan', icon: '☰' },
-    { id: 'chart', label: '12 Cung', icon: '◇' },
-    { id: 'daivan', label: 'Đại Vận', icon: '⟳' },
-    { id: 'interpretation', label: 'Luận giải', icon: '✦' },
-    { id: 'horoscope', label: 'Vận hạn', icon: '☯' },
+  const { chart, decadalPeriods } = result;
+  const tabs: { id: TabId; label: string; glyph: string }[] = [
+    { id: 'overview', label: t.result.tabs.overview, glyph: '☰' },
+    { id: 'chart', label: t.result.tabs.chart, glyph: '◇' },
+    { id: 'daivan', label: t.result.tabs.daivan, glyph: '⟳' },
+    { id: 'interpretation', label: t.result.tabs.interpretation, glyph: '✦' },
+    { id: 'horoscope', label: t.result.tabs.horoscope, glyph: '☯' },
   ];
 
   const selectedPalace = activePalace !== null
-    ? result.chart.palaces.find((p) => p.index === activePalace)
+    ? chart.palaces.find((p) => p.index === activePalace) ?? null
     : null;
 
-  const birthYear = parseInt(result.chart.solarDate.split('-')[0], 10);
+  const birthYear = parseInt(chart.solarDate.split('-')[0], 10);
+  const referenceYear = isFixture ? FIXTURE_REFERENCE_YEAR : undefined;
+  const nowYear = referenceYear ?? new Date().getFullYear();
+  const nowMonth = isFixture ? 9 : new Date().getMonth() + 1;
+
+  const soulPalace = chart.palaces.find(isSoulPalace);
+  const currentDecadal = decadalPeriods?.find((p) => p.isCurrentDecadal);
+  const mutagens = natalMutagens(chart);
+  const yearStem = chart.chineseDate.split(/[\s·]+/)[0] || '';
+  const decadalStars = currentDecadal
+    ? starsOrBorrowed(chart, currentDecadal.earthlyBranch)
+    : { stars: [], borrowedFrom: null };
+
+  const docMeta = [
+    chart.solarDate,
+    v(chart.time, 'branch'),
+    v(chart.gender, 'gender'),
+    v(chart.fiveElementsClass, 'fiveElements'),
+    `${t.result.menhAt} ${v(chart.earthlyBranchOfSoulPalace, 'branch')}`,
+  ].join(' · ');
+
+  const starList = (stars: StarData[]) =>
+    stars.map((s, i) => (
+      <span key={i}>
+        {i > 0 && <>&nbsp;</>}
+        <span className="star-a">{v(s.name, 'majorStar')}</span>
+        {s.brightness && <> <span className="bl">{v(s.brightness, 'brightness')}</span></>}
+        {s.mutagen && <> <span className={s.mutagen === 'Kỵ' ? 'mut ky' : 'mut'}>{v(s.mutagen, 'mutagen')}</span></>}
+      </span>
+    ));
 
   return (
     <>
-      <Header />
-      <main className="flex-1 pt-20 pb-12 relative">
-        {/* Subtle background effects */}
-        <div className="fixed inset-0 pointer-events-none">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#3b5bdb]/[0.02] rounded-full blur-[120px]" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#9775cd]/[0.02] rounded-full blur-[100px]" />
+      <div className="app">
+      <Header
+        actions={
+          <button type="button" className="btn" onClick={() => router.push('/')}>{t.result.newChart}</button>
+        }
+        primary={
+          <button type="button" className="btn gh" onClick={handleExportPdf} disabled={pdfExporting}>
+            {pdfExporting ? t.result.exporting : t.result.exportPdf}
+          </button>
+        }
+      />
+
+      <main className="flex-1">
+        <div className="res-head">
+          <button type="button" className="back" onClick={() => router.push('/')}>{t.result.backNewChart}</button>
+          <h1>{t.result.title} {input?.name && <em>— {input.name}</em>}</h1>
+          <div className="metaline">
+            <span>{chart.solarDate}</span><s>|</s>
+            <span>{v(chart.time, 'branch')} ({chart.timeRange})</span><s>|</s>
+            <span>{v(chart.zodiac, 'zodiac')}</span><s>|</s>
+            <span>{v(chart.fiveElementsClass, 'fiveElements')}</span><s>|</s>
+            <span>{v(chart.gender, 'gender')}</span>
+          </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
-          {/* Page header */}
-          <div className="mb-8 animate-fade-in-up">
+        <div className="tabs" role="tablist">
+          {tabs.map((t) => (
             <button
-              onClick={() => router.push('/')}
-              className="text-sm text-[#4a5568] hover:text-[#8b9dc3] transition-colors mb-4 inline-flex items-center gap-1 group"
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === t.id}
+              className={activeTab === t.id ? 'on' : ''}
+              onClick={() => setActiveTab(t.id)}
             >
-              <span className="group-hover:-translate-x-1 transition-transform">←</span>
-              Lập lá số mới
+              <span className="g" aria-hidden="true">{t.glyph}</span>{t.label}
             </button>
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#e2e8f0]">
-              Lá Số Tử Vi {input?.name && (
-                <span className="bg-gradient-to-r from-[#5b8af5] to-[#e8b339] bg-clip-text text-transparent">
-                  — {input.name}
-                </span>
-              )}
-            </h1>
-            <p className="text-[#6b7a94] mt-1">
-              {result.chart.solarDate} | {result.chart.time} ({result.chart.timeRange}) | {result.chart.zodiac} | {result.chart.fiveElementsClass}
-            </p>
-          </div>
+          ))}
+        </div>
 
-          {/* Tabs */}
-          <div className="flex gap-1 mb-8 overflow-x-auto pb-2 border-b border-[#1e2538] animate-fade-in-up stagger-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-[1px] ${
-                  activeTab === tab.id
-                    ? 'border-[#3b5bdb] text-[#5b8af5] text-glow-accent'
-                    : 'border-transparent text-[#4a5568] hover:text-[#8b9dc3] hover:border-[#2a3348]'
-                }`}
-              >
-                <span className="mr-1.5">{tab.icon}</span>
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Tab content with animation */}
-          <div className="animate-fade-in-up stagger-2">
-            {activeTab === 'overview' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ChartSummary chart={result.chart} name={input?.name} />
-                <div className="bg-[#0d1117] border border-[#1e2538] rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-[#e8b339] text-glow-gold mb-4">Điểm nổi bật</h3>
-                  <div className="space-y-3">
-                    {(() => {
-                      const soulPalace = result.chart.palaces.find((p) =>
-                        p.name.toLowerCase().includes('mệnh') || p.name === '命宫'
-                      );
-                      if (!soulPalace) return null;
-                      return (
-                        <div className="p-3 rounded-lg bg-[#0a0e17] border border-[#1a2236] hover:border-[#2a3348] transition-colors">
-                          <span className="text-[10px] text-[#4a5568] uppercase tracking-wider">Mệnh cung</span>
-                          <div className="mt-1.5 flex flex-wrap gap-1.5">
-                            {soulPalace.majorStars.length > 0 ? (
-                              soulPalace.majorStars.map((s, i) => (
-                                <span key={i} className="text-sm font-medium text-[#9775cd]">
-                                  {s.name}
-                                  {s.brightness && <span className="text-[#4a5568] text-xs"> ({s.brightness})</span>}
-                                  {s.mutagen && <span className="text-[#e8b339] text-xs"> {s.mutagen}</span>}
-                                </span>
-                              ))
-                            ) : (
-                              <span className="text-sm text-[#3d4a5c]">Cung trống sao</span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    <div className="p-3 rounded-lg bg-[#0a0e17] border border-[#1a2236] hover:border-[#2a3348] transition-colors">
-                      <span className="text-[10px] text-[#4a5568] uppercase tracking-wider">Ngũ hành cục</span>
-                      <p className="text-sm font-medium text-[#8b9dc3] mt-1">{result.chart.fiveElementsClass}</p>
+        <div className="res-body">
+          {activeTab === 'overview' && (
+            <div className="res-cols">
+              <ChartSummary chart={chart} name={input?.name} />
+              <div className="card">
+                <div className="card-h">
+                  <span className="ix" aria-hidden="true">◈</span>
+                  <h3>{t.result.highlights}</h3>
+                </div>
+                <div className="card-b">
+                  {soulPalace && (
+                    <div className="hl">
+                      <div className="k">{t.result.menhPalace} · {v(soulPalace.earthlyBranch, 'branch')}</div>
+                      <div className="v">
+                        {soulPalace.majorStars.length
+                          ? starList(soulPalace.majorStars)
+                          : <span className="empty">{v('vô chính diệu', 'relation')}</span>}
+                      </div>
                     </div>
-
-                    <div className="p-3 rounded-lg bg-[#0a0e17] border border-[#1a2236] hover:border-[#2a3348] transition-colors">
-                      <span className="text-[10px] text-[#4a5568] uppercase tracking-wider">Mệnh chủ / Thân chủ</span>
-                      <p className="text-sm font-medium text-[#8b9dc3] mt-1">{result.chart.soul} / {result.chart.body}</p>
+                  )}
+                  {mutagens.length > 0 && (
+                    <div className="hl">
+                      <div className="k">{t.result.mutagenOfYear} {v(yearStem, 'stem')}</div>
+                      <div className="v">
+                        {mutagens.map((m, i) => (
+                          <span key={i}>
+                            {i > 0 && ' · '}
+                            <span className={m.mutagen === 'Kỵ' ? 'mut ky' : 'mut'}>{v(m.mutagen, 'mutagen')}</span>
+                            {' '}{v(m.star)}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-
-                    {result.decadalPeriods && result.decadalPeriods.length > 0 && (() => {
-                      const current = result.decadalPeriods.find((p) => p.isCurrentDecadal);
-                      if (!current) return null;
-                      return (
-                        <div className="p-3 rounded-lg bg-[#131c30] border border-[#3b5bdb]/30 glow-accent">
-                          <span className="text-[10px] text-[#5b8af5] uppercase tracking-wider">Đại hạn hiện tại</span>
-                          <p className="text-sm font-medium text-[#8b9dc3] mt-1">
-                            {current.palaceName} ({current.range[0]}–{current.range[1]} tuổi)
-                          </p>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {current.majorStars.map((s, i) => (
-                              <span key={i} className="text-xs text-[#9775cd]">{s.name}</span>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
+                  )}
+                  {currentDecadal && (
+                    <div className="hl cy">
+                      <div className="k">
+                        {t.result.currentDecadal} · {currentDecadal.range[0]}–{currentDecadal.range[1]} {t.result.age}
+                      </div>
+                      <div className="v">
+                        {v(currentDecadal.palaceName, 'palace')} ({v(currentDecadal.earthlyBranch, 'branch')}) —{' '}
+                        {decadalStars.stars.length && decadalStars.borrowedFrom
+                          ? <span className="borrow">
+                              {v('vô chính diệu', 'relation')}, {v('mượn', 'relation')}{' '}
+                              {v(decadalStars.borrowedFrom, 'branch')}
+                            </span>
+                          : starList(currentDecadal.majorStars)}
+                      </div>
+                    </div>
+                  )}
+                  {chart.horoscope && (
+                    <div className="hl cy" style={{ marginBottom: 0 }}>
+                      <div className="k">
+                        {t.result.yearly} {nowYear} · {v(chart.horoscope.yearly.heavenlyStem, 'stem')} {v(chart.horoscope.yearly.earthlyBranch, 'branch')}
+                      </div>
+                      <div className="v">
+                        {v(chart.horoscope.yearly.name, 'palace')} ({v(chart.horoscope.yearly.earthlyBranch, 'branch')})
+                        {currentDecadal && (
+                          <> · <span className="bl">
+                            {t.result.yearOfDecadalPre} {nowYear - birthYear + 1 - currentDecadal.range[0] + 1} {t.result.yearOfDecadalPost}
+                          </span></>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {activeTab === 'chart' && (
-              <div className="space-y-6">
-                <ChartGrid
-                  palaces={result.chart.palaces}
-                  activePalace={activePalace}
-                  onPalaceClick={(idx) =>
-                    setActivePalace(activePalace === idx ? null : idx)
-                  }
-                />
-                {selectedPalace && (
-                  <div className="animate-scale-in">
-                    <PalaceDetail
-                      palace={selectedPalace}
-                      onClose={() => setActivePalace(null)}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'daivan' && result.decadalPeriods && (
-              <DecadalView
-                periods={result.decadalPeriods}
-                birthYear={birthYear}
-              />
-            )}
-
-            {activeTab === 'interpretation' && (
-              <Interpretation
-                content={result.interpretation}
+          {activeTab === 'chart' && (
+            <>
+              <ChartGrid
+                palaces={chart.palaces}
+                activePalace={activePalace}
+                onPalaceClick={(idx) => setActivePalace(activePalace === idx ? null : idx)}
+                chart={chart}
                 name={input?.name}
-                solarDate={result.chart.solarDate}
-                onExportPdf={handleExportPdf}
-                pdfExporting={pdfExporting}
               />
-            )}
+              {selectedPalace && (
+                <PalaceDetail
+                  palace={selectedPalace}
+                  palaces={chart.palaces}
+                  onClose={() => setActivePalace(null)}
+                />
+              )}
+            </>
+          )}
 
-            {activeTab === 'horoscope' && (
-              <div className="space-y-6">
-                {result.chart.horoscope ? (
+          {activeTab === 'daivan' && decadalPeriods && (
+            <DecadalView periods={decadalPeriods} birthYear={birthYear} chart={chart} referenceYear={referenceYear} />
+          )}
+
+          {activeTab === 'interpretation' && (
+            <Interpretation
+              content={result.interpretation}
+              name={input?.name}
+              solarDate={chart.solarDate}
+              meta={docMeta}
+              generatedOn={isFixture ? FIXTURE_REFERENCE_DATE : undefined}
+              onExportPdf={handleExportPdf}
+              pdfExporting={pdfExporting}
+            />
+          )}
+
+          {activeTab === 'horoscope' && (
+            <div className="res-cols" style={{ gridTemplateColumns: 'minmax(0,1fr) minmax(0,440px)', gap: 22, alignItems: 'start' }}>
+              <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {chart.horoscope ? (
                   <>
-                    {[
-                      { key: 'decadal', title: 'Đại Hạn Hiện Tại', data: result.chart.horoscope.decadal },
-                      { key: 'yearly', title: `Lưu Niên (${new Date().getFullYear()})`, data: result.chart.horoscope.yearly },
-                      { key: 'monthly', title: 'Lưu Nguyệt', data: result.chart.horoscope.monthly },
-                    ].map(({ key, title, data }) => (
-                      <div key={key} className="bg-[#0d1117] border border-[#1e2538] rounded-xl p-6 hover:border-[#2a3348] transition-colors">
-                        <h3 className="text-lg font-bold text-[#e8b339] mb-4">{title}</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                          <div>
-                            <span className="text-[10px] text-[#4a5568] uppercase tracking-wider">Cung</span>
-                            <p className="text-sm font-medium text-[#8b9dc3] mt-0.5">{data.name}</p>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-[#4a5568] uppercase tracking-wider">Can Chi</span>
-                            <p className="text-sm font-medium text-[#8b9dc3] mt-0.5">{data.heavenlyStem} {data.earthlyBranch}</p>
-                          </div>
-                          <div className="col-span-2">
-                            <span className="text-[10px] text-[#4a5568] uppercase tracking-wider">Tứ hóa</span>
-                            <p className="text-sm font-medium text-[#e8b339] mt-0.5">
-                              {data.mutagen.join(', ') || 'Không có'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                    <HoroscopeCard
+                      glyph="⟳" title={t.result.decadalNow}
+                      meta={currentDecadal ? `${currentDecadal.range[0]}–${currentDecadal.range[1]}` : undefined}
+                      item={chart.horoscope.decadal}
+                      chart={chart}
+                      stars="borrow"
+                    />
+                    <HoroscopeCard
+                      glyph="☯" title={`${t.result.yearly} ${nowYear}`}
+                      item={chart.horoscope.yearly}
+                      chart={chart}
+                    />
+                    <HoroscopeCard
+                      glyph="☾" title={t.result.monthly} meta={`${t.result.month} ${nowMonth}`}
+                      item={chart.horoscope.monthly}
+                      chart={chart}
+                      stars="none"
+                    />
                   </>
                 ) : (
-                  <div className="bg-[#0d1117] border border-[#1e2538] rounded-xl p-6 text-center text-[#4a5568]">
-                    Không có dữ liệu vận hạn cho lá số này.
+                  <div className="card">
+                    <div className="card-b" style={{ color: 'var(--tx3)', fontSize: 13 }}>
+                      {t.result.noHoroscope}
+                    </div>
                   </div>
                 )}
               </div>
-            )}
-          </div>
+              <ChatPanel chart={chart} name={input?.name} variant="inline" />
+            </div>
+          )}
         </div>
       </main>
+      </div>
       <Footer />
 
-      {/* ── Off-screen sections for PDF capture ── */}
+      {/* ── Off-screen paper sections for image and PDF capture ── */}
       <div
         aria-hidden
         className="fixed pointer-events-none"
         style={{ left: '-9999px', top: 0, width: '900px' }}
       >
-        {/* Page 1: Summary info */}
-        <div ref={pdfSummaryRef} className="bg-[#060a13] p-8">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-[#e2e8f0]">
-              Lá Số Tử Vi {input?.name && (
-                <span className="text-[#e8b339]"> — {input.name}</span>
-              )}
-            </h1>
-            <p className="text-[#6b7a94] mt-1 text-sm">
-              {result.chart.solarDate} | {result.chart.time} ({result.chart.timeRange}) | {result.chart.zodiac} | {result.chart.fiveElementsClass}
-            </p>
+        <div ref={pdfSummaryRef} className="paper print" style={{ background: PAPER, padding: '34px 38px 30px' }}>
+          <div className="print-head">
+            <div>
+              <div className="t">{t.result.title}{input?.name ? ` — ${input.name}` : ''}</div>
+              <div className="m">{docMeta}</div>
+            </div>
+            <div className="sl">紫微<br />斗數</div>
           </div>
-          <ChartSummary chart={result.chart} name={input?.name} />
+          <div className="print-lab">{t.result.printPage1}</div>
+          <ChartSummary chart={chart} name={input?.name} />
+          <div className="print-foot"><span>tuvi.app</span><span>1</span></div>
         </div>
 
-        {/* Page 2: Chart grid */}
-        <div ref={pdfChartRef} className="bg-[#060a13] p-8">
-          <h2 className="text-xl font-bold text-[#e8b339] mb-4 flex items-center gap-2">
-            <span>◇</span> Lá Số 12 Cung
-          </h2>
+        <div ref={pdfChartRef} className="paper print" style={{ background: PAPER, padding: '34px 38px 30px' }}>
+          <div className="print-head">
+            <div>
+              <div className="t">{t.result.title}{input?.name ? ` — ${input.name}` : ''}</div>
+              <div className="m">{docMeta}</div>
+            </div>
+            <div className="sl">紫微<br />斗數</div>
+          </div>
+          <div className="print-lab">{t.result.printPage2}</div>
           <ChartGrid
-            palaces={result.chart.palaces}
+            palaces={chart.palaces}
             activePalace={null}
             onPalaceClick={() => {}}
+            chart={chart}
+            name={input?.name}
+            variant="print"
           />
+          <div className="print-foot"><span>tuvi.app</span><span>2</span></div>
         </div>
 
-        {/* Page 3+: Interpretation */}
-        <div ref={pdfInterpretationRef} className="bg-[#060a13] p-8">
+        <div ref={pdfInterpretationRef} className="paper print" style={{ background: PAPER }}>
           <InterpretationContent
             content={result.interpretation}
             name={input?.name}
-            solarDate={result.chart.solarDate}
+            solarDate={chart.solarDate}
+            meta={docMeta}
+            generatedOn={isFixture ? FIXTURE_REFERENCE_DATE : undefined}
+            variant="print"
           />
         </div>
       </div>
 
-      {/* Chat FAB */}
-      {!chatOpen && (
+      {activeTab !== 'horoscope' && !chatOpen && (
         <button
+          type="button"
+          className="fab"
           onClick={() => setChatOpen(true)}
-          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-[#3b5bdb] to-[#9775cd] text-white flex items-center justify-center shadow-lg shadow-[#3b5bdb]/30 hover:shadow-[0_0_30px_rgba(59,91,219,0.4)] hover:scale-110 active:scale-95 transition-all animate-fade-in group"
-          title="Hỏi chuyên gia Tử Vi"
+          title={t.result.askFab}
+          aria-label={t.result.askFabAria}
         >
-          <span className="text-xl group-hover:animate-float">✦</span>
-          {/* Ping dot */}
-          <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#e8b339] opacity-75" />
-            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#e8b339] border-2 border-[#060a13]" />
-          </span>
+          ✦
         </button>
       )}
 
-      {/* Chat Panel */}
-      <ChatPanel
-        chart={result.chart}
-        name={input?.name}
-        isOpen={chatOpen}
-        onClose={() => setChatOpen(false)}
-      />
+      {activeTab !== 'horoscope' && chatOpen && (
+        <ChatPanel chart={chart} name={input?.name} variant="floating" onClose={() => setChatOpen(false)} />
+      )}
     </>
+  );
+}
+
+export default function ResultPage() {
+  return (
+    <Suspense fallback={<main className="flex-1" />}>
+      <ResultView />
+    </Suspense>
   );
 }

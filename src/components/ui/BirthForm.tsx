@@ -1,30 +1,39 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { loadFixtureInput } from '@/lib/fixture';
 import { BIRTH_HOURS } from '@/types';
 import type { BirthInput, RectificationCandidate } from '@/types';
 import LoadingScreen from './LoadingScreen';
 import CandidateSelection from './CandidateSelection';
+import { useI18n } from '@/lib/i18n/context';
 
 type Step = 'form' | 'loading-candidates' | 'select-candidate' | 'loading-analysis';
 
 export default function BirthForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<Step>('form');
   const [error, setError] = useState<string | null>(null);
   const [unknownHour, setUnknownHour] = useState(false);
   const [candidates, setCandidates] = useState<RectificationCandidate[]>([]);
+  const { locale, t, v } = useI18n();
 
-  const [form, setForm] = useState<BirthInput>({
-    name: '',
-    solarDate: '',
-    birthHour: 6,
-    gender: 'male',
-    location: 'Việt Nam',
-  });
+  const [form, setForm] = useState<BirthInput>(
+    () => {
+      const fx = loadFixtureInput(searchParams.get('fixture'));
+      // the mockup shows the name field on its placeholder
+      return fx ? { ...fx, name: '' } : {
+      name: '',
+      solarDate: '',
+      birthHour: 6,
+      gender: 'male',
+      location: t.form.defaultLocation,
+      };
+    },
+  );
 
-  // ── Run full analysis with a specific timeIndex ────────────────────────────
   const runAnalysis = async (timeIndex: number) => {
     setStep('loading-analysis');
     setError(null);
@@ -34,12 +43,12 @@ export default function BirthForm() {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input }),
+        body: JSON.stringify({ input, locale }),
       });
       const data = await res.json();
 
       if (!data.success) {
-        setError(data.error || 'Đã xảy ra lỗi.');
+        setError(data.error || t.form.errGeneric);
         setStep('form');
         return;
       }
@@ -48,28 +57,25 @@ export default function BirthForm() {
       sessionStorage.setItem('tuvi_input', JSON.stringify(input));
       router.push('/result');
     } catch {
-      setError('Không thể kết nối đến máy chủ. Vui lòng thử lại.');
+      setError(t.form.errNetwork);
       setStep('form');
     }
   };
 
-  // ── Submit handler ─────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     if (!form.solarDate) {
-      setError('Vui lòng chọn ngày sinh.');
+      setError(t.form.errNoDate);
       return;
     }
 
-    // Known hour → go straight to analysis
     if (!unknownHour) {
       await runAnalysis(form.birthHour);
       return;
     }
 
-    // Unknown hour → fetch all 13 candidates
     setStep('loading-candidates');
     try {
       const res = await fetch('/api/candidates', {
@@ -80,7 +86,7 @@ export default function BirthForm() {
       const data = await res.json();
 
       if (!data.success || !data.candidates?.length) {
-        setError(data.error || 'Không thể tạo danh sách ứng viên.');
+        setError(data.error || t.form.errCandidates);
         setStep('form');
         return;
       }
@@ -88,14 +94,13 @@ export default function BirthForm() {
       setCandidates(data.candidates);
       setStep('select-candidate');
     } catch {
-      setError('Không thể kết nối đến máy chủ. Vui lòng thử lại.');
+      setError(t.form.errNetwork);
       setStep('form');
     }
   };
 
-  // ── Render states ──────────────────────────────────────────────────────────
   if (step === 'loading-candidates' || step === 'loading-analysis') {
-    return <LoadingScreen />;
+    return <LoadingScreen mode={step === 'loading-candidates' ? 'candidates' : 'analysis'} />;
   }
 
   if (step === 'select-candidate') {
@@ -111,163 +116,110 @@ export default function BirthForm() {
     );
   }
 
-  // ── Main form ──────────────────────────────────────────────────────────────
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="p-4 rounded-lg bg-danger/10 border border-danger/30 text-danger text-sm">
-          {error}
-        </div>
-      )}
+  const today = new Date().toISOString().split('T')[0];
 
-      {/* Name */}
-      <div>
-        <label className="block text-sm font-medium text-muted mb-2">
-          Họ và tên <span className="text-muted/50">(không bắt buộc)</span>
-        </label>
+  return (
+    <form onSubmit={handleSubmit}>
+      {error && <div className="err" role="alert">{error}</div>}
+
+      <div className="field">
+        <label htmlFor="bf-name">{t.form.name} <s>{t.form.optional}</s></label>
         <input
-          type="text"
+          id="bf-name" type="text" className="inp"
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
-          placeholder="Nhập họ tên..."
-          className="w-full px-4 py-3 rounded-lg bg-card border border-border text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+          placeholder={t.form.namePlaceholder}
         />
       </div>
 
-      {/* Date of birth */}
-      <div>
-        <label className="block text-sm font-medium text-muted mb-2">
-          Ngày sinh dương lịch <span className="text-danger">*</span>
-        </label>
+      <div className="field">
+        <label htmlFor="bf-date">{t.form.date} <i aria-hidden="true">*</i></label>
         <input
-          type="date"
+          id="bf-date" type="date" className="inp mono [color-scheme:dark]"
           value={form.solarDate}
           onChange={(e) => setForm({ ...form, solarDate: e.target.value })}
-          required
-          max={new Date().toISOString().split('T')[0]}
-          min="1920-01-01"
-          className="w-full px-4 py-3 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all [color-scheme:dark]"
+          required max={today} min="1920-01-01"
         />
       </div>
 
-      {/* Birth hour + unknown toggle */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium text-muted">
-            Giờ sinh {!unknownHour && <span className="text-danger">*</span>}
-          </label>
-          <button
-            type="button"
-            onClick={() => setUnknownHour((v) => !v)}
-            className={`flex items-center gap-1.5 text-xs px-3 py-1 rounded-full border transition-all ${
-              unknownHour
-                ? 'border-[#3b5bdb]/50 bg-[#3b5bdb]/10 text-[#5b8af5]'
-                : 'border-[#1e2538] text-[#4a5568] hover:border-[#3d4a5c] hover:text-[#6b7a94]'
-            }`}
+      <div className="two">
+        <div className="field">
+          <label htmlFor="bf-hour">{t.form.hour}</label>
+          <select
+            id="bf-hour" className="inp mono"
+            value={form.birthHour}
+            disabled={unknownHour}
+            onChange={(e) => setForm({ ...form, birthHour: parseInt(e.target.value, 10) })}
           >
-            <span className={`w-1.5 h-1.5 rounded-full transition-colors ${unknownHour ? 'bg-[#5b8af5]' : 'bg-[#3d4a5c]'}`} />
-            Không biết giờ sinh
-          </button>
+            {BIRTH_HOURS.map((h) => (
+              <option key={h.value} value={h.value}>
+                {v(h.branch, 'branch')} · {h.range}
+              </option>
+            ))}
+          </select>
         </div>
-
-        {unknownHour ? (
-          <div className="px-4 py-3 rounded-lg bg-[#0d1117] border border-[#3b5bdb]/20 text-sm text-[#6b7a94] leading-relaxed">
-            Hệ thống sẽ tạo <span className="text-[#5b8af5] font-medium">13 lá số</span> ứng với 13 giờ sinh — bạn chọn cung Mệnh phản ánh đúng tính cách nhất.
-          </div>
-        ) : (
-          <>
-            <select
-              value={form.birthHour}
-              onChange={(e) => setForm({ ...form, birthHour: parseInt(e.target.value) })}
-              className="w-full px-4 py-3 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all appearance-none"
+        <div className="field">
+          <label id="bf-gender-label">{t.form.gender} <i aria-hidden="true">*</i></label>
+          <div className="seg" role="group" aria-labelledby="bf-gender-label">
+            <button
+              type="button"
+              className={form.gender === 'male' ? 'on' : ''}
+              aria-pressed={form.gender === 'male'}
+              onClick={() => setForm({ ...form, gender: 'male' })}
             >
-              {BIRTH_HOURS.map((hour) => (
-                <option key={hour.value} value={hour.value}>
-                  {hour.label}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-muted/50 mt-1.5">
-              Giờ Tý có 2 lựa chọn: 23:00–23:59 (cùng ngày) và 00:00–00:59 (đầu ngày mới).
-            </p>
-          </>
-        )}
-      </div>
-
-      {/* Gender */}
-      <div>
-        <label className="block text-sm font-medium text-muted mb-2">
-          Giới tính <span className="text-danger">*</span>
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => setForm({ ...form, gender: 'male' })}
-            className={`px-4 py-3 rounded-lg border text-center font-medium transition-all ${
-              form.gender === 'male'
-                ? 'border-accent bg-accent/10 text-accent'
-                : 'border-border bg-card text-muted hover:border-border hover:bg-card-hover'
-            }`}
-          >
-            ♂ Nam
-          </button>
-          <button
-            type="button"
-            onClick={() => setForm({ ...form, gender: 'female' })}
-            className={`px-4 py-3 rounded-lg border text-center font-medium transition-all ${
-              form.gender === 'female'
-                ? 'border-accent bg-accent/10 text-accent'
-                : 'border-border bg-card text-muted hover:border-border hover:bg-card-hover'
-            }`}
-          >
-            ♀ Nữ
-          </button>
+              {t.form.male}
+            </button>
+            <button
+              type="button"
+              className={form.gender === 'female' ? 'on' : ''}
+              aria-pressed={form.gender === 'female'}
+              onClick={() => setForm({ ...form, gender: 'female' })}
+            >
+              {t.form.female}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Location */}
-      <div>
-        <label className="block text-sm font-medium text-muted mb-2">
-          Nơi sinh <span className="text-muted/50">(mặc định Việt Nam)</span>
-        </label>
+      <button
+        type="button"
+        className={unknownHour ? 'chk on' : 'chk'}
+        aria-pressed={unknownHour}
+        onClick={() => setUnknownHour((prev) => !prev)}
+      >
+        <span className="bx" aria-hidden="true">{unknownHour ? '✓' : ''}</span>
+        <span className="tt">
+          {t.form.unknownHour}
+          <small>{t.form.unknownHourNote}</small>
+        </span>
+      </button>
+
+      <div className="field">
+        <label htmlFor="bf-loc">{t.form.location} <s>{t.form.locationDefault}</s></label>
         <input
-          type="text"
+          id="bf-loc" type="text" className="inp"
           value={form.location}
           onChange={(e) => setForm({ ...form, location: e.target.value })}
-          placeholder="Việt Nam"
-          className="w-full px-4 py-3 rounded-lg bg-card border border-border text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+          placeholder={t.form.defaultLocation}
         />
       </div>
 
-      {/* Self description */}
-      <div>
-        <label className="block text-sm font-medium text-muted mb-2">
-          Mô tả bản thân <span className="text-muted/50">(không bắt buộc)</span>
-        </label>
+      <div className="field">
+        <label htmlFor="bf-self">{t.form.self} <s>{t.form.optional}</s></label>
         <textarea
+          id="bf-self" className="inp" rows={3} maxLength={500}
           value={form.selfDescription || ''}
           onChange={(e) => setForm({ ...form, selfDescription: e.target.value })}
-          placeholder="Tính cách, công việc hiện tại, tình trạng tình cảm, sức khỏe, điều bạn đang trăn trở..."
-          rows={3}
-          maxLength={500}
-          className="w-full px-4 py-3 rounded-lg bg-card border border-border text-foreground placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all resize-none text-sm leading-relaxed"
+          placeholder={t.form.selfPlaceholder}
         />
-        <p className="text-xs text-muted/50 mt-1.5">
-          Giúp AI đối chiếu lá số với thực tế của bạn — phân tích sẽ chính xác và cá nhân hóa hơn.
+        <p className="hint-note" style={{ marginTop: 6, marginBottom: 0 }}>
+          {t.form.selfNote}
         </p>
       </div>
 
-      {/* Submit */}
-      <button
-        type="submit"
-        className="w-full py-4 rounded-lg bg-gradient-to-r from-accent-dim to-accent text-white font-semibold text-lg hover:opacity-90 transition-all animate-pulse-glow"
-      >
-        {unknownHour ? '◎ Xem 13 Cung Mệnh' : '✦ Lập Lá Số Tử Vi'}
+      <button type="submit" className="btn pri wide">
+        {unknownHour ? t.form.submitCandidates : t.form.submit}
       </button>
-
-      <p className="text-xs text-muted/60 text-center">
-        Nhập ngày giờ sinh theo lịch dương. Giờ sinh theo giờ địa phương.
-      </p>
     </form>
   );
 }

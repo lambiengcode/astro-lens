@@ -1,31 +1,40 @@
 'use client';
 
 import Link from 'next/link';
+import { useI18n } from '@/lib/i18n/context';
+import LocaleSwitcher from './LocaleSwitcher';
 
-export default function Header() {
+interface HeaderProps {
+  /** Nav items that sit before the language selector. */
+  actions?: React.ReactNode;
+  /**
+   * The page's primary action. It stays last in the bar — the language
+   * selector sits immediately before it.
+   */
+  primary?: React.ReactNode;
+}
+
+export default function Header({ actions, primary }: HeaderProps) {
+  const { t } = useI18n();
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass-strong">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#3b5bdb] to-[#9775cd] flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(59,91,219,0.4)] transition-shadow">
-            <span className="text-white text-sm font-bold">✦</span>
-          </div>
-          <span className="text-lg font-bold bg-gradient-to-r from-[#5b8af5] to-[#e8b339] bg-clip-text text-transparent">
-            Tử Vi Đẩu Số
-          </span>
-        </Link>
-        <nav className="flex items-center gap-4 text-sm">
-          <Link href="/" className="text-[#6b7a94] hover:text-[#e2e8f0] transition-colors">
-            Trang chủ
-          </Link>
-          <Link
-            href="/#lap-la-so"
-            className="px-4 py-2 rounded-lg bg-[#3b5bdb]/10 border border-[#3b5bdb]/30 text-[#5b8af5] hover:bg-[#3b5bdb]/20 hover:border-[#3b5bdb]/50 transition-all"
-          >
-            Lập lá số
-          </Link>
-        </nav>
-      </div>
+    <header className="appbar">
+      <Link href="/" className="brand">
+        <span className="mk" aria-hidden="true">✦</span>
+        {/* The wordmark collapses to the mark alone on a narrow app bar — the
+            switcher now takes its width out of the right-hand cluster, so at
+            390px the brand no longer has room for the full wordmark beside it.
+            PARITY.md §10 has the measurement. */}
+        <span className="wm">{t.app.brand}</span>
+      </Link>
+      {/* Right-aligned cluster: nav links, then the language selector, then the
+          primary action. Captain's instruction, 2026-09-04 — it supersedes the
+          earlier middle placement, which was chosen to keep the app bar off the
+          parity screens' geometry and is now history. PARITY.md §10. */}
+      <nav>
+        {actions ?? <Link href="/" className="on">{t.nav.home}</Link>}
+        <LocaleSwitcher />
+        {primary ?? <Link href="/#lap-la-so" className="btn gh">{t.nav.create}</Link>}
+      </nav>
     </header>
   );
 }

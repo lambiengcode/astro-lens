@@ -1,152 +1,204 @@
 'use client';
 
-import { useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { useI18n } from '@/lib/i18n/context';
+import { INTL_LOCALE, type Locale } from '@/lib/i18n/locales';
+
+/** The paper ground. Captured images and PDF pages use the same value. */
+export const PAPER = '#fbf8f1';
 
 interface InterpretationProps {
   content: string;
   name?: string;
   solarDate?: string;
+  meta?: string;
+  /** Generation date shown in the paper bar. Pinned in fixture mode. */
+  generatedOn?: string;
   onExportPdf?: () => void;
   pdfExporting?: boolean;
 }
 
-type ExportType = 'image' | null;
+const INLINE: [RegExp, string][] = [
+  [/\*\*(.+?)\*\*/g, '<strong>$1</strong>'],
+  [/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>'],
+];
 
-function renderMarkdown(text: string): string {
-  let html = text
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h2>$1</h2>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-    .replace(/^---$/gm, '<hr class="border-border my-4"/>')
-    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br/>');
-
-  html = html.replace(/((?:<li>.*?<\/li><br\/>?)+)/g, '<ul>$1</ul>');
-  html = html.replace(/<\/li><br\/><li>/g, '</li><li>');
-  html = html.replace(/<\/li><br\/><\/ul>/g, '</li></ul>');
-
-  return `<p>${html}</p>`;
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-export function InterpretationContent({ content, name, solarDate }: { content: string; name?: string; solarDate?: string }) {
-  const html = renderMarkdown(content);
+function inline(text: string): string {
+  return INLINE.reduce((acc, [re, to]) => acc.replace(re, to), escapeHtml(text));
+}
+
+/**
+ * Block-level markdown, line by line. The previous regex chain dropped the last
+ * item of any list that was not followed by a blank-line-plus-<br>, which silently
+ * lost a line of the reading.
+ */
+function renderMarkdown(text: string): string {
+  const out: string[] = [];
+  let list: string[] | null = null;
+  let para: string[] | null = null;
+
+  const flushList = () => {
+    if (list) { out.push(`<ul>${list.join('')}</ul>`); list = null; }
+  };
+  const flushPara = () => {
+    if (para) { out.push(`<p>${para.join('<br/>')}</p>`); para = null; }
+  };
+  const flush = () => { flushList(); flushPara(); };
+
+  for (const raw of text.split('\n')) {
+    const line = raw.trim();
+
+    if (!line) { flush(); continue; }
+
+    const heading = /^(#{1,3})\s+(.*)$/.exec(line);
+    if (heading) {
+      flush();
+      const tag = heading[1].length >= 3 ? 'h3' : 'h2';
+      out.push(`<${tag}>${inline(heading[2])}</${tag}>`);
+      continue;
+    }
+
+    if (line === '---') { flush(); out.push('<hr/>'); continue; }
+
+    const quote = /^>\s*(.*)$/.exec(line);
+    if (quote) {
+      flush();
+      out.push(`<blockquote class="sealq">${inline(quote[1])}</blockquote>`);
+      continue;
+    }
+
+    const item = /^(?:[-*]|\d+\.)\s+(.*)$/.exec(line);
+    if (item) {
+      flushPara();
+      (list ??= []).push(`<li>${inline(item[1])}</li>`);
+      continue;
+    }
+
+    flushList();
+    (para ??= []).push(inline(line));
+  }
+
+  flush();
+  return out.join('');
+}
+
+/**
+ * Words for a Latin script, characters for CJK and Hangul — a Chinese or
+ * Korean reading has almost no spaces, so counting runs of them would report a
+ * five-thousand-character reading as a handful of words. `字` and `자` are what
+ * those readers count in, which is also what the catalogue's `paper.words`
+ * says in each locale.
+ */
+function readingLength(text: string, locale: Locale): string {
+  const body = text.trim();
+  const n = locale === 'vi' || locale === 'en'
+    ? body.split(/\s+/).filter(Boolean).length
+    : body.replace(/\s+/g, '').length;
+  return n.toLocaleString(INTL_LOCALE[locale]);
+}
+
+/**
+ * The document itself. Rendered on screen and captured verbatim for the image
+ * and PDF exports — DESIGN.md §5, PLAN.md §8.
+ */
+export function InterpretationContent({
+  content, name, solarDate, meta, generatedOn, variant = 'screen',
+}: {
+  content: string;
+  name?: string;
+  solarDate?: string;
+  meta?: string;
+  generatedOn?: string;
+  variant?: 'screen' | 'print';
+}) {
+  const { locale, t } = useI18n();
+  const cast = generatedOn ?? new Date().toISOString().split('T')[0];
   return (
-    <div className="bg-card border border-border rounded-xl p-6 sm:p-8">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gold flex items-center gap-2">
-          <span>✦</span> Luận Giải Chi Tiết
-        </h2>
-        {(name || solarDate) && (
-          <span className="text-xs text-[#4a5568]">
-            {name && <span>{name}</span>}
-            {name && solarDate && <span> | </span>}
-            {solarDate && <span>{solarDate}</span>}
-          </span>
-        )}
-      </div>
+    <div className="paper-b">
+      <div className="seal" aria-hidden="true">紫微<br />斗數</div>
+      <div className="doc-t">{name || t.paper.docTitle}</div>
+      <div className="doc-m">{meta || solarDate}</div>
       <div
-        className="prose-interpretation text-foreground/90 leading-relaxed"
-        dangerouslySetInnerHTML={{ __html: html }}
+        className="prose-interpretation"
+        dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
       />
+      <div className="paper-foot">
+        <span>tuvi.app · {t.paper.castOn} {cast}</span>
+        <span data-parity-volatile>
+          {variant === 'print'
+            ? t.paper.printLabel
+            : `${readingLength(content, locale)} ${t.paper.words}`}
+        </span>
+      </div>
     </div>
   );
 }
 
-export default function Interpretation({ content, name, solarDate, onExportPdf, pdfExporting }: InterpretationProps) {
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [exportingType, setExportingType] = useState<ExportType>(null);
+export default function Interpretation({
+  content, name, solarDate, meta, generatedOn, onExportPdf, pdfExporting,
+}: InterpretationProps) {
+  const { locale, t } = useI18n();
+  const paperRef = useRef<HTMLDivElement>(null);
+  const [exportingImage, setExportingImage] = useState(false);
+  const [stamped, setStamped] = useState(false);
+  const isExporting = exportingImage || !!pdfExporting;
 
-  const isExporting = exportingType !== null || pdfExporting;
+  // The seal drops and settles once the reading arrives — PLAN §7.6.
+  // Under reduced motion the media block pins it to its settled state.
+  useEffect(() => {
+    const drop = setTimeout(() => setStamped(true), 320);
+    return () => clearTimeout(drop);
+  }, []);
 
   const handleExportImage = useCallback(async () => {
-    if (!contentRef.current || isExporting) return;
-    setExportingType('image');
+    if (!paperRef.current || isExporting) return;
+    setExportingImage(true);
     try {
       const { default: html2canvas } = await import('html2canvas-pro');
-      const canvas = await html2canvas(contentRef.current, {
-        backgroundColor: '#060a13',
+      const canvas = await html2canvas(paperRef.current, {
+        backgroundColor: PAPER,
         scale: 2,
         useCORS: true,
         logging: false,
       });
       const link = document.createElement('a');
       const datePart = solarDate || new Date().toISOString().split('T')[0];
-      const namePart = name ? `_${name}` : '';
-      link.download = `tuvi${namePart}_${datePart}.png`;
+      link.download = `tuvi${name ? `_${name}` : ''}_${datePart}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (e) {
       console.error('Export image failed:', e);
     } finally {
-      setExportingType(null);
+      setExportingImage(false);
     }
   }, [isExporting, name, solarDate]);
 
-  return (
-    <div>
-      {/* Export buttons */}
-      <div className="flex justify-end gap-2 mb-4">
-        <button
-          onClick={handleExportImage}
-          disabled={isExporting}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[#131c30] border border-[#1e2538] text-[#8b9dc3] hover:text-[#e2e8f0] hover:border-[#3b5bdb]/50 hover:bg-[#1a2540] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {exportingType === 'image' ? (
-            <>
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Đang xuất...
-            </>
-          ) : (
-            <>
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                <circle cx="8.5" cy="8.5" r="1.5" />
-                <polyline points="21 15 16 10 5 21" />
-              </svg>
-              Xuất ảnh
-            </>
-          )}
-        </button>
-        <button
-          onClick={onExportPdf}
-          disabled={isExporting}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[#131c30] border border-[#1e2538] text-[#8b9dc3] hover:text-[#e2e8f0] hover:border-[#3b5bdb]/50 hover:bg-[#1a2540] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {pdfExporting ? (
-            <>
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Đang xuất...
-            </>
-          ) : (
-            <>
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-                <polyline points="10 9 9 9 8 9" />
-              </svg>
-              Xuất PDF
-            </>
-          )}
-        </button>
-      </div>
+  const model = 'Gemini';
+  const today = generatedOn ?? new Date().toISOString().split('T')[0];
 
-      {/* Capturable content area */}
-      <div ref={contentRef}>
-        <InterpretationContent content={content} name={name} solarDate={solarDate} />
+  return (
+    <div className={stamped ? 'paper stamped' : 'paper'} ref={paperRef}>
+      <div className="paper-bar">
+        <span className="ttl">{t.paper.barTitle}</span>
+        <span className="sub">
+          {model} · {today} · {readingLength(content, locale)} {t.paper.words}
+        </span>
+        <span className="acts">
+          <button type="button" className="pbtn" onClick={handleExportImage} disabled={isExporting}>
+            {exportingImage ? t.paper.exporting : t.paper.downloadImage}
+          </button>
+          <button type="button" className="pbtn pri" onClick={onExportPdf} disabled={isExporting}>
+            {pdfExporting ? t.paper.exporting : t.paper.downloadPdf}
+          </button>
+        </span>
       </div>
+      <InterpretationContent
+        content={content} name={name} solarDate={solarDate} meta={meta} generatedOn={today}
+      />
     </div>
   );
 }

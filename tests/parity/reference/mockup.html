@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thiên Văn Đài — Full Design Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   THIÊN VĂN ĐÀI — design tokens
+   ═══════════════════════════════════════════════════════════ */
+:root{
+  /* night / instrument surfaces */
+  --n0:#06090f;      /* page void            */
+  --n1:#0a0f18;      /* surface              */
+  --n2:#0e1522;      /* raised card          */
+  --n3:#131c2c;      /* active / hover       */
+  --line:#1b2536;    /* hairline             */
+  --line2:#28344c;   /* emphasised hairline  */
+
+  --tx:#e6eef9;      /* primary text         */
+  --tx2:#94a6c2;     /* secondary            */
+  --tx3:#5c6d89;     /* tertiary / labels    */
+  --tx4:#3b4860;     /* disabled             */
+
+  --cyan:#5ec9d6;    /* structure + interaction */
+  --cyan-d:#2b7a86;
+  --amber:#e8b25a;   /* stars + emphasis     */
+  --amber-d:#8a6624;
+  --sig:#e06a5c;     /* signal — Kỵ only     */
+
+  /* paper — reading + export only */
+  --p0:#f4efe4;
+  --p1:#fbf8f1;
+  --p-line:#ddd2bd;
+  --p-tx:#221e18;
+  --p-tx2:#554d42;
+  --p-tx3:#8a7f6e;
+  --verm:#b23a2e;
+
+  --r:3px;           /* the radius. one value. */
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:#04060b;color:var(--tx);
+  font-family:'IBM Plex Sans',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.55;
+}
+h1,h2,h3,h4,h5{margin:0;line-height:1.2;font-weight:600;}
+p{margin:0;}
+.mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;}
+
+/* ── doc chrome ─────────────────────────────────────────── */
+.doc{max-width:1240px;margin:0 auto;padding:0 20px 120px;}
+.nav{position:sticky;top:0;z-index:80;background:rgba(4,6,11,.9);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-bottom:34px;}
+.nav-in{max-width:1240px;margin:0 auto;padding:11px 20px;display:flex;gap:8px;
+  align-items:center;overflow-x:auto;}
+.nav b{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--cyan);
+  white-space:nowrap;margin-right:8px;font-weight:600;}
+.nav a{font-size:12px;color:var(--tx3);text-decoration:none;padding:5px 9px;
+  border:1px solid transparent;border-radius:var(--r);white-space:nowrap;}
+.nav a:hover{color:var(--tx);border-color:var(--line2);}
+
+.doc-head{padding:44px 0 30px;border-bottom:1px solid var(--line);margin-bottom:12px;}
+.doc-head .kick{font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);font-weight:600;}
+.doc-head h1{font-size:clamp(28px,4vw,44px);letter-spacing:-.025em;margin:12px 0 14px;font-weight:700;}
+.doc-head p{color:var(--tx2);max-width:78ch;font-size:15.5px;}
+.pillars{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:26px;}
+.pillar{border:1px solid var(--line);border-left:2px solid var(--cyan);background:var(--n1);
+  padding:12px 14px;border-radius:0 var(--r) var(--r) 0;min-width:0;}
+.pillar h5{font-size:12.5px;margin-bottom:3px;}
+.pillar p{font-size:12.5px;color:var(--tx3);line-height:1.5;}
+
+.sec{margin-top:66px;}
+.sec-bar{display:flex;align-items:baseline;gap:13px;padding-bottom:9px;
+  border-bottom:1px solid var(--line);margin-bottom:9px;flex-wrap:wrap;}
+.sec-bar .n{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--cyan);font-weight:600;}
+.sec-bar h2{font-size:20px;letter-spacing:-.015em;}
+.sec-bar .tag{font-size:11.5px;color:var(--tx4);font-family:'IBM Plex Mono',monospace;margin-left:auto;}
+.sec-note{color:var(--tx3);font-size:13.5px;margin-bottom:20px;max-width:80ch;}
+
+/* device frame */
+.frame{border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:var(--n0);}
+.frame-bar{background:#080c14;border-bottom:1px solid var(--line);padding:8px 13px;
+  display:flex;align-items:center;gap:8px;}
+.dot{width:9px;height:9px;border-radius:50%;background:#1e2a3d;flex:none;}
+.frame-url{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--tx4);margin-left:8px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.frame-body{overflow-x:auto;}
+
+/* ═══════════════════════════════════════════════════════════
+   APP SHELL
+   ═══════════════════════════════════════════════════════════ */
+.app{background:var(--n0);color:var(--tx);min-width:0;}
+.appbar{display:flex;align-items:center;gap:16px;padding:13px 22px;
+  border-bottom:1px solid var(--line);background:rgba(10,15,24,.75);}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;font-size:14.5px;letter-spacing:-.01em;}
+.brand .mk{width:26px;height:26px;border:1px solid var(--cyan-d);border-radius:50%;
+  display:grid;place-items:center;color:var(--cyan);font-size:13px;flex:none;
+  box-shadow:inset 0 0 0 4px rgba(94,201,214,.06);}
+.appbar nav{margin-left:auto;display:flex;gap:5px;align-items:center;}
+.appbar nav a{font-size:12.5px;color:var(--tx3);text-decoration:none;padding:6px 11px;border-radius:var(--r);}
+.appbar nav a.on{color:var(--tx);}
+.btn{font-family:inherit;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:var(--r);
+  border:1px solid var(--line2);background:transparent;color:var(--tx2);cursor:default;white-space:nowrap;}
+.btn.pri{background:var(--cyan);border-color:var(--cyan);color:#04191d;}
+.btn.gh{border-color:var(--cyan-d);color:var(--cyan);}
+
+/* ── hero ──────────────────────────────────────────────── */
+.hero{position:relative;padding:64px 22px 56px;overflow:hidden;}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:40px;align-items:center;
+  max-width:1120px;margin:0 auto;position:relative;z-index:2;}
+@media(max-width:920px){.hero-grid{grid-template-columns:minmax(0,1fr);}}
+.hero .eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);
+  border:1px solid var(--line2);padding:5px 11px;border-radius:var(--r);}
+.hero h1{font-size:clamp(30px,4.4vw,50px);letter-spacing:-.03em;margin:20px 0 0;font-weight:600;line-height:1.08;}
+.hero h1 .em{color:var(--amber);}
+.hero .sub{color:var(--tx2);font-size:15px;margin-top:16px;max-width:46ch;line-height:1.65;}
+.hero .acts{display:flex;gap:11px;align-items:center;margin-top:26px;flex-wrap:wrap;}
+.hero .acts .btn{font-size:13.5px;padding:10px 18px;}
+.hero .micro{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--tx3);}
+.hero .micro s{text-decoration:none;color:var(--cyan);}
+
+/* astrolabe */
+.labe{aspect-ratio:1;max-width:400px;margin:0 auto;width:100%;}
+.labe svg{width:100%;height:auto;display:block;}
+
+/* stat strip */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--n1);}
+@media(max-width:720px){.stats{grid-template-columns:repeat(2,minmax(0,1fr));}}
+.stat{padding:20px 22px;border-right:1px solid var(--line);min-width:0;}
+.stat:last-child{border-right:none;}
+.stat .v{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;color:var(--tx);letter-spacing:-.02em;}
+.stat .v em{font-style:normal;color:var(--cyan);}
+.stat .k{font-size:11.5px;color:var(--tx3);margin-top:3px;}
+
+/* form + preview band */
+.band{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:34px;
+  padding:52px 22px;max-width:1120px;margin:0 auto;}
+@media(max-width:920px){.band{grid-template-columns:minmax(0,1fr);}}
+.card{background:var(--n1);border:1px solid var(--line);border-radius:var(--r);min-width:0;}
+.card-h{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+.card-h h3{font-size:14px;}
+.card-h .ix{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cyan);
+  border:1px solid var(--line2);padding:2px 6px;border-radius:var(--r);}
+.card-h .sp{margin-left:auto;font-size:11.5px;color:var(--tx3);font-family:'IBM Plex Mono',monospace;}
+.card-b{padding:18px;}
+
+.field{margin-bottom:15px;}
+.field label{display:block;font-size:11.5px;letter-spacing:.05em;color:var(--tx3);margin-bottom:6px;}
+.field label i{font-style:normal;color:var(--sig);}
+.inp{width:100%;background:var(--n0);border:1px solid var(--line2);border-radius:var(--r);
+  padding:10px 12px;color:var(--tx);font-family:inherit;font-size:13.5px;}
+.inp.ph{color:var(--tx4);}
+.inp.mono{font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;}
+.inp.foc{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(94,201,214,.14);}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line2);border-radius:var(--r);overflow:hidden;}
+.seg span{padding:9px;text-align:center;font-size:13px;color:var(--tx3);}
+.seg span.on{background:var(--n3);color:var(--cyan);box-shadow:inset 0 -2px 0 var(--cyan);}
+.chk{display:flex;gap:9px;align-items:flex-start;padding:11px 12px;border:1px solid var(--line);
+  border-radius:var(--r);background:var(--n0);margin-bottom:16px;}
+.chk .bx{width:14px;height:14px;border:1px solid var(--line2);border-radius:2px;flex:none;margin-top:2px;}
+.chk .tt{font-size:12.5px;color:var(--tx2);}
+.chk .tt small{display:block;color:var(--tx4);font-size:11.5px;margin-top:1px;}
+.btn.wide{width:100%;padding:12px;font-size:14px;}
+
+.prev-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-content:start;}
+@media(max-width:620px){.prev-grid{grid-template-columns:minmax(0,1fr);}}
+.prev{border:1px solid var(--line);background:var(--n1);border-radius:var(--r);padding:15px;min-width:0;}
+.prev .ph{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--cyan);letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:9px;}
+.prev h4{font-size:13.5px;margin-bottom:5px;}
+.prev p{font-size:12.3px;color:var(--tx3);line-height:1.55;}
+
+/* ── result shell ───────────────────────────────────────── */
+.res-head{padding:22px 22px 0;max-width:1180px;margin:0 auto;}
+.back{font-size:12.5px;color:var(--tx3);font-family:'IBM Plex Mono',monospace;}
+.res-head h1{font-size:25px;letter-spacing:-.02em;margin:12px 0 7px;}
+.res-head h1 em{font-style:normal;color:var(--amber);}
+.metaline{display:flex;flex-wrap:wrap;gap:0 10px;font-family:'IBM Plex Mono',monospace;
+  font-size:12px;color:var(--tx3);}
+.metaline s{text-decoration:none;color:var(--line2);}
+.tabs{display:flex;gap:2px;margin:22px auto 0;max-width:1180px;padding:0 22px;
+  border-bottom:1px solid var(--line);overflow-x:auto;}
+.tabs a{font-size:13px;color:var(--tx3);text-decoration:none;padding:10px 15px;
+  border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;display:flex;gap:7px;align-items:center;}
+.tabs a .g{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--tx4);}
+.tabs a.on{color:var(--cyan);border-bottom-color:var(--cyan);}
+.tabs a.on .g{color:var(--cyan);}
+.res-body{max-width:1180px;margin:0 auto;padding:24px 22px 40px;}
+
+.kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;}
+.kv > div{padding:11px 0;border-bottom:1px solid var(--line);min-width:0;}
+.kv > div:nth-child(odd){padding-right:16px;}
+.kv .k{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--tx3);}
+.kv .v{font-size:13.5px;color:var(--tx);margin-top:2px;}
+.kv .v.mono{font-family:'IBM Plex Mono',monospace;font-size:13px;}
+.hl{border:1px solid var(--line);border-left:2px solid var(--amber);background:var(--n0);
+  padding:11px 13px;border-radius:0 var(--r) var(--r) 0;margin-bottom:9px;}
+.hl .k{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--tx3);}
+.hl .v{font-size:13.5px;margin-top:3px;}
+.hl.cy{border-left-color:var(--cyan);}
+.star-a{color:var(--amber);font-weight:600;}
+.star-c{color:var(--cyan);}
+.bl{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--tx3);}
+.mut{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;padding:1px 4px;
+  border-radius:2px;background:rgba(232,178,90,.15);color:var(--amber);border:1px solid rgba(232,178,90,.3);}
+.mut.ky{background:rgba(224,106,92,.13);color:var(--sig);border-color:rgba(224,106,92,.32);}
+
+/* ═══ 12-PALACE GRID ═══ */
+.chart-scroll{overflow-x:auto;}
+.chart{min-width:760px;border:1px solid var(--line2);background:var(--n0);}
+.crow{display:grid;grid-template-columns:repeat(4,1fr);}
+.cmid{display:grid;grid-template-columns:repeat(4,1fr);}
+.cmid .col{display:flex;flex-direction:column;}
+.pal{border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+  min-height:172px;display:flex;flex-direction:column;position:relative;background:var(--n1);min-width:0;}
+.crow:first-child .pal{border-top:none;}
+.pal:last-child{border-right:none;}
+.cmid .col .pal{border-right:1px solid var(--line);}
+.pal.menh{background:var(--n2);}
+.pal.menh::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--amber);}
+.pal.dv{background:#0d1a1e;}
+.pal.dv::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--cyan);}
+.pal-b{flex:1;padding:8px 9px;display:flex;flex-direction:column;gap:5px;min-width:0;}
+.majors{display:flex;flex-direction:column;gap:3px;}
+.maj{display:flex;align-items:baseline;gap:4px;flex-wrap:wrap;}
+.maj .nm{font-size:13.5px;font-weight:600;color:var(--amber);letter-spacing:-.01em;}
+.maj .br{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--tx3);}
+.empty{font-size:11.5px;color:var(--tx4);font-style:italic;}
+.borrow{font-size:10.5px;color:var(--cyan);border:1px dashed var(--cyan-d);
+  padding:2px 5px;border-radius:2px;display:inline-block;}
+.minors{display:flex;flex-wrap:wrap;gap:2px 7px;}
+.minors span{font-size:11px;color:var(--cyan);opacity:.85;}
+.adjs{display:flex;flex-wrap:wrap;gap:2px 7px;margin-top:auto;}
+.adjs span{font-size:10px;color:var(--tx4);}
+.pal-f{border-top:1px solid var(--line);display:grid;grid-template-columns:1fr auto 1fr;
+  align-items:end;gap:4px;padding:6px 8px;min-width:0;}
+.pal-f .lf{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--tx3);line-height:1.35;min-width:0;}
+.pal-f .ct{text-align:center;min-width:0;}
+.pal-f .ct .pn{font-size:12.5px;font-weight:600;color:var(--tx);letter-spacing:-.01em;}
+.pal.menh .pal-f .ct .pn{color:var(--amber);}
+.pal-f .ct .than{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--cyan);}
+.pal-f .ct .dr{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--tx3);margin-top:1px;}
+.pal.dv .pal-f .ct .dr{color:var(--cyan);}
+.pal-f .rt{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--tx2);}
+.centre{grid-column:span 2;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+  background:var(--n0);position:relative;padding:22px;text-align:center;min-height:344px;min-width:0;}
+.centre .ring{position:absolute;border:1px solid var(--line);border-radius:50%;}
+.centre .r1{inset:34px;}
+.centre .r2{inset:62px;border-color:rgba(94,201,214,.13);}
+.centre .cn{font-size:16px;font-weight:600;letter-spacing:.02em;position:relative;}
+.centre .han{font-family:'Noto Serif',serif;font-size:12px;color:var(--tx3);margin-top:3px;position:relative;}
+.centre .who{margin-top:16px;position:relative;}
+.centre .who .nm{font-size:19px;font-weight:600;color:var(--amber);}
+.centre .who .dl{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--tx2);margin-top:5px;line-height:1.7;}
+.centre .hint{position:relative;margin-top:18px;font-size:11px;color:var(--tx4);}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:11.5px;color:var(--tx3);}
+.legend i{font-style:normal;}
+.legend .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px;}
+
+/* palace detail drawer */
+.drawer{border:1px solid var(--cyan-d);background:var(--n1);border-radius:var(--r);margin-top:16px;}
+.drawer-h{display:flex;align-items:center;gap:11px;padding:13px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+.drawer-h h3{font-size:15px;}
+.drawer-h .bx{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cyan);
+  border:1px solid var(--cyan-d);padding:2px 7px;border-radius:2px;}
+.drawer-h .x{margin-left:auto;color:var(--tx3);font-size:15px;}
+.drawer-b{padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;}
+.dcol h5{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);margin-bottom:7px;}
+.dcol .li{font-size:13px;color:var(--tx);margin-bottom:4px;display:flex;gap:5px;align-items:baseline;flex-wrap:wrap;}
+
+/* ── decadal ─────────────────────────────────────────────── */
+.dv-head{display:flex;align-items:baseline;gap:14px;margin-bottom:16px;flex-wrap:wrap;}
+.dv-head h3{font-size:16px;}
+.dv-head .now{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--cyan);}
+.tl{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);}
+.tl-row{display:grid;grid-template-columns:96px 128px minmax(0,1fr) auto;gap:0;background:var(--n1);
+  align-items:center;min-width:0;}
+@media(max-width:720px){.tl-row{grid-template-columns:76px 104px minmax(0,1fr);}}
+.tl-row.on{background:#0d1a1e;box-shadow:inset 2px 0 0 var(--cyan);}
+.tl-row.past{opacity:.55;}
+.tl-row > div{padding:11px 13px;min-width:0;}
+.tl .ages{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--tx2);}
+.tl-row.on .ages{color:var(--cyan);}
+.tl .pn{font-size:13px;font-weight:600;}
+.tl .sts{display:flex;flex-wrap:wrap;gap:3px 9px;font-size:11.5px;}
+.tl .yrs{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--tx4);text-align:right;white-space:nowrap;}
+@media(max-width:720px){.tl .yrs{display:none;}}
+.bar{height:3px;background:var(--line);position:relative;margin-top:6px;}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--cyan);}
+
+/* ── PAPER reading surface ───────────────────────────────── */
+.paper{background:var(--p0);color:var(--p-tx);border-radius:var(--r);
+  font-family:'Noto Serif',Georgia,serif;position:relative;}
+.paper-bar{display:flex;align-items:center;gap:10px;padding:12px 20px;
+  border-bottom:1px solid var(--p-line);background:var(--p1);flex-wrap:wrap;
+  font-family:'IBM Plex Sans',sans-serif;border-radius:var(--r) var(--r) 0 0;}
+.paper-bar .ttl{font-size:13.5px;font-weight:600;color:var(--p-tx);}
+.paper-bar .sub{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--p-tx3);}
+.paper-bar .acts{margin-left:auto;display:flex;gap:8px;}
+.pbtn{font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;padding:7px 13px;
+  border:1px solid var(--p-line);background:var(--p1);color:var(--p-tx2);border-radius:var(--r);white-space:nowrap;}
+.pbtn.pri{background:var(--verm);border-color:var(--verm);color:#fdf6ec;}
+.paper-b{padding:34px 40px 40px;max-width:none;}
+@media(max-width:640px){.paper-b{padding:24px 20px 30px;}}
+.paper-b .doc-t{font-size:24px;font-weight:700;letter-spacing:-.01em;margin-bottom:5px;}
+.paper-b .doc-m{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--p-tx3);
+  padding-bottom:16px;border-bottom:2px solid var(--p-tx);margin-bottom:24px;}
+.paper-b h2{font-size:17px;font-weight:700;color:var(--verm);margin:28px 0 9px;
+  padding-bottom:6px;border-bottom:1px solid var(--p-line);}
+.paper-b h2:first-of-type{margin-top:0;}
+.paper-b h3{font-size:14.5px;font-weight:600;color:var(--p-tx);margin:18px 0 6px;}
+.paper-b p{font-size:14.5px;line-height:1.85;color:var(--p-tx2);margin-bottom:12px;max-width:72ch;}
+.paper-b p b,.paper-b strong{color:var(--p-tx);font-weight:600;}
+.paper-b .sealq{border-left:3px solid var(--verm);background:var(--p1);padding:12px 16px;
+  margin:16px 0;font-size:13.8px;line-height:1.75;color:var(--p-tx2);font-style:italic;max-width:72ch;}
+.paper-b ul{margin:0 0 12px;padding-left:20px;max-width:72ch;}
+.paper-b li{font-size:14.3px;line-height:1.75;color:var(--p-tx2);margin-bottom:5px;}
+.paper-b li::marker{color:var(--verm);}
+.seal{position:absolute;top:66px;right:36px;width:58px;height:58px;border:2px solid var(--verm);
+  border-radius:3px;display:grid;place-items:center;color:var(--verm);opacity:.5;
+  font-family:'Noto Serif',serif;font-size:11px;line-height:1.15;text-align:center;padding:4px;}
+@media(max-width:640px){.seal{display:none;}}
+.paper-foot{border-top:1px solid var(--p-line);margin-top:26px;padding-top:14px;
+  display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--p-tx3);}
+
+/* ── chat ───────────────────────────────────────────────── */
+.chat{border:1px solid var(--line2);background:var(--n1);border-radius:var(--r);
+  display:flex;flex-direction:column;max-width:440px;}
+.chat-h{display:flex;align-items:center;gap:10px;padding:13px 15px;border-bottom:1px solid var(--line);}
+.chat-h .mk{width:26px;height:26px;border:1px solid var(--cyan-d);border-radius:50%;
+  display:grid;place-items:center;color:var(--cyan);font-size:12px;flex:none;}
+.chat-h .t{font-size:13.5px;font-weight:600;}
+.chat-h .s{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--tx3);}
+.chat-h .x{margin-left:auto;color:var(--tx3);}
+.chat-b{padding:15px;display:flex;flex-direction:column;gap:11px;background:var(--n0);}
+.msg{max-width:86%;padding:9px 12px;border-radius:var(--r);font-size:13px;line-height:1.6;}
+.msg.u{align-self:flex-end;background:var(--n3);border:1px solid var(--line2);color:var(--tx);}
+.msg.a{align-self:flex-start;background:var(--n1);border:1px solid var(--line);color:var(--tx2);}
+.msg.a b{color:var(--amber);font-weight:600;}
+.msg .cite{display:block;margin-top:7px;padding-top:7px;border-top:1px solid var(--line);
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--cyan);}
+.typing{align-self:flex-start;display:flex;gap:4px;padding:11px 12px;}
+.typing i{width:5px;height:5px;border-radius:50%;background:var(--cyan);display:block;opacity:.4;}
+.typing i:nth-child(2){opacity:.7;} .typing i:nth-child(3){opacity:1;}
+.chat-f{padding:12px 15px;border-top:1px solid var(--line);display:flex;gap:9px;align-items:center;}
+.chat-f .inp{flex:1;}
+.sugg{display:flex;gap:6px;flex-wrap:wrap;padding:0 15px 12px;}
+.sugg span{font-size:11.5px;color:var(--cyan);border:1px solid var(--cyan-d);
+  padding:4px 9px;border-radius:var(--r);}
+
+/* ── tokens sheet ───────────────────────────────────────── */
+.tok{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;}
+.tok-card{border:1px solid var(--line);background:var(--n1);border-radius:var(--r);padding:16px;min-width:0;}
+.tok-card h4{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px;}
+.sw-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;min-width:0;}
+.sw-row .chip{width:26px;height:26px;border-radius:2px;border:1px solid rgba(255,255,255,.1);flex:none;}
+.sw-row .lb{font-size:12px;min-width:0;}
+.sw-row .lb b{display:block;font-weight:600;}
+.sw-row .lb code{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--tx3);}
+.type-row{padding:7px 0;border-bottom:1px solid var(--line);}
+.type-row:last-child{border-bottom:none;}
+.type-row .sm{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--tx3);}
+.rules li{font-size:12.5px;color:var(--tx2);margin-bottom:7px;line-height:1.5;}
+.rules li b{color:var(--tx);}
+.rules{margin:0;padding-left:17px;}
+.rules li::marker{color:var(--cyan);}
+
+.foot{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);
+  font-size:12.5px;color:var(--tx4);}
+.foot b{color:var(--tx3);}
+
+/* ═══════════════════════════════════════════════════════════
+   MOTION LAYER
+   Rule: the instrument moves, the data never blurs.
+   Every animation below is transform/opacity only — no blur,
+   no filter, no layout thrash. All of it dies under
+   prefers-reduced-motion.
+   ═══════════════════════════════════════════════════════════ */
+:root{
+  --e-out:cubic-bezier(.22,1,.36,1);      /* settle      */
+  --e-in-out:cubic-bezier(.65,0,.35,1);   /* travel      */
+  --e-spring:cubic-bezier(.34,1.4,.64,1); /* mechanical  */
+}
+
+/* ── scroll reveal ─────────────────────────────────────── */
+[data-rv]{opacity:0;transform:translateY(18px);
+  transition:opacity .7s var(--e-out),transform .7s var(--e-out);}
+[data-rv].in{opacity:1;transform:none;}
+[data-rv-d="1"]{transition-delay:.06s} [data-rv-d="2"]{transition-delay:.12s}
+[data-rv-d="3"]{transition-delay:.18s} [data-rv-d="4"]{transition-delay:.24s}
+[data-rv-d="5"]{transition-delay:.30s} [data-rv-d="6"]{transition-delay:.36s}
+
+/* ── astrolabe ─────────────────────────────────────────── */
+.labe{position:relative;}
+#labe svg{overflow:visible;}
+.g-ticks{transform-origin:200px 200px;animation:rot 240s linear infinite;}
+.g-spokes{transform-origin:200px 200px;animation:rot 420s linear infinite reverse;}
+.g-tri-a{transform-origin:200px 200px;animation:rot 180s linear infinite reverse;}
+.g-tri-b{transform-origin:200px 200px;animation:rot 300s linear infinite;}
+.g-labels{transform-origin:200px 200px;animation:rot 240s linear infinite reverse;}
+@keyframes rot{to{transform:rotate(360deg);}}
+
+.sweep{transform-origin:200px 200px;animation:sweep 7s linear infinite;}
+@keyframes sweep{to{transform:rotate(360deg);}}
+
+.g-draw circle,.g-draw line,.g-draw polygon{
+  stroke-dasharray:1400;stroke-dashoffset:1400;
+  animation:draw 2.1s var(--e-out) forwards;}
+.g-draw .d2{animation-delay:.18s} .g-draw .d3{animation-delay:.36s}
+.g-draw .d4{animation-delay:.54s} .g-draw .d5{animation-delay:.72s}
+@keyframes draw{to{stroke-dashoffset:0;}}
+
+.core{transform-origin:200px 200px;animation:corebeat 4.5s var(--e-in-out) infinite;}
+@keyframes corebeat{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.07);opacity:.95}}
+.labe-txt{animation:fadeUp .9s var(--e-out) .9s backwards;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* the dial answers the pointer */
+.labe svg{transition:transform .5s var(--e-out);will-change:transform;}
+
+/* ── hero copy ─────────────────────────────────────────── */
+.hero .eyebrow{animation:fadeUp .7s var(--e-out) .05s backwards;}
+/* padding + negative margin keeps dấu nặng and dấu hỏi inside the
+   clipping box — a bare overflow:hidden decapitates Vietnamese */
+.hero h1{line-height:1.16;}
+.hero h1 .ln{display:block;overflow:hidden;padding:.14em 0 .16em;margin:-.14em 0 -.16em;}
+.hero h1 .ln i{display:block;font-style:inherit;
+  animation:lineUp .85s var(--e-out) backwards;}
+.hero h1 .ln:nth-child(1) i{animation-delay:.14s}
+.hero h1 .ln:nth-child(2) i{animation-delay:.24s}
+.hero h1 .ln:nth-child(3) i{animation-delay:.34s}
+@keyframes lineUp{from{transform:translateY(105%)}to{transform:none}}
+.hero .sub{animation:fadeUp .8s var(--e-out) .48s backwards;}
+.hero .acts{animation:fadeUp .8s var(--e-out) .58s backwards;}
+
+/* ── buttons ───────────────────────────────────────────── */
+.btn{transition:background .18s,border-color .18s,color .18s,transform .18s var(--e-spring);
+  position:relative;overflow:hidden;}
+.btn:hover{transform:translateY(-1px);}
+.btn.pri:hover{box-shadow:0 0 0 3px rgba(94,201,214,.16);}
+.btn.gh:hover,.btn:hover{border-color:var(--cyan);color:var(--cyan);}
+.btn.pri:hover{color:#04191d;}
+.btn.pri::after{content:"";position:absolute;inset:0;transform:translateX(-110%);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.32),transparent);}
+.btn.pri:hover::after{animation:glint .7s var(--e-in-out);}
+@keyframes glint{to{transform:translateX(110%);}}
+
+/* ── stat counters ─────────────────────────────────────── */
+.stat{transition:background .25s;}
+.stat:hover{background:var(--n2);}
+.stat .v{transition:color .25s;}
+.stat:hover .v em{color:var(--amber);}
+
+/* ── cards + previews ──────────────────────────────────── */
+.card,.prev{transition:border-color .25s,transform .3s var(--e-out),background .25s;}
+.prev:hover{border-color:var(--line2);transform:translateY(-2px);background:var(--n2);}
+.prev .ph{transition:letter-spacing .3s var(--e-out);}
+.prev:hover .ph{letter-spacing:.16em;}
+
+/* ── input focus ring ──────────────────────────────────── */
+.inp{transition:border-color .2s,box-shadow .25s var(--e-out);}
+.inp.foc{animation:ringPulse 2.6s var(--e-in-out) infinite;}
+@keyframes ringPulse{
+  0%,100%{box-shadow:0 0 0 2px rgba(94,201,214,.14)}
+  50%{box-shadow:0 0 0 3px rgba(94,201,214,.26)}}
+.seg span{transition:background .2s,color .2s,box-shadow .2s;}
+
+/* ── tabs ──────────────────────────────────────────────── */
+.tabs{position:relative;}
+.tabs a{transition:color .22s;}
+.tabs a:hover{color:var(--tx2);}
+.tabs a.on{animation:tabIn .45s var(--e-out);}
+@keyframes tabIn{from{box-shadow:inset 0 -2px 0 -2px var(--cyan)}to{box-shadow:none}}
+
+/* ═══ THE CHART — scan, stagger, and relationship highlight ═══ */
+.chart{position:relative;}
+.chart::after{content:"";position:absolute;left:0;right:0;top:0;height:120px;
+  background:linear-gradient(180deg,transparent,rgba(94,201,214,.11) 55%,rgba(94,201,214,.5) 82%,transparent);
+  pointer-events:none;z-index:20;opacity:0;}
+.chart.scan::after{animation:scan 1.5s var(--e-in-out) .15s;}
+@keyframes scan{
+  0%{opacity:0;transform:translateY(-120px)}
+  12%{opacity:1}
+  88%{opacity:1}
+  100%{opacity:0;transform:translateY(760px)}}
+
+.pal{opacity:0;transform:scale(.965);
+  transition:opacity .55s var(--e-out),transform .55s var(--e-out),
+             background .22s,box-shadow .3s var(--e-out);}
+.chart.lit .pal{opacity:1;transform:none;}
+
+.pal .maj .nm,.pal .minors span,.pal .pal-f{transition:color .22s,opacity .28s;}
+.pal:hover{background:var(--n3);z-index:12;}
+.pal::after{content:"";position:absolute;inset:0;pointer-events:none;
+  box-shadow:inset 0 0 0 0 var(--cyan);transition:box-shadow .28s var(--e-out);}
+.pal:hover::after{box-shadow:inset 0 0 0 1px var(--cyan);}
+
+/* relationship highlight: xung chiếu (đối cung) + tam hợp */
+.chart.rel .pal{opacity:.34;}
+.chart.rel .pal.self{opacity:1;background:var(--n3);}
+.chart.rel .pal.self::after{box-shadow:inset 0 0 0 1px var(--cyan);}
+.chart.rel .pal.xung{opacity:1;}
+.chart.rel .pal.xung::after{box-shadow:inset 0 0 0 1px var(--amber);}
+.chart.rel .pal.hop{opacity:1;}
+.chart.rel .pal.hop::after{box-shadow:inset 0 0 0 1px var(--cyan-d);}
+/* relationship linework — drawn over the grid, never interactive */
+.rel-ov{position:absolute;inset:0;z-index:16;pointer-events:none;overflow:visible;opacity:0;
+  transition:opacity .2s var(--e-out);}
+.chart.rel .rel-ov{opacity:1;}
+.rel-ov line{stroke-linecap:round;}
+.rel-ov .l-hop{stroke:var(--cyan);stroke-width:1.5;opacity:.62;}
+.rel-ov .l-close{stroke:var(--cyan);stroke-width:1;opacity:.3;stroke-dasharray:3 4;}
+.rel-ov .l-xung{stroke:var(--amber);stroke-width:1.5;opacity:.7;}
+.rel-ov .node{fill:var(--n0);stroke-width:1.5;}
+.rel-ov .n-self{stroke:var(--cyan);}
+.rel-ov .n-hop{stroke:var(--cyan);opacity:.75;}
+.rel-ov .n-xung{stroke:var(--amber);}
+.rel-ov .cap{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;
+  text-anchor:middle;dominant-baseline:middle;}
+.rel-ov .cap-hop{fill:var(--cyan);}
+.rel-ov .cap-xung{fill:var(--amber);}
+.rel-ov .cap-bg{fill:var(--n0);}
+
+.rel-tag{position:absolute;top:5px;right:6px;font-family:'IBM Plex Mono',monospace;
+  font-size:8.5px;letter-spacing:.09em;padding:1px 4px;border-radius:2px;
+  opacity:0;transform:translateY(-3px);transition:opacity .25s,transform .25s var(--e-out);z-index:14;}
+.chart.rel .pal.xung .rel-tag{opacity:1;transform:none;color:var(--amber);
+  border:1px solid rgba(232,178,90,.4);background:rgba(232,178,90,.1);}
+.chart.rel .pal.hop .rel-tag{opacity:1;transform:none;color:var(--cyan);
+  border:1px solid var(--cyan-d);background:rgba(94,201,214,.08);}
+
+/* mệnh + đại vận rules draw themselves in */
+.pal.menh::before,.pal.dv::before{transform:scaleX(0);transform-origin:left;}
+.chart.lit .pal.menh::before,.chart.lit .pal.dv::before{
+  animation:ruleIn .8s var(--e-out) .75s forwards;}
+@keyframes ruleIn{to{transform:scaleX(1);}}
+
+/* tứ hóa chips glint on entry, then rest */
+.mut{position:relative;overflow:hidden;}
+.chart.lit .mut::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
+  transform:translateX(-110%);animation:glint 1s var(--e-in-out) 1.15s;}
+
+/* centre dial breathes */
+.centre .ring{transition:opacity .6s;}
+.centre .r2{animation:ringBreathe 9s var(--e-in-out) infinite;}
+@keyframes ringBreathe{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.045);opacity:1}}
+.centre .who .nm{transition:color .3s;}
+
+/* drawer */
+.drawer{animation:drawerIn .5s var(--e-out);transform-origin:top;}
+@keyframes drawerIn{from{opacity:0;transform:translateY(-8px) scaleY(.985)}to{opacity:1;transform:none}}
+.drawer-h .bx{animation:corebeat 3.4s var(--e-in-out) infinite;}
+
+/* ── decadal ───────────────────────────────────────────── */
+.tl-row{transition:background .22s,opacity .3s,box-shadow .25s;}
+.tl-row:hover{background:var(--n2);opacity:1;}
+.tl-row.on{position:relative;}
+.tl-row.on::after{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--cyan);
+  animation:edgePulse 3s var(--e-in-out) infinite;}
+@keyframes edgePulse{0%,100%{opacity:.55}50%{opacity:1}}
+.bar i{width:0;transition:width 1.5s var(--e-out) .35s;}
+.tl.run .bar i{width:30%;}
+
+/* ── paper + seal ──────────────────────────────────────── */
+.seal{opacity:0;transform:rotate(-16deg) scale(1.6);}
+.paper.stamped .seal{animation:stamp .55s var(--e-spring) forwards;}
+@keyframes stamp{
+  0%{opacity:0;transform:rotate(-16deg) scale(1.6)}
+  70%{opacity:.62;transform:rotate(-7deg) scale(.94)}
+  100%{opacity:.5;transform:rotate(-7deg) scale(1)}}
+.pbtn{transition:transform .18s var(--e-spring),border-color .2s,color .2s;}
+.pbtn:hover{transform:translateY(-1px);border-color:var(--verm);color:var(--verm);}
+.pbtn.pri:hover{color:#fdf6ec;}
+.sealq{transition:border-left-width .25s var(--e-out),padding-left .25s var(--e-out);}
+.sealq:hover{border-left-width:6px;padding-left:19px;}
+
+/* ── chat ──────────────────────────────────────────────── */
+.msg{animation:msgIn .5s var(--e-out) backwards;}
+.msg.u{animation-name:msgInR;}
+@keyframes msgIn{from{opacity:0;transform:translateX(-10px) translateY(4px)}to{opacity:1;transform:none}}
+@keyframes msgInR{from{opacity:0;transform:translateX(10px) translateY(4px)}to{opacity:1;transform:none}}
+.chat-b .msg:nth-child(2){animation-delay:.12s}
+.chat-b .msg:nth-child(3){animation-delay:.24s}
+.typing{animation:msgIn .4s var(--e-out) .34s backwards;}
+.typing i{animation:bounce 1.25s var(--e-in-out) infinite;}
+.typing i:nth-child(2){animation-delay:.16s}
+.typing i:nth-child(3){animation-delay:.32s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-4px);opacity:1}}
+.sugg span{transition:background .2s,color .2s,transform .2s var(--e-spring);}
+.sugg span:hover{background:rgba(94,201,214,.1);transform:translateY(-1px);}
+.msg .cite{position:relative;}
+.msg.a:hover .cite{color:var(--amber);}
+
+/* ── doc nav ───────────────────────────────────────────── */
+.nav a{transition:color .2s,border-color .2s,background .2s;}
+.nav a.here{color:var(--cyan);border-color:var(--cyan-d);background:rgba(94,201,214,.07);}
+.pillar{transition:border-left-color .25s,transform .28s var(--e-out),background .25s;}
+.pillar:hover{transform:translateX(3px);border-left-color:var(--amber);background:var(--n2);}
+.tok-card{transition:border-color .25s,transform .28s var(--e-out);}
+.tok-card:hover{border-color:var(--line2);transform:translateY(-2px);}
+.sw-row .chip{transition:transform .25s var(--e-spring);}
+.sw-row:hover .chip{transform:scale(1.16);}
+
+/* ── motion legend strip ───────────────────────────────── */
+.mo{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px;}
+.mo-c{border:1px solid var(--line);background:var(--n1);border-radius:var(--r);padding:15px;min-width:0;}
+.mo-c .lab{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--cyan);margin-bottom:9px;}
+.mo-c h4{font-size:13px;margin-bottom:4px;}
+.mo-c p{font-size:12.3px;color:var(--tx3);line-height:1.55;}
+.mo-c .ms{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--tx4);margin-top:8px;
+  padding-top:8px;border-top:1px solid var(--line);}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;}
+  [data-rv]{opacity:1!important;transform:none!important;}
+  .pal{opacity:1!important;transform:none!important;}
+  .seal{opacity:.5!important;transform:rotate(-7deg)!important;}
+  .bar i{width:30%!important;}
+  .pal.menh::before,.pal.dv::before{transform:scaleX(1)!important;}
+}
+</style>
+</head>
+<body>
+
+<div class="nav"><div class="nav-in">
+  <b>Thiên Văn Đài</b>
+  <a href="#s1">01 Landing</a>
+  <a href="#s2">02 Tổng quan</a>
+  <a href="#s3">03 12 Cung</a>
+  <a href="#s4">04 Đại vận</a>
+  <a href="#s5">05 Luận giải</a>
+  <a href="#s6">06 Vận hạn + Chat</a>
+  <a href="#s7">07 Xuất PDF</a>
+  <a href="#s8">08 Tokens</a>
+  <a href="#s9">09 Motion</a>
+</div></div>
+
+<div class="doc">
+
+  <header class="doc-head">
+    <div class="kick">Direction C · full mockup</div>
+    <h1>Thiên Văn Đài</h1>
+    <p>An astronomical instrument, not a fortune booth. Every screen of the app rendered in the direction —
+      real palace anatomy, real Giáp-year tứ hóa, real tab structure. The chart data below is a textbook
+      <span class="mono" style="color:var(--tx2)">Tử Vi tại Tỵ</span> layout so the star placement is genuinely correct, not decorative filler.</p>
+    <div class="pillars">
+      <div class="pillar"><h5>Instrument, not atmosphere</h5><p>Thin linework and hard 3px edges. No blur, no glow, nothing translucent behind data.</p></div>
+      <div class="pillar"><h5>Every number is monospaced</h5><p>Địa chi, ages, đại vận, dates. Tabular numerals stop the grid jittering.</p></div>
+      <div class="pillar"><h5>Two accents, one signal</h5><p>Cyan carries structure and interaction, amber carries stars. Red appears only for Hóa Kỵ.</p></div>
+      <div class="pillar"><h5>Paper where it's read</h5><p>The reading and the PDF sit on warm paper — the one surface that must survive white.</p></div>
+    </div>
+  </header>
+
+  <!-- ══════════ 01 LANDING ══════════ -->
+  <section class="sec" id="s1">
+    <div class="sec-bar"><span class="n">01</span><h2>Landing</h2><span class="tag">/</span></div>
+    <p class="sec-note">The astrolabe replaces the gradient headline — it is the product's own subject drawn as an instrument dial,
+      and it costs one inline SVG rather than five animated blur layers.</p>
+
+    <div class="frame">
+      <div class="frame-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span class="frame-url">tuvi.app</span></div>
+      <div class="frame-body"><div class="app">
+
+        <div class="appbar">
+          <div class="brand"><span class="mk">✦</span> Tử Vi Đẩu Số</div>
+          <nav>
+            <a href="#" class="on">Trang chủ</a><a href="#">Cách xem</a><a href="#">Về thuật toán</a>
+            <span class="btn gh">Lập lá số</span>
+          </nav>
+        </div>
+
+        <div class="hero">
+          <div class="hero-grid">
+            <div>
+              <span class="eyebrow">◈ Tử Vi Đẩu Số · Gemini luận giải</span>
+              <h1><span class="ln"><i>Lá số của bạn,</i></span><span class="ln"><i>đọc bằng <span class="em">thước đo</span></i></span><span class="ln"><i>chứ không bằng lời hoa mỹ.</i></span></h1>
+              <p class="sub">An sao theo thuật toán cổ truyền, luận giải bằng AI trên đúng dữ liệu 12 cung,
+                 ngũ hành và đại vận. Không mơ hồ, không nước đôi — có căn cứ ở từng câu.</p>
+              <div class="acts">
+                <span class="btn pri">Lập lá số ngay</span>
+                <span class="btn">Xem lá số mẫu</span>
+                <span class="micro"><s>✓</s> Miễn phí · <s>✓</s> Không cần đăng ký</span>
+              </div>
+            </div>
+            <div class="labe" id="labe"></div>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><div class="v">12</div><div class="k">cung được an và luận</div></div>
+          <div class="stat"><div class="v">108<em>+</em></div><div class="k">chính tinh và phụ tinh</div></div>
+          <div class="stat"><div class="v">10<em>×</em></div><div class="k">đại vận suốt đời</div></div>
+          <div class="stat"><div class="v">100<em>%</em></div><div class="k">dữ liệu ở lại máy bạn</div></div>
+        </div>
+
+        <div class="band">
+          <div class="card">
+            <div class="card-h"><span class="ix">01</span><h3>Thông tin lập lá số</h3><span class="sp">~8 giây</span></div>
+            <div class="card-b">
+              <div class="field"><label>Họ và tên <span style="color:var(--tx4)">(không bắt buộc)</span></label>
+                <div class="inp ph">Nhập họ tên…</div></div>
+              <div class="field"><label>Ngày sinh dương lịch <i>*</i></label>
+                <div class="inp mono foc">14 / 03 / 1994</div></div>
+              <div class="two">
+                <div class="field"><label>Giờ sinh</label><div class="inp mono">Ngọ · 11:00–12:59</div></div>
+                <div class="field"><label>Giới tính</label>
+                  <div class="seg"><span>Nam</span><span class="on">Nữ</span></div></div>
+              </div>
+              <div class="chk"><span class="bx"></span>
+                <span class="tt">Không rõ giờ sinh
+                  <small>Dựng 13 lá số ứng viên và đối chiếu để chọn giờ đúng nhất.</small></span></div>
+              <span class="btn pri wide">An sao và luận giải →</span>
+            </div>
+          </div>
+
+          <div class="prev-grid">
+            <div class="prev"><div class="ph">◇ Bước 01</div><h4>An sao chính xác</h4>
+              <p>12 cung, chính tinh, phụ tinh, tứ hóa và vòng Trường Sinh — dựng theo thuật toán, không đoán.</p></div>
+            <div class="prev"><div class="ph">⟳ Bước 02</div><h4>Đại vận suốt đời</h4>
+              <p>Mười đại vận, đánh dấu chính xác vận đang đi và năm bắt đầu, kết thúc.</p></div>
+            <div class="prev"><div class="ph">✦ Bước 03</div><h4>Luận giải có căn cứ</h4>
+              <p>Mỗi nhận định dẫn lại cung và sao đã sinh ra nó. Đọc được, kiểm được.</p></div>
+            <div class="prev"><div class="ph">☯ Bước 04</div><h4>Hỏi lại bất cứ điều gì</h4>
+              <p>Trò chuyện trực tiếp trên chính lá số của bạn — không phải chatbot chung chung.</p></div>
+          </div>
+        </div>
+
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ══════════ 02 OVERVIEW ══════════ -->
+  <section class="sec" id="s2">
+    <div class="sec-bar"><span class="n">02</span><h2>Kết quả · Tổng quan</h2><span class="tag">/result</span></div>
+    <p class="sec-note">The meta line becomes a monospaced instrument readout. Điểm nổi bật is a left-ruled stack rather than
+      four glowing cards — the rule colour tells you whether it is structure (cyan) or a star reading (amber).</p>
+
+    <div class="frame">
+      <div class="frame-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span class="frame-url">tuvi.app/result</span></div>
+      <div class="frame-body"><div class="app">
+        <div class="appbar">
+          <div class="brand"><span class="mk">✦</span> Tử Vi Đẩu Số</div>
+          <nav><span class="btn">Lập lá số mới</span><span class="btn gh">Xuất PDF</span></nav>
+        </div>
+
+        <div class="res-head">
+          <div class="back">← Lập lá số mới</div>
+          <h1>Lá Số Tử Vi <em>— Nguyễn Minh Anh</em></h1>
+          <div class="metaline">
+            <span>1994-03-14</span><s>|</s><span>Ngọ (11:00–12:59)</span><s>|</s>
+            <span>Tuất</span><s>|</s><span>Kim tứ cục</span><s>|</s><span>Dương Nữ</span>
+          </div>
+        </div>
+
+        <div class="tabs">
+          <a href="#s2" class="on"><span class="g">☰</span>Tổng quan</a>
+          <a href="#s3"><span class="g">◇</span>12 Cung</a>
+          <a href="#s4"><span class="g">⟳</span>Đại Vận</a>
+          <a href="#s5"><span class="g">✦</span>Luận giải</a>
+          <a href="#s6"><span class="g">☯</span>Vận hạn</a>
+        </div>
+
+        <div class="res-body">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;">
+            <div class="card">
+              <div class="card-h"><span class="ix">☰</span><h3>Thông tin tổng quan</h3></div>
+              <div class="card-b" style="padding-top:4px;">
+                <div class="kv">
+                  <div><div class="k">Ngày dương</div><div class="v mono">1994-03-14</div></div>
+                  <div><div class="k">Ngày âm</div><div class="v mono">03-02-1994</div></div>
+                  <div><div class="k">Can chi</div><div class="v">Giáp Tuất · Đinh Mão · Bính Thìn</div></div>
+                  <div><div class="k">Giờ sinh</div><div class="v mono">Ngọ · 11:00–12:59</div></div>
+                  <div><div class="k">Cung giáp</div><div class="v">Song Ngư</div></div>
+                  <div><div class="k">Con giáp</div><div class="v">Tuất</div></div>
+                  <div><div class="k">Ngũ hành cục</div><div class="v">Kim tứ cục</div></div>
+                  <div><div class="k">Mệnh chủ / Thân chủ</div><div class="v">Vũ Khúc / Thiên Tướng</div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-h"><span class="ix">◈</span><h3>Điểm nổi bật</h3></div>
+              <div class="card-b">
+                <div class="hl">
+                  <div class="k">Mệnh cung · Dậu</div>
+                  <div class="v"><span class="star-a">Liêm Trinh</span> <span class="bl">bình</span>
+                    <span class="mut">Lộc</span> &nbsp;<span class="star-a">Phá Quân</span> <span class="bl">hãm</span>
+                    <span class="mut">Quyền</span></div>
+                </div>
+                <div class="hl">
+                  <div class="k">Tứ hóa năm Giáp</div>
+                  <div class="v"><span class="mut">Lộc</span> Liêm Trinh · <span class="mut">Quyền</span> Phá Quân ·
+                    <span class="mut">Khoa</span> Vũ Khúc · <span class="mut ky">Kỵ</span> Thái Dương</div>
+                </div>
+                <div class="hl cy">
+                  <div class="k">Đại vận hiện tại · 24–33 tuổi</div>
+                  <div class="v">Phu Thê (Mùi) — <span class="borrow">vô chính diệu, mượn Sửu</span></div>
+                </div>
+                <div class="hl cy" style="margin-bottom:0">
+                  <div class="k">Lưu niên 2026 · Bính Ngọ</div>
+                  <div class="v">Tử Tức (Ngọ) · <span class="bl">năm thứ 3 của đại vận</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ══════════ 03 CHART ══════════ -->
+  <section class="sec" id="s3">
+    <div class="sec-bar"><span class="n">03</span><h2>Kết quả · 12 Cung</h2><span class="tag">ChartGrid.tsx</span></div>
+    <p class="sec-note">The screen that decides the whole direction. Major stars carry amber at 13.5px, minor stars cyan at 11px,
+      phụ tinh drop to a muted 10px, and everything structural — địa chi, can chi, đại vận, vòng Trường Sinh — is monospaced.
+      Mệnh is marked by an amber top rule, the running đại vận by a cyan one. Nothing is blurred, so nothing is lost.</p>
+
+    <div class="frame">
+      <div class="frame-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span class="frame-url">tuvi.app/result#chart</span></div>
+      <div class="frame-body"><div class="app">
+        <div class="tabs" style="margin-top:0;padding-top:8px;">
+          <a href="#s2"><span class="g">☰</span>Tổng quan</a>
+          <a href="#s3" class="on"><span class="g">◇</span>12 Cung</a>
+          <a href="#s4"><span class="g">⟳</span>Đại Vận</a>
+          <a href="#s5"><span class="g">✦</span>Luận giải</a>
+          <a href="#s6"><span class="g">☯</span>Vận hạn</a>
+        </div>
+        <div class="res-body">
+          <div class="chart-scroll"><div class="chart" id="chart"></div></div>
+          <div class="legend">
+            <span><i class="sw" style="background:var(--amber)"></i>Chính tinh</span>
+            <span><i class="sw" style="background:var(--cyan)"></i>Phụ tinh · cấu trúc</span>
+            <span><i class="sw" style="background:var(--tx4)"></i>Sao lẻ</span>
+            <span><i class="sw" style="background:var(--sig)"></i>Hóa Kỵ</span>
+            <span class="mono" style="color:var(--tx4)">miếu · vượng · đắc · bình · hãm</span>
+          </div>
+
+          <div class="drawer">
+            <div class="drawer-h">
+              <span class="bx">Dậu</span><h3>Cung Mệnh</h3>
+              <span class="bl">Quý Dậu · 4–13 tuổi · Đế Vượng</span>
+              <span class="x">✕</span>
+            </div>
+            <div class="drawer-b">
+              <div class="dcol"><h5>Chính tinh</h5>
+                <div class="li"><span class="star-a">Liêm Trinh</span><span class="bl">bình</span><span class="mut">Lộc</span></div>
+                <div class="li"><span class="star-a">Phá Quân</span><span class="bl">hãm</span><span class="mut">Quyền</span></div>
+              </div>
+              <div class="dcol"><h5>Phụ tinh</h5>
+                <div class="li"><span class="star-c">Văn Xương</span></div>
+                <div class="li"><span class="star-c">Kình Dương</span></div>
+                <div class="li"><span class="star-c">Thiên Việt</span></div>
+              </div>
+              <div class="dcol"><h5>Sao lẻ</h5>
+                <div class="li" style="color:var(--tx3)">Hồng Loan · Thiên Hỷ · Long Trì</div>
+              </div>
+              <div class="dcol"><h5>Cung xung chiếu</h5>
+                <div class="li" style="color:var(--tx2)">Thiên Di (Mão) — Thiên Tướng <span class="bl">hãm</span></div>
+                <h5 style="margin-top:12px">Tam hợp</h5>
+                <div class="li" style="color:var(--tx2)">Sửu · Tỵ</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ══════════ 04 DECADAL ══════════ -->
+  <section class="sec" id="s4">
+    <div class="sec-bar"><span class="n">04</span><h2>Kết quả · Đại Vận</h2><span class="tag">DecadalView.tsx</span></div>
+    <p class="sec-note">Ten rows, one life. Ages and calendar years both monospaced so the columns line up down the whole table;
+      the running decade is the only row that carries colour.</p>
+    <div class="frame">
+      <div class="frame-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span class="frame-url">tuvi.app/result#daivan</span></div>
+      <div class="frame-body"><div class="app"><div class="res-body">
+        <div class="dv-head">
+          <h3>Mười đại vận</h3>
+          <span class="now">đang đi · 24–33 tuổi · Phu Thê · năm 3/10</span>
+        </div>
+        <div class="tl" id="tl"></div>
+      </div></div></div>
+    </div>
+  </section>
+
+  <!-- ══════════ 05 READING ══════════ -->
+  <section class="sec" id="s5">
+    <div class="sec-bar"><span class="n">05</span><h2>Kết quả · Luận giải</h2><span class="tag">Interpretation.tsx</span></div>
+    <p class="sec-note">This is where the direction borrows from Cổ Thư. The reading leaves the dark instrument and lands on warm
+      paper in a serif at 14.5px on a 72-character measure — because it is read for minutes, and because this exact surface
+      is what the PDF captures. Each claim cites the cung and sao it came from, which is the honest-reading promise made visible.</p>
+    <div class="frame">
+      <div class="frame-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span class="frame-url">tuvi.app/result#interpretation</span></div>
+      <div class="frame-body"><div class="app"><div class="res-body">
+        <div class="paper">
+          <div class="paper-bar">
+            <span class="ttl">Luận giải lá số</span>
+            <span class="sub">Gemini · 2026-09-03 · 2.140 chữ</span>
+            <span class="acts"><span class="pbtn">↓ Tải ảnh</span><span class="pbtn pri">↓ Xuất PDF</span></span>
+          </div>
+          <div class="paper-b">
+            <div class="seal">紫微<br>斗數</div>
+            <div class="doc-t">Nguyễn Minh Anh</div>
+            <div class="doc-m">1994-03-14 · Ngọ · Dương Nữ · Kim tứ cục · Mệnh an tại Dậu</div>
+
+            <h2>I. Mệnh cung — bản chất</h2>
+            <p>Mệnh an tại <b>Dậu</b>, có <b>Liêm Trinh</b> (bình) đồng cung <b>Phá Quân</b> (hãm). Đây là cách cục của người
+              hành động trước, giải thích sau: quyết đoán, chịu được va đập, và gần như không thể sống lâu trong một khuôn khổ
+              do người khác đặt ra. Phá Quân hãm địa nói rằng những đổ vỡ trong đời không đến từ hoàn cảnh mà đến từ chính
+              quyết định dứt bỏ của đương số — thường là dứt bỏ đúng, nhưng dứt bỏ sớm.</p>
+            <p>Điểm đáng chú ý nhất của lá số này nằm ở tứ hóa năm Giáp: <b>Liêm Trinh hóa Lộc</b> và
+              <b>Phá Quân hóa Quyền</b> cùng rơi vào Mệnh. Cả tài lộc lẫn quyền quyết định đều tự thân mà có, không nhờ vào
+              ai ban cho — nhưng cũng vì thế mà không ai gánh đỡ được khi chọn sai.</p>
+            <div class="sealq">Căn cứ: Mệnh · Dậu · Liêm Trinh (Lộc) + Phá Quân (Quyền) · xung chiếu Thiên Di (Mão) Thiên Tướng hãm.</div>
+
+            <h2>II. Đại vận 24–33 — vận đang đi</h2>
+            <p>Đại vận hiện tại đóng ở <b>Phu Thê (Mùi)</b>, là cung <b>vô chính diệu</b> — không có chính tinh, phải mượn sao
+              của cung đối là Sửu: <b>Vũ Khúc</b> (miếu, hóa Khoa) và <b>Tham Lang</b> (miếu). Một đại vận vô chính diệu không
+              có nghĩa là trống rỗng; nó có nghĩa là giai đoạn này định hình bởi người khác và bởi quan hệ nhiều hơn bởi
+              bản thân đương số.</p>
+            <p>Vũ Khúc hóa Khoa mượn vào cho thấy các mối quan hệ trong mười năm này có xu hướng thực tế, gắn với công việc
+              và tiền bạc hơn là lãng mạn. Tham Lang miếu địa thêm sức hút và cơ hội, nhưng cũng thêm phần tính toán.</p>
+            <h3>Ba năm còn lại của vận</h3>
+            <ul>
+              <li><b>2026 (Bính Ngọ)</b> — lưu niên vào Tử Tức, năm thứ ba của vận: hợp để cam kết dài hạn, không hợp để mở rộng.</li>
+              <li><b>2027 (Đinh Mùi)</b> — lưu niên trùng cung đại vận, biến động rõ nhất trong cả mười năm.</li>
+              <li><b>2028 (Mậu Thân)</b> — chuyển tiếp sang đại vận 34–43, nên chuẩn bị từ cuối 2027.</li>
+            </ul>
+
+            <h2>III. Điều nên nói thẳng</h2>
+            <p><b>Thái Dương hóa Kỵ</b> đóng tại Nô Bộc (Dần) là điểm yếu rõ ràng nhất của lá số. Hóa Kỵ ở cung bạn bè,
+              cấp dưới không dự báo tai họa; nó dự báo hao tổn lặp lại vì tin người quá nhanh và giao việc quá sớm.
+              Đây là chỗ nên đặt kỷ luật thành quy trình, chứ không nên trông vào cảm tính.</p>
+            <div class="sealq">Căn cứ: Nô Bộc · Dần · Thái Dương (Kỵ) vượng địa · tam hợp Ngọ – Tuất.</div>
+            <div class="paper-foot">
+              <span>tuvi.app · lá số lập ngày 2026-09-03</span>
+              <span>Trang 3 / 5</span>
+            </div>
+          </div>
+        </div>
+      </div></div></div>
+    </div>
+  </section>
+
+  <!-- ══════════ 06 HOROSCOPE + CHAT ══════════ -->
+  <section class="sec" id="s6">
+    <div class="sec-bar"><span class="n">06</span><h2>Vận hạn &amp; Trò chuyện</h2><span class="tag">ChatPanel.tsx</span></div>
+    <p class="sec-note">Vận hạn is a readout table, not decorated cards. The chat cites the palace behind every answer —
+      the single feature that separates this from a generic chatbot, so it gets the only cyan on the panel.</p>
+    <div class="frame">
+      <div class="frame-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span class="frame-url">tuvi.app/result#horoscope</span></div>
+      <div class="frame-body"><div class="app"><div class="res-body">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);gap:22px;align-items:start;">
+          <div style="min-width:0;display:flex;flex-direction:column;gap:14px;">
+            <div class="card"><div class="card-h"><span class="ix">⟳</span><h3>Đại hạn hiện tại</h3><span class="sp">24–33</span></div>
+              <div class="card-b"><div class="kv">
+                <div><div class="k">Cung</div><div class="v">Phu Thê · vô chính diệu</div></div>
+                <div><div class="k">Can chi</div><div class="v mono">Tân Mùi</div></div>
+                <div><div class="k">Sao mượn</div><div class="v"><span class="star-a">Vũ Khúc</span> <span class="mut">Khoa</span> · <span class="star-a">Tham Lang</span></div></div>
+                <div><div class="k">Tứ hóa</div><div class="v"><span class="mut">Khoa</span> Vũ Khúc</div></div>
+              </div></div></div>
+            <div class="card"><div class="card-h"><span class="ix">☯</span><h3>Lưu niên 2026</h3><span class="sp">Bính Ngọ</span></div>
+              <div class="card-b"><div class="kv">
+                <div><div class="k">Cung</div><div class="v">Tử Tức</div></div>
+                <div><div class="k">Can chi</div><div class="v mono">Canh Ngọ</div></div>
+                <div><div class="k">Chính tinh</div><div class="v" style="color:var(--tx4);font-style:italic">Vô chính diệu</div></div>
+                <div><div class="k">Tứ hóa</div><div class="v"><span class="mut">Lộc</span> Thiên Đồng · <span class="mut ky">Kỵ</span> Liêm Trinh</div></div>
+              </div></div></div>
+            <div class="card"><div class="card-h"><span class="ix">☾</span><h3>Lưu nguyệt</h3><span class="sp">tháng 9</span></div>
+              <div class="card-b"><div class="kv">
+                <div><div class="k">Cung</div><div class="v">Tài Bạch</div></div>
+                <div><div class="k">Can chi</div><div class="v mono">Đinh Dậu</div></div>
+              </div></div></div>
+          </div>
+
+          <div class="chat">
+            <div class="chat-h"><span class="mk">✦</span>
+              <span><span class="t">Hỏi trên lá số này</span><br><span class="s">gemini · 12 cung đã nạp</span></span>
+              <span class="x">✕</span></div>
+            <div class="chat-b">
+              <div class="msg u">Đại vận này tôi có nên đổi việc không?</div>
+              <div class="msg a">Đại vận 24–33 đóng ở <b>Phu Thê</b> chứ không phải Quan Lộc, nên mười năm này công việc
+                không phải là trục chính — quan hệ mới là. Vũ Khúc hóa Khoa mượn vào cho thấy cơ hội nghề nghiệp
+                trong vận thường đến qua người quen, không qua ứng tuyển.
+                <span class="cite">↳ Phu Thê (Mùi) · vô chính diệu · mượn Sửu: Vũ Khúc (Khoa), Tham Lang</span></div>
+              <div class="msg u">Vậy năm 2027 thì sao?</div>
+              <div class="typing"><i></i><i></i><i></i></div>
+            </div>
+            <div class="sugg"><span>Tài chính năm nay</span><span>Nên tránh điều gì</span><span>Giải thích Hóa Kỵ</span></div>
+            <div class="chat-f"><span class="inp ph">Hỏi về lá số của bạn…</span><span class="btn pri">↑</span></div>
+          </div>
+        </div>
+      </div></div></div>
+    </div>
+  </section>
+
+  <!-- ══════════ 07 EXPORT ══════════ -->
+  <section class="sec" id="s7">
+    <div class="sec-bar"><span class="n">07</span><h2>Xuất ảnh / PDF</h2><span class="tag">html2canvas · jsPDF</span></div>
+    <p class="sec-note">Today the export forces <code class="mono" style="color:var(--amber)">#060a13</code> onto every page,
+      which prints as a solid black A4. The paper surface is the fix, and it is a one-line change at the capture site —
+      the chart grid inverts to ink-on-paper for print while keeping the exact same structure.</p>
+    <div class="frame">
+      <div class="frame-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span class="frame-url">tuvi_NguyenMinhAnh_1994-03-14.pdf</span></div>
+      <div class="frame-body" style="background:#2a2a26;padding:26px;">
+        <div style="max-width:660px;margin:0 auto;background:var(--p1);box-shadow:0 20px 60px -20px rgba(0,0,0,.7);">
+          <div style="padding:34px 38px 30px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;
+                        border-bottom:2px solid var(--p-tx);padding-bottom:14px;margin-bottom:20px;">
+              <div>
+                <div style="font-family:'Noto Serif',serif;font-size:21px;font-weight:700;color:var(--p-tx);">Lá Số Tử Vi — Nguyễn Minh Anh</div>
+                <div class="mono" style="font-size:11px;color:var(--p-tx3);margin-top:5px;">1994-03-14 · Ngọ · Dương Nữ · Kim tứ cục</div>
+              </div>
+              <div style="width:44px;height:44px;border:2px solid var(--verm);border-radius:3px;display:grid;
+                          place-items:center;color:var(--verm);font-family:'Noto Serif',serif;font-size:9px;
+                          line-height:1.1;text-align:center;flex:none;">紫微<br>斗數</div>
+            </div>
+            <div style="font-family:'IBM Plex Sans',sans-serif;font-size:10.5px;letter-spacing:.11em;
+                        text-transform:uppercase;color:var(--p-tx3);margin-bottom:10px;">Trang 2 — Lá số 12 cung</div>
+            <div id="paperchart"></div>
+            <div style="display:flex;justify-content:space-between;margin-top:16px;padding-top:11px;
+                        border-top:1px solid var(--p-line);font-family:'IBM Plex Mono',monospace;
+                        font-size:10px;color:var(--p-tx3);">
+              <span>tuvi.app</span><span>2 / 5</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 08 TOKENS ══════════ -->
+  <section class="sec" id="s8">
+    <div class="sec-bar"><span class="n">08</span><h2>Tokens &amp; rules</h2><span class="tag">globals.css</span></div>
+    <p class="sec-note">Drop-in replacement for the current <code class="mono" style="color:var(--amber)">:root</code> block.
+      Seven colours, one radius, two families — the whole direction fits in the file that already exists.</p>
+    <div class="tok">
+      <div class="tok-card"><h4>Night surfaces</h4>
+        <div class="sw-row"><span class="chip" style="background:#06090f"></span><span class="lb"><b>Void</b><code>--n0 #06090f</code></span></div>
+        <div class="sw-row"><span class="chip" style="background:#0a0f18"></span><span class="lb"><b>Surface</b><code>--n1 #0a0f18</code></span></div>
+        <div class="sw-row"><span class="chip" style="background:#0e1522"></span><span class="lb"><b>Raised</b><code>--n2 #0e1522</code></span></div>
+        <div class="sw-row"><span class="chip" style="background:#1b2536"></span><span class="lb"><b>Hairline</b><code>--line #1b2536</code></span></div>
+      </div>
+      <div class="tok-card"><h4>Accents</h4>
+        <div class="sw-row"><span class="chip" style="background:#5ec9d6"></span><span class="lb"><b>Cyan · structure</b><code>--cyan #5ec9d6</code></span></div>
+        <div class="sw-row"><span class="chip" style="background:#e8b25a"></span><span class="lb"><b>Amber · chính tinh</b><code>--amber #e8b25a</code></span></div>
+        <div class="sw-row"><span class="chip" style="background:#e06a5c"></span><span class="lb"><b>Signal · Hóa Kỵ only</b><code>--sig #e06a5c</code></span></div>
+        <div class="sw-row"><span class="chip" style="background:#f4efe4"></span><span class="lb"><b>Paper · đọc + in</b><code>--p0 #f4efe4</code></span></div>
+        <div class="sw-row"><span class="chip" style="background:#b23a2e"></span><span class="lb"><b>Son · dấu ấn</b><code>--verm #b23a2e</code></span></div>
+      </div>
+      <div class="tok-card"><h4>Type</h4>
+        <div class="type-row"><div style="font-size:22px;font-weight:600;letter-spacing:-.03em;">Khám phá vận mệnh</div><div class="sm">Plex Sans 600 · display</div></div>
+        <div class="type-row"><div style="font-size:13.5px;font-weight:600;color:var(--amber)">Liêm Trinh <span class="bl">bình</span></div><div class="sm">Plex Sans 600 · chính tinh 13.5px</div></div>
+        <div class="type-row"><div class="mono" style="font-size:12px;color:var(--tx2)">Quý Dậu · 24–33 · 2018–2027</div><div class="sm">Plex Mono · mọi con số</div></div>
+        <div class="type-row"><div style="font-family:'Noto Serif',serif;font-size:14px;color:var(--tx2)">Mệnh an tại Dậu, có Liêm Trinh…</div><div class="sm">Noto Serif · luận giải trên giấy</div></div>
+      </div>
+      <div class="tok-card"><h4>Rules that carry the direction</h4>
+        <ul class="rules">
+          <li><b>One radius: 3px.</b> Pills and 30px corners are what made it read as a SaaS template.</li>
+          <li><b>No blur, no glow, no gradient text.</b> Depth comes from hairlines and one raised surface.</li>
+          <li><b>Numbers are never in the sans.</b> If it counts or dates, it is mono.</li>
+          <li><b>Colour is meaning, not decoration.</b> Amber = a star, cyan = structure, red = only Hóa Kỵ.</li>
+          <li><b>Prose leaves the dark.</b> Anything read for more than a minute sits on paper.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 09 MOTION ══════════ -->
+  <section class="sec" id="s9">
+    <div class="sec-bar"><span class="n">09</span><h2>Motion</h2><span class="tag">transform + opacity only</span></div>
+    <p class="sec-note">Everything above is already moving — hover a palace on screen 03 and the chart answers.
+      The discipline is simple: the <em>instrument</em> animates, the <em>data</em> never does. Nothing here uses blur,
+      filter or shadow animation, so none of it costs a repaint, and all of it switches off under
+      <code class="mono" style="color:var(--amber)">prefers-reduced-motion</code>.</p>
+
+    <div class="mo">
+      <div class="mo-c"><div class="lab">◈ Signature</div><h4>Vòng địa chi sống</h4>
+        <p>Four rings counter-rotate at different rates and a radar sweep crosses every 7 seconds.
+          The dial also leans toward your cursor. It draws itself in on load, stroke by stroke.</p>
+        <div class="ms">rotate · 180–420s · sweep 7s</div></div>
+
+      <div class="mo-c"><div class="lab">◇ The best one</div><h4>Xung chiếu &amp; tam hợp</h4>
+        <p>Hover any palace and the chart dims, then <b style="color:var(--tx)">draws the relationships</b>:
+          the tam hợp triangle in cyan — all three sides, because the triangle is the point — and the
+          xung chiếu axis in amber straight through the centre, both labelled on the line.
+          The lines animate outward from the palace you are on.</p>
+        <div class="ms">tam hợp = b±4 · xung = b+6</div></div>
+
+      <div class="mo-c"><div class="lab">▤ Arrival</div><h4>Scan, then resolve</h4>
+        <p>A cyan scan line crosses the grid once, and the sixteen cells resolve behind it in staggered
+          waves. The Mệnh and đại vận rules draw left to right; the tứ hóa chips glint once and settle.</p>
+        <div class="ms">1.5s scan · 55ms stagger</div></div>
+
+      <div class="mo-c"><div class="lab">⟳ Reading</div><h4>Numbers that count</h4>
+        <p>Stat figures count up on arrival, the đại vận progress bar fills to where you are in the decade,
+          and the pending chat answer actually lands after a beat.</p>
+        <div class="ms">1.1s count · 1.5s fill</div></div>
+
+      <div class="mo-c"><div class="lab">✦ Paper</div><h4>The seal stamps</h4>
+        <p>When the reading scrolls in, the vermilion seal drops and settles slightly over-rotated,
+          like it was pressed by hand. One animation, and the page feels signed.</p>
+        <div class="ms">0.55s · spring</div></div>
+
+      <div class="mo-c"><div class="lab">⚠ The limit</div><h4>What still does not move</h4>
+        <p>Star names, brightness, tứ hóa, can chi and đại vận ranges never animate, fade or float once placed.
+          If it is data you might read wrong, it holds still.</p>
+        <div class="ms">non-negotiable</div></div>
+    </div>
+  </section>
+
+  <p class="foot"><b>Scope of this mockup:</b> direction C from the options board, drawn across every screen the app actually has.
+    Chart data is a correct <span class="mono">Tử Vi tại Tỵ</span> layout with genuine Giáp-year tứ hóa, so the density here is
+    the real density. <b>Nothing has been written to the horoscopes repo</b> — PR #15 remains unmerged and untouched.</p>
+</div>
+
+<script>
+/* ── astrolabe ─────────────────────────────────────────── */
+const BRANCHES=['Tý','Sửu','Dần','Mão','Thìn','Tỵ','Ngọ','Mùi','Thân','Dậu','Tuất','Hợi'];
+(function(){
+  const S=400,c=S/2;let t='';
+  for(let i=0;i<72;i++){const a=i*5*Math.PI/180,long=i%6===0;
+    const r1=long?150:157,r2=163;
+    t+=`<line x1="${c+r1*Math.cos(a)}" y1="${c+r1*Math.sin(a)}" x2="${c+r2*Math.cos(a)}" y2="${c+r2*Math.sin(a)}"
+        stroke="${long?'#5ec9d6':'#28344c'}" stroke-width="1" opacity="${long?.75:.5}"/>`;}
+  let lb='';
+  for(let i=0;i<12;i++){const a=(i*30-90)*Math.PI/180,r=178;
+    lb+=`<text x="${c+r*Math.cos(a)}" y="${c+r*Math.sin(a)}" fill="#5c6d89" font-size="11"
+         font-family="IBM Plex Mono, monospace" text-anchor="middle" dominant-baseline="middle">${BRANCHES[i]}</text>`;}
+  let sp='';
+  for(let i=0;i<12;i++){const a=(i*30-90)*Math.PI/180;
+    sp+=`<line x1="${c+70*Math.cos(a)}" y1="${c+70*Math.sin(a)}" x2="${c+150*Math.cos(a)}" y2="${c+150*Math.sin(a)}"
+         stroke="#1b2536" stroke-width="1"/>`;}
+  document.getElementById('labe').innerHTML=`
+  <svg viewBox="0 0 ${S} ${S}" role="img" aria-label="Vòng địa chi">
+    <defs>
+      <radialGradient id="swp" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="55%" stop-color="rgba(94,201,214,0)"/>
+        <stop offset="100%" stop-color="rgba(94,201,214,.16)"/>
+      </radialGradient>
+      <linearGradient id="swl" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="rgba(94,201,214,0)"/>
+        <stop offset="100%" stop-color="rgba(94,201,214,.55)"/>
+      </linearGradient>
+    </defs>
+
+    <!-- radar sweep -->
+    <g class="sweep">
+      <path d="M ${c} ${c} L ${c+163} ${c} A 163 163 0 0 0 ${c+150.6} ${c-62.4} Z" fill="url(#swp)"/>
+      <line x1="${c}" y1="${c}" x2="${c+163}" y2="${c}" stroke="url(#swl)" stroke-width="1"/>
+    </g>
+
+    <g class="g-draw">
+      <circle class="d1" cx="${c}" cy="${c}" r="163" fill="none" stroke="#28344c"/>
+      <circle class="d2" cx="${c}" cy="${c}" r="150" fill="none" stroke="#1b2536"/>
+      <circle class="d3" cx="${c}" cy="${c}" r="106" fill="none" stroke="#1b2536"/>
+      <circle class="d4" cx="${c}" cy="${c}" r="70"  fill="none" stroke="rgba(94,201,214,.28)"/>
+    </g>
+
+    <g class="g-spokes">${sp}</g>
+    <g class="g-ticks">${t}</g>
+    <g class="g-labels">${lb}</g>
+
+    <g class="g-tri-a"><polygon points="${c},${c-70} ${c+61},${c+35} ${c-61},${c+35}"
+       fill="none" stroke="rgba(94,201,214,.3)"/></g>
+    <g class="g-tri-b"><polygon points="${c},${c+70} ${c-61},${c-35} ${c+61},${c-35}"
+       fill="none" stroke="rgba(232,178,90,.22)"/></g>
+
+    <circle class="core" cx="${c}" cy="${c}" r="25" fill="none" stroke="#e8b25a" stroke-opacity=".5"/>
+    <g class="labe-txt">
+      <text x="${c}" y="${c-4}" fill="#e8b25a" font-size="15" font-family="Noto Serif, serif"
+            text-anchor="middle" dominant-baseline="middle">紫微</text>
+      <text x="${c}" y="${c+13}" fill="#5c6d89" font-size="8.5" font-family="IBM Plex Mono, monospace"
+            text-anchor="middle" dominant-baseline="middle">MỆNH · DẬU</text>
+    </g>
+  </svg>`;
+})();
+
+/* ── chart data: textbook "Tử Vi tại Tỵ", năm Giáp ─────── */
+const P={};
+const def=(b,o)=>P[b]=o;
+def('Tý',   {pal:'Điền Trạch',stem:'Bính',maj:[['Thiên Đồng','vượng'],['Thái Âm','miếu']],
+             min:['Thiên Việt','Địa Không'],adj:['Thiên Khốc','Bát Tọa'],cs:'Mộc Dục',bs:'Lực Sĩ',dr:'94–103'});
+def('Sửu',  {pal:'Quan Lộc',stem:'Đinh',maj:[['Vũ Khúc','miếu','Khoa'],['Tham Lang','miếu']],
+             min:['Hữu Bật','Linh Tinh'],adj:['Đào Hoa','Tam Thai'],cs:'Quan Đới',bs:'Thanh Long',dr:'84–93'});
+def('Dần',  {pal:'Nô Bộc',stem:'Bính',maj:[['Thái Dương','vượng','Kỵ'],['Cự Môn','miếu']],
+             min:['Đà La','Thiên Mã'],adj:['Thiên Hư','Phượng Các'],cs:'Lâm Quan',bs:'Tiểu Hao',dr:'74–83'});
+def('Mão',  {pal:'Thiên Di',stem:'Đinh',maj:[['Thiên Tướng','hãm']],
+             min:['Văn Khúc','Hỏa Tinh'],adj:['Long Trì'],cs:'Đế Vượng',bs:'Tướng Quân',dr:'64–73'});
+def('Thìn', {pal:'Tật Ách',stem:'Mậu',maj:[['Thiên Cơ','lợi'],['Thiên Lương','miếu']],
+             min:['Địa Kiếp'],adj:['Thiên Diêu'],cs:'Suy',bs:'Tấu Thư',dr:'54–63'});
+def('Tỵ',   {pal:'Tài Bạch',stem:'Kỷ',maj:[['Tử Vi','vượng'],['Thất Sát','bình']],
+             min:['Lộc Tồn','Thiên Khôi'],adj:['Ân Quang'],cs:'Bệnh',bs:'Phi Liêm',dr:'44–53'});
+def('Ngọ',  {pal:'Tử Tức',stem:'Canh',maj:[],min:['Thiên Hình'],adj:['Thiên Quan'],
+             cs:'Tử',bs:'Hỷ Thần',dr:'34–43',borrow:'mượn Tý'});
+def('Mùi',  {pal:'Phu Thê',stem:'Tân',maj:[],min:['Tả Phù'],adj:['Hồng Loan','Thiên Hỷ'],
+             cs:'Mộ',bs:'Bệnh Phù',dr:'24–33',borrow:'mượn Sửu',dv:true});
+def('Thân', {pal:'Huynh Đệ',stem:'Nhâm',maj:[],min:['Văn Xương'],adj:['Thiên Vu'],
+             cs:'Tuyệt',bs:'Đại Hao',dr:'14–23',borrow:'mượn Dần'});
+def('Dậu',  {pal:'Mệnh',stem:'Quý',maj:[['Liêm Trinh','bình','Lộc'],['Phá Quân','hãm','Quyền']],
+             min:['Văn Xương','Kình Dương','Thiên Việt'],adj:['Hồng Loan','Long Trì'],
+             cs:'Thai',bs:'Phục Binh',dr:'4–13',menh:true});
+def('Tuất', {pal:'Phụ Mẫu',stem:'Giáp',maj:[],min:['Thiên Khôi'],adj:['Thiên Thọ'],
+             cs:'Dưỡng',bs:'Quan Phủ',dr:'114–123',borrow:'mượn Thìn'});
+def('Hợi',  {pal:'Phúc Đức',stem:'Ất',maj:[['Thiên Phủ','đắc']],min:['Hữu Bật'],adj:['Thiên Quý'],
+             cs:'Trường Sinh',bs:'Bác Sĩ',dr:'104–113',than:true});
+
+function palHTML(b,paper){
+  const d=P[b];
+  const cls=['pal',d.menh?'menh':'',d.dv?'dv':''].filter(Boolean).join(' ');
+  const majors = d.maj.length
+    ? d.maj.map(([n,br,mu])=>`<div class="maj"><span class="nm">${n}</span><span class="br">${br}</span>`
+        +(mu?`<span class="mut${mu==='Kỵ'?' ky':''}">${mu}</span>`:'')+`</div>`).join('')
+    : `<div class="empty">vô chính diệu</div>`
+      +(d.borrow?`<div style="margin-top:4px"><span class="borrow">${d.borrow}</span></div>`:'');
+  return `<div class="${cls}" data-b="${BRANCHES.indexOf(b)}" style="transition-delay:${(BRANCHES.indexOf(b)%6)*55}ms">
+    <span class="rel-tag"></span>
+    <div class="pal-b">
+      <div class="majors">${majors}</div>
+      <div class="minors">${d.min.map(s=>`<span>${s}</span>`).join('')}</div>
+      <div class="adjs">${d.adj.map(s=>`<span>${s}</span>`).join('')}</div>
+    </div>
+    <div class="pal-f">
+      <div class="lf">${d.cs}<br>${d.bs}</div>
+      <div class="ct"><div class="pn">${d.pal}</div>
+        ${d.than?'<div class="than">[ Thân ]</div>':''}
+        <div class="dr">${d.dr}</div></div>
+      <div class="rt">${d.stem}<br>${b}</div>
+    </div>
+  </div>`;
+}
+
+function buildChart(el){
+  const top=['Tỵ','Ngọ','Mùi','Thân'], bot=['Dần','Sửu','Tý','Hợi'],
+        left=['Thìn','Mão'], right=['Dậu','Tuất'];
+  el.innerHTML =
+    `<div class="crow">${top.map(b=>palHTML(b)).join('')}</div>`
+  + `<div class="cmid">`
+  +   `<div class="col">${left.map(b=>palHTML(b)).join('')}</div>`
+  +   `<div class="centre">
+         <span class="ring r1"></span><span class="ring r2"></span>
+         <div class="cn">Tử Vi Đẩu Số</div><div class="han">紫微斗數</div>
+         <div class="who"><div class="nm">Nguyễn Minh Anh</div>
+           <div class="dl">1994-03-14 · giờ Ngọ<br>Dương Nữ · Kim tứ cục<br>Mệnh Dậu · Thân Hợi</div></div>
+         <div class="hint">Nhấn vào một cung để xem chi tiết</div>
+       </div>`
+  +   `<div class="col">${right.map(b=>palHTML(b)).join('')}</div>`
+  + `</div>`
+  + `<div class="crow">${bot.map(b=>palHTML(b)).join('')}</div>`;
+}
+buildChart(document.getElementById('chart'));
+
+/* paper (print) variant of the same grid */
+const pc=document.getElementById('paperchart');
+buildChart(pc);
+pc.classList.add('chart');
+pc.style.cssText='--n0:#fbf8f1;--n1:#fbf8f1;--n2:#f4efe4;--n3:#f4efe4;--line:#ddd2bd;--line2:#b9ab90;'
+  +'--tx:#221e18;--tx2:#554d42;--tx3:#8a7f6e;--tx4:#a89c88;--amber:#8a5a1e;--cyan:#2f6f7a;'
+  +'--cyan-d:#8fb3b8;--sig:#b23a2e;min-width:0;';
+pc.querySelectorAll('.centre .hint').forEach(n=>n.remove());
+pc.querySelectorAll('.pal').forEach(n=>{n.style.minHeight='128px';});
+pc.querySelector('.centre').style.minHeight='256px';
+
+/* ── decadal timeline ───────────────────────────────────── */
+const DV=[
+  ['4–13','Mệnh','Dậu','Liêm Trinh · Phá Quân','1997–2006','past'],
+  ['14–23','Huynh Đệ','Thân','vô chính diệu','2007–2016','past'],
+  ['24–33','Phu Thê','Mùi','mượn Vũ Khúc · Tham Lang','2017–2026','now'],
+  ['34–43','Tử Tức','Ngọ','vô chính diệu','2027–2036',''],
+  ['44–53','Tài Bạch','Tỵ','Tử Vi · Thất Sát','2037–2046',''],
+  ['54–63','Tật Ách','Thìn','Thiên Cơ · Thiên Lương','2047–2056',''],
+  ['64–73','Thiên Di','Mão','Thiên Tướng','2057–2066',''],
+  ['74–83','Nô Bộc','Dần','Thái Dương · Cự Môn','2067–2076',''],
+  ['84–93','Quan Lộc','Sửu','Vũ Khúc · Tham Lang','2077–2086',''],
+  ['94–103','Điền Trạch','Tý','Thiên Đồng · Thái Âm','2087–2096','']
+];
+document.getElementById('tl').innerHTML=DV.map(([age,pal,br,sts,yrs,st])=>{
+  const on=st==='now';
+  return `<div class="tl-row ${st==='past'?'past':''} ${on?'on':''}">
+    <div class="ages">${age}</div>
+    <div><div class="pn">${pal}</div><div class="mono" style="font-size:10.5px;color:var(--tx3)">${br}</div></div>
+    <div><div class="sts" style="color:${sts.startsWith('vô')?'var(--tx4)':'var(--amber)'}">${sts}</div>
+      ${on?'<div class="bar"><i style="width:30%"></i></div>':''}</div>
+    <div class="yrs">${yrs}</div>
+  </div>`;
+}).join('');
+
+/* ═══════════════════════════════════════════════════════════
+   MOTION CONTROLLER
+   ═══════════════════════════════════════════════════════════ */
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ── scroll reveal ─────────────────────────────────────── */
+document.querySelectorAll('.sec, .pillar, .mo-c, .tok-card').forEach((el,i)=>{
+  el.setAttribute('data-rv','');
+  if(el.classList.contains('pillar')||el.classList.contains('mo-c')||el.classList.contains('tok-card'))
+    el.setAttribute('data-rv-d', String((i%6)+1));
+});
+
+const seen = new WeakSet();
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(!e.isIntersecting) return;
+    const el = e.target;
+    el.classList.add('in');
+    if(seen.has(el)) return;
+    seen.add(el);
+    if(el.dataset.fx) FX[el.dataset.fx] && FX[el.dataset.fx](el);
+  });
+},{threshold:.12, rootMargin:'0px 0px -8% 0px'});
+
+/* ── one-shot effects, fired when their section arrives ── */
+const FX = {
+  /* stat counters */
+  stats(el){
+    el.querySelectorAll('.stat .v').forEach(v=>{
+      const raw = v.textContent.trim();
+      const m = raw.match(/^(\d+)(.*)$/s);
+      if(!m) return;
+      const target = +m[1], tail = v.innerHTML.replace(/^\d+/,'');
+      if(REDUCED) return;
+      const dur = 1100, t0 = performance.now();
+      const step = (now)=>{
+        const p = Math.min(1,(now-t0)/dur);
+        const eased = 1-Math.pow(1-p,3);
+        v.innerHTML = Math.round(target*eased) + tail;
+        if(p<1) requestAnimationFrame(step);
+      };
+      v.innerHTML = '0'+tail;
+      requestAnimationFrame(step);
+    });
+  },
+  /* chart: scan sweep, then cells resolve */
+  chart(el){
+    if(REDUCED){ el.classList.add('lit'); return; }
+    el.classList.add('scan');
+    setTimeout(()=>el.classList.add('lit'), 260);
+  },
+  /* decadal bar fills */
+  tl(el){ setTimeout(()=>el.classList.add('run'), 120); },
+  /* seal stamps down */
+  paper(el){ setTimeout(()=>el.classList.add('stamped'), 320); }
+};
+
+document.querySelectorAll('[data-rv]').forEach(el=>io.observe(el));
+document.querySelectorAll('.stats').forEach(el=>{el.dataset.fx='stats';io.observe(el);});
+document.querySelectorAll('.tl').forEach(el=>{el.dataset.fx='tl';io.observe(el);});
+document.querySelectorAll('.paper').forEach(el=>{el.dataset.fx='paper';io.observe(el);});
+
+const mainChart = document.getElementById('chart');
+mainChart.dataset.fx='chart';
+io.observe(mainChart);
+/* the print variant never animates — it is a still document */
+pc.classList.add('lit');
+
+/* ── chart relationships: xung chiếu + tam hợp, with linework ─── */
+(function(){
+  const NS = 'http://www.w3.org/2000/svg';
+  const chart = mainChart;
+  const cells = [...chart.querySelectorAll('.pal')];
+  const byBranch = new Map(cells.map(c=>[+c.dataset.b,c]));
+
+  const ov = document.createElementNS(NS,'svg');
+  ov.setAttribute('class','rel-ov');
+  ov.setAttribute('aria-hidden','true');
+  chart.appendChild(ov);
+
+  /* centre of a cell, in chart-local pixels */
+  const centre = (el, base)=>{
+    const r = el.getBoundingClientRect();
+    return { x: r.left - base.left + r.width/2, y: r.top - base.top + r.height/2 };
+  };
+
+  const mk = (tag, attrs, cls)=>{
+    const n = document.createElementNS(NS, tag);
+    if(cls) n.setAttribute('class', cls);
+    for(const k in attrs) n.setAttribute(k, attrs[k]);
+    return n;
+  };
+
+  /* a line that draws itself out from the hovered palace */
+  const line = (a, b, cls, delay)=>{
+    const l = mk('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y}, cls);
+    ov.appendChild(l);
+    if(REDUCED) return;
+    const len = Math.hypot(b.x-a.x, b.y-a.y);
+    l.style.strokeDasharray = len;
+    l.style.strokeDashoffset = len;
+    l.style.transition = `stroke-dashoffset .42s var(--e-out) ${delay}ms`;
+    requestAnimationFrame(()=>{ l.style.strokeDashoffset = 0; });
+  };
+
+  /* a small label sitting on the midpoint of a line */
+  const cap = (a, b, text, cls, delay)=>{
+    const x = (a.x+b.x)/2, y = (a.y+b.y)/2;
+    const w = text.length*6.2 + 10;
+    const g = mk('g',{});
+    g.appendChild(mk('rect',{x:x-w/2,y:y-8,width:w,height:16,rx:2},'cap-bg'));
+    const t = mk('text',{x:x,y:y+.5},'cap '+cls);
+    t.textContent = text;
+    g.appendChild(t);
+    ov.appendChild(g);
+    if(REDUCED) return;
+    g.style.opacity = 0;
+    g.style.transition = `opacity .3s var(--e-out) ${delay+240}ms`;
+    requestAnimationFrame(()=>{ g.style.opacity = 1; });
+  };
+
+  const node = (p, cls, r)=> ov.appendChild(mk('circle',{cx:p.x,cy:p.y,r:r||4},'node '+cls));
+
+  const clear = ()=>{
+    chart.classList.remove('rel');
+    ov.replaceChildren();
+    cells.forEach(c=>{
+      c.classList.remove('self','xung','hop');
+      c.querySelector('.rel-tag').textContent='';
+    });
+  };
+
+  const draw = (cell)=>{
+    const b = +cell.dataset.b;
+    clear();
+    chart.classList.add('rel');
+    cell.classList.add('self');
+
+    /* size the overlay to the grid as it is laid out right now */
+    const base = chart.getBoundingClientRect();
+    ov.setAttribute('width', base.width);
+    ov.setAttribute('height', base.height);
+    ov.setAttribute('viewBox', `0 0 ${base.width} ${base.height}`);
+
+    const self = centre(cell, base);
+    const xungCell = byBranch.get((b+6)%12);
+    const hopCells  = [(b+4)%12,(b+8)%12].map(i=>byBranch.get(i)).filter(Boolean);
+
+    /* tam hợp: the full triangle, because that is what the triangle means */
+    const hopPts = hopCells.map(h=>{
+      h.classList.add('hop');
+      h.querySelector('.rel-tag').textContent = 'TAM HỢP';
+      return centre(h, base);
+    });
+    hopPts.forEach((p,i)=> line(self, p, 'l-hop', i*70));
+    if(hopPts.length === 2) line(hopPts[0], hopPts[1], 'l-close', 180);
+
+    /* xung chiếu: the axis straight through the centre of the chart */
+    let xungPt = null;
+    if(xungCell){
+      xungCell.classList.add('xung');
+      xungCell.querySelector('.rel-tag').textContent = 'XUNG';
+      xungPt = centre(xungCell, base);
+      line(self, xungPt, 'l-xung', 40);
+      cap(self, xungPt, 'XUNG CHIẾU', 'cap-xung', 40);
+    }
+    if(hopPts.length) cap(self, hopPts[0], 'TAM HỢP', 'cap-hop', 0);
+
+    /* endpoints last so they sit on top of the strokes */
+    hopPts.forEach(p=> node(p,'n-hop'));
+    if(xungPt) node(xungPt,'n-xung');
+    node(self,'n-self',5);
+  };
+
+  cells.forEach(cell=> cell.addEventListener('mouseenter', ()=>draw(cell)));
+  chart.addEventListener('mouseleave', clear);
+  addEventListener('resize', clear);
+})();
+
+/* ── dial answers the pointer (light parallax) ─────────── */
+(function(){
+  if(REDUCED) return;
+  const host = document.getElementById('labe');
+  const svg = host.querySelector('svg');
+  const hero = host.closest('.hero');
+  if(!hero) return;
+  hero.addEventListener('mousemove', e=>{
+    const r = hero.getBoundingClientRect();
+    const dx = (e.clientX - (r.left+r.width/2)) / r.width;
+    const dy = (e.clientY - (r.top+r.height/2)) / r.height;
+    svg.style.transform = `rotate(${dx*4}deg) translate(${dx*10}px, ${dy*10}px)`;
+  });
+  hero.addEventListener('mouseleave', ()=>{ svg.style.transform=''; });
+})();
+
+/* ── nav highlights the section you are reading ────────── */
+(function(){
+  const links = [...document.querySelectorAll('.nav a')];
+  const map = new Map(links.map(a=>[a.getAttribute('href').slice(1),a]));
+  const nio = new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      const a = map.get(e.target.id);
+      if(!a) return;
+      if(e.isIntersecting){ links.forEach(l=>l.classList.remove('here')); a.classList.add('here'); }
+    });
+  },{rootMargin:'-45% 0px -50% 0px'});
+  document.querySelectorAll('.sec[id]').forEach(s=>nio.observe(s));
+})();
+
+/* ── chat: the pending answer eventually lands ─────────── */
+(function(){
+  const body = document.querySelector('.chat-b');
+  if(!body || REDUCED) return;
+  const typing = body.querySelector('.typing');
+  let played = false;
+  new IntersectionObserver((es,ob)=>{
+    es.forEach(e=>{
+      if(!e.isIntersecting || played) return;
+      played = true;
+      setTimeout(()=>{
+        typing.remove();
+        const msg = document.createElement('div');
+        msg.className = 'msg a';
+        msg.innerHTML = '2027 là <b>Đinh Mùi</b> — lưu niên trùng đúng cung đại vận, nên là năm '
+          + 'biến động rõ nhất trong cả mười năm. Không phải xấu; là năm mọi thứ đang treo sẽ ngã ngũ.'
+          + '<span class="cite">↳ Lưu niên Đinh Mùi trùng cung đại vận Phu Thê (Mùi)</span>';
+        body.appendChild(msg);
+      }, 2400);
+      ob.disconnect();
+    });
+  },{threshold:.4}).observe(body);
+})();
+</script>
+</body>
+</html>

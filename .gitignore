@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+tests/parity/out/
+# Generated readings and run reports. EVAL.md is the committed record,
+# exactly as PARITY.md is for tests/parity/out/.
+tests/eval/out/
+public/__parity/
+
+# playwright run artefacts
+test-results/
+playwright-report/
