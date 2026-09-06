@@ -167,6 +167,14 @@ lint is "green" when those three are the only output.
   `result/page.tsx`'s capture code, export a PDF and open it. `PARITY.md` §7
   has the two commands.
 
+## The architecture diagram
+
+`docs/architecture-{light,dark}.png` and the standalone viewer
+`docs/astro-lens-architecture.html` are generated from
+`docs/astro-lens.architecture.json` by the `archify` skill. Amend the JSON and
+regenerate; never redraw the images by hand. All five READMEs embed the pair
+through a `<picture>` block so it follows the reader's GitHub theme.
+
 ## The development-only fixture
 
 `?fixture=tuvi-ty` on `/` and `/result` loads a canned textbook chart

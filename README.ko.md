@@ -91,6 +91,15 @@ API 호출을 쓰지 않고 화면만 보고 싶다면 `/`나 `/result` 뒤에 `
 
 ## 구조
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.png">
+  <img alt="astro-lens 구조" src="docs/architecture-light.png">
+</picture>
+
+독자 → `proxy.ts`의 언어 판별 → App Router → `/api/analyze`. 명반은 `iztro`로 로컬에서 계산되고, 독자의 프롬프트 팩을 불러온 뒤에 Gemini를 부릅니다. 후속 질문은 `/api/chat`이 맡고, `gemini-cache.ts`가 캐시된 시스템 지시와 참고서를 공급하며, 내보내기는 종이 변형 위에 다시 그립니다.
+
+[`docs/astro-lens-architecture.html`](docs/astro-lens-architecture.html)을 열면 직접 살펴볼 수 있습니다 — 이동, 확대, 검색, 세 가지 안내 보기. 원본 명세는 [`docs/astro-lens.architecture.json`](docs/astro-lens.architecture.json)입니다.
+
 ### 명반은 로컬에서 계산합니다
 
 `src/lib/iztro.ts`는 [iztro](https://github.com/SylarLong/iztro)를 감쌉니다. 실제

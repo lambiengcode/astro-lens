@@ -92,6 +92,15 @@ To look at the UI without spending an API call, append `?fixture=tuvi-ty` to
 
 ## Architecture
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.png">
+  <img alt="astro-lens architecture" src="docs/architecture-light.png">
+</picture>
+
+Reader → locale resolution in `proxy.ts` → App Router → `/api/analyze`, which computes the chart locally through `iztro` and loads the reader's prompt pack before calling Gemini. `/api/chat` serves the follow-ups, `gemini-cache.ts` supplies the cached system instruction and reference book, and export re-renders onto the paper variant.
+
+Explore it yourself in [`docs/astro-lens-architecture.html`](docs/astro-lens-architecture.html) — pan, zoom, search, three guided views. The source spec is [`docs/astro-lens.architecture.json`](docs/astro-lens.architecture.json).
+
 ### The chart is computed locally
 
 `src/lib/iztro.ts` wraps [iztro](https://github.com/SylarLong/iztro), which does

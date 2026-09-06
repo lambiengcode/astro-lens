@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "astro-lens — how a reading is made",
+    "output": "astro-lens-architecture.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "chart-path",
+        "label": "Computing the chart",
+        "focus": [
+          "browser",
+          "proxy",
+          "pages",
+          "analyze",
+          "iztro"
+        ],
+        "note": "The 12-palace chart is computed locally by iztro. No network call, no model involved."
+      },
+      {
+        "id": "reading-path",
+        "label": "Generating the reading",
+        "focus": [
+          "analyze",
+          "prompts",
+          "cache",
+          "gemini"
+        ],
+        "note": "One prompt pack per locale, with the system instruction and reference book served from a context cache."
+      },
+      {
+        "id": "export-path",
+        "label": "Chat and export",
+        "focus": [
+          "pages",
+          "chat",
+          "gemini",
+          "export"
+        ],
+        "note": "Follow-up questions reuse the same chart; export re-renders every surface onto paper."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "browser",
+      "type": "external",
+      "label": "Reader",
+      "sublabel": "vi · 中文 · 한국어 · en",
+      "pos": [
+        30,
+        320
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "proxy",
+      "type": "security",
+      "label": "proxy.ts",
+      "sublabel": "locale resolution",
+      "pos": [
+        280,
+        320
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "pages",
+      "type": "frontend",
+      "label": "App Router",
+      "sublabel": "/ and /result",
+      "pos": [
+        530,
+        320
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "analyze",
+      "type": "backend",
+      "label": "/api/analyze",
+      "sublabel": "chart + reading",
+      "pos": [
+        820,
+        322
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "gemini",
+      "type": "external",
+      "label": "Google Gemini",
+      "sublabel": "generateContent",
+      "pos": [
+        1130,
+        320
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "iztro",
+      "type": "backend",
+      "label": "iztro.ts",
+      "sublabel": "12 palaces, local",
+      "pos": [
+        620,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "prompts",
+      "type": "backend",
+      "label": "prompt/<locale>.ts",
+      "sublabel": "five prompt packs",
+      "pos": [
+        850,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "gemini-cache.ts",
+      "sublabel": "context cache · 90 days",
+      "pos": [
+        1125,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "chat",
+      "type": "backend",
+      "label": "/api/chat",
+      "sublabel": "follow-up answers",
+      "pos": [
+        820,
+        530
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "export",
+      "type": "frontend",
+      "label": "Image / PDF export",
+      "sublabel": "html2canvas-pro + jsPDF",
+      "pos": [
+        510,
+        530
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Next.js 16 server",
+      "wraps": [
+        "proxy",
+        "analyze",
+        "chat",
+        "iztro",
+        "prompts",
+        "cache"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Browser",
+      "wraps": [
+        "pages",
+        "export"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "reader-request",
+      "from": "browser",
+      "to": "proxy",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "locale-header",
+      "from": "proxy",
+      "to": "pages",
+      "label": "locale header",
+      "variant": "security"
+    },
+    {
+      "id": "submit-birth",
+      "from": "pages",
+      "to": "analyze",
+      "label": "birth input"
+    },
+    {
+      "id": "analyze-model",
+      "from": "analyze",
+      "to": "gemini",
+      "label": "reading, reader's language",
+      "variant": "emphasis"
+    },
+    {
+      "id": "compute-chart",
+      "from": "analyze",
+      "to": "iztro",
+      "label": "compute 12 palaces",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "load-pack",
+      "from": "analyze",
+      "to": "prompts",
+      "label": "reader's prompt pack",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "cached-preamble",
+      "from": "cache",
+      "to": "gemini",
+      "label": "system instruction + reference book",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 64
+    },
+    {
+      "id": "ask-followup",
+      "from": "pages",
+      "to": "chat",
+      "label": "follow-up question"
+    },
+    {
+      "id": "chat-model",
+      "from": "chat",
+      "to": "gemini",
+      "label": "answer + citation"
+    },
+    {
+      "id": "render-export",
+      "from": "pages",
+      "to": "export",
+      "label": "paper variant",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 68
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "The chart is not AI",
+      "items": [
+        "iztro computes all 12 palaces locally",
+        "Always generated in vi-VN, so the Vietnamese term is the join key for every other locale",
+        "Switching language never regenerates a chart"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "The reading is",
+      "items": [
+        "One prompt pack per locale drives instruction, output language and vocabulary",
+        "Every judgement cites the cung and sao behind it",
+        "npm run eval checks what the model said against the chart it was given"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Two traps worth knowing",
+      "items": [
+        "The context cache is found by displayName only — editing the system instruction while a cache exists does nothing",
+        "Export re-renders onto the paper variant; a dark PDF is an unreadable printed document"
+      ]
+    }
+  ]
+}

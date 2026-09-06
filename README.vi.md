@@ -91,6 +91,15 @@ hoặc `/result` — xem [lá số mẫu](#lá-số-mẫu-dành-cho-phát-triể
 
 ## Kiến trúc
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.png">
+  <img alt="Kiến trúc astro-lens" src="docs/architecture-light.png">
+</picture>
+
+Người đọc → `proxy.ts` xác định ngôn ngữ → App Router → `/api/analyze`, nơi lá số được tính ngay tại máy bằng `iztro` và gói prompt theo ngôn ngữ được nạp trước khi gọi Gemini. `/api/chat` lo các câu hỏi tiếp theo, `gemini-cache.ts` cấp chỉ dẫn hệ thống và sách tham chiếu đã cache, còn phần xuất vẽ lại trên biến thể giấy.
+
+Mở [`docs/astro-lens-architecture.html`](docs/astro-lens-architecture.html) để tự xem — kéo, thu phóng, tìm kiếm, ba lối xem dẫn đường. Đặc tả nguồn nằm ở [`docs/astro-lens.architecture.json`](docs/astro-lens.architecture.json).
+
 ### Lá số được tính ngay tại máy
 
 `src/lib/iztro.ts` bọc thư viện [iztro](https://github.com/SylarLong/iztro) —

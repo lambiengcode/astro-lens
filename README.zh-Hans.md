@@ -88,6 +88,15 @@ npm run dev                                             # http://localhost:3000
 
 ## 架构
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.png">
+  <img alt="astro-lens 架构" src="docs/architecture-light.png">
+</picture>
+
+读者 → `proxy.ts` 解析语言 → App Router → `/api/analyze`：命盘由 `iztro` 在本地算出，载入读者对应的提示词包之后才调用 Gemini。`/api/chat` 负责追问，`gemini-cache.ts` 提供缓存的系统指令与参考书，导出则在纸面变体上重新绘制。
+
+打开 [`docs/astro-lens-architecture.html`](docs/astro-lens-architecture.html) 可自行探索——平移、缩放、搜索、三种导览视图。源规格见 [`docs/astro-lens.architecture.json`](docs/astro-lens.architecture.json)。
+
 ### 命盘在本地计算
 
 `src/lib/iztro.ts` 封装了 [iztro](https://github.com/SylarLong/iztro)，真正的命理
