@@ -19,17 +19,17 @@
 
 <table>
 <tr>
-<td width="50%" align="center"><a href="public/screenshots/chart.png"><img src="public/screenshots/chart.png" width="420" alt="十二宮命盤"></a><br><b>十二宮命盤</b></td>
-<td width="50%" align="center"><a href="public/screenshots/reading.png"><img src="public/screenshots/reading.png" width="420" alt="命盤解讀"></a><br><b>命盤解讀</b></td>
+<td width="33.3%" align="center"><a href="public/screenshots/chart.png"><img src="public/screenshots/chart.png" width="340" alt="十二宮命盤"></a><br><b>十二宮命盤</b></td>
+<td width="33.3%" align="center"><a href="public/screenshots/reading.png"><img src="public/screenshots/reading.png" width="340" alt="命盤解讀"></a><br><b>命盤解讀</b></td>
+<td width="33.3%" align="center"><a href="public/screenshots/daivan.png"><img src="public/screenshots/daivan.png" width="340" alt="大限時間軸"></a><br><b>大限時間軸</b></td>
 </tr>
 </table>
 
 <table>
 <tr>
-<td width="25%" align="center"><a href="public/screenshots/daivan.png"><img src="public/screenshots/daivan.png" width="200" alt="大限時間軸"></a><br><sub><b>大限時間軸</b></sub></td>
-<td width="25%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="200" alt="首頁"></a><br><sub><b>首頁</b></sub></td>
-<td width="25%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="200" alt="追問對話"></a><br><sub><b>追問對話</b></sub></td>
-<td width="25%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="200" alt="韓文"></a><br><sub><b>韓文</b></sub></td>
+<td width="33.3%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="220" alt="首頁"></a><br><sub><b>首頁</b></sub></td>
+<td width="33.3%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="220" alt="追問對話"></a><br><sub><b>追問對話</b></sub></td>
+<td width="33.3%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="220" alt="韓文"></a><br><sub><b>韓文</b></sub></td>
 </tr>
 </table>
 

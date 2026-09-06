@@ -22,17 +22,17 @@ lại.
 
 <table>
 <tr>
-<td width="50%" align="center"><a href="public/screenshots/chart.png"><img src="public/screenshots/chart.png" width="420" alt="Lá số 12 cung"></a><br><b>Lá số 12 cung</b></td>
-<td width="50%" align="center"><a href="public/screenshots/reading.png"><img src="public/screenshots/reading.png" width="420" alt="Bài luận giải"></a><br><b>Bài luận giải</b></td>
+<td width="33.3%" align="center"><a href="public/screenshots/chart.png"><img src="public/screenshots/chart.png" width="340" alt="Lá số 12 cung"></a><br><b>Lá số 12 cung</b></td>
+<td width="33.3%" align="center"><a href="public/screenshots/reading.png"><img src="public/screenshots/reading.png" width="340" alt="Bài luận giải"></a><br><b>Bài luận giải</b></td>
+<td width="33.3%" align="center"><a href="public/screenshots/daivan.png"><img src="public/screenshots/daivan.png" width="340" alt="Bảng đại vận"></a><br><b>Bảng đại vận</b></td>
 </tr>
 </table>
 
 <table>
 <tr>
-<td width="25%" align="center"><a href="public/screenshots/daivan.png"><img src="public/screenshots/daivan.png" width="200" alt="Bảng đại vận"></a><br><sub><b>Bảng đại vận</b></sub></td>
-<td width="25%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="200" alt="Trang chủ"></a><br><sub><b>Trang chủ</b></sub></td>
-<td width="25%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="200" alt="Hỏi đáp"></a><br><sub><b>Hỏi đáp</b></sub></td>
-<td width="25%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="200" alt="Tiếng Hàn"></a><br><sub><b>Tiếng Hàn</b></sub></td>
+<td width="33.3%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="220" alt="Trang chủ"></a><br><sub><b>Trang chủ</b></sub></td>
+<td width="33.3%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="220" alt="Hỏi đáp"></a><br><sub><b>Hỏi đáp</b></sub></td>
+<td width="33.3%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="220" alt="Tiếng Hàn"></a><br><sub><b>Tiếng Hàn</b></sub></td>
 </tr>
 </table>
 
