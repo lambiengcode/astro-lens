@@ -16,15 +16,11 @@ lại.
 
 ## Giao diện
 
-| | |
-|---|---|
-| **[Trang chủ](public/screenshots/landing.png)**<br>Biểu mẫu nhập ngày sinh, phần hero và dải số liệu. Đây là toàn bộ màn hình đầu tiên — thanh điều hướng chỉ có hai mục, đây không phải một trang giới thiệu sản phẩm. | ![Trang chủ](public/screenshots/landing.png) |
-| **[Lá số 12 cung](public/screenshots/chart.png)**<br>Lá số với Cung Mệnh đang được chọn và ngăn chi tiết mở ra. Mỗi ô mang chính tinh kèm miếu vượng đắc bình hãm, các vòng phụ tinh và tạp diệu, khoảng tuổi đại vận, và can chi của cung. | ![Lá số](public/screenshots/chart.png) |
-| **[Lớp phủ quan hệ](public/screenshots/chart-relations.png)**<br>Tương tác đặc trưng của ứng dụng. Rê chuột lên một cung sẽ vẽ **xung chiếu** (màu hổ phách, cung đối) và **tam hợp** (màu lam, hai đỉnh còn lại) thành đường nối trên lưới, mỗi đích đến có nhãn riêng. Ảnh này đang rê lên Tật Ách. | ![Quan hệ](public/screenshots/chart-relations.png) |
-| **[Bảng đại vận](public/screenshots/daivan.png)**<br>Các đại vận mười năm dưới dạng bảng: khoảng tuổi, tên cung, sao trong cung, các năm tương ứng, và thanh tiến độ cho giai đoạn đang đi. | ![Đại vận](public/screenshots/daivan.png) |
-| **[Bài luận giải](public/screenshots/reading.png)**<br>Bài luận giải trên mặt giấy, kèm các nút xuất bản. Những khối thụt vào là **dẫn chứng** — mỗi dẫn chứng nêu rõ cung và sao mà nhận định dựa vào. | ![Luận giải](public/screenshots/reading.png) |
-| **[Hỏi đáp](public/screenshots/chat.png)**<br>Hỏi thêm trên chính lá số đó. Dòng chữ đơn cách dưới câu trả lời (`↳ Cung Mệnh · Liêm Trinh (bình) · …`) là dẫn chứng của câu trả lời, được tách khỏi phần nội dung để đứng riêng. | ![Hỏi đáp](public/screenshots/chat.png) |
-| **[Tiếng Hàn](public/screenshots/chart-ko.png)**<br>Vẫn lá số ấy tại `?lang=ko`. Tên cung, tên sao và trạng thái miếu hãm đều được dịch — 명궁, 자미, 칠살, 왕/평/묘/함 — vì bảng thuật ngữ chuyên môn được dịch, chứ không chỉ nhãn giao diện. | ![Tiếng Hàn](public/screenshots/chart-ko.png) |
+| | | |
+|:--:|:--:|:--:|
+| [<img src="public/screenshots/landing.png" width="260" alt="Trang chủ">](public/screenshots/landing.png)<br>**Trang chủ** | [<img src="public/screenshots/chart.png" width="260" alt="Lá số 12 cung">](public/screenshots/chart.png)<br>**Lá số 12 cung** | [<img src="public/screenshots/chart-relations.png" width="260" alt="Lớp phủ quan hệ">](public/screenshots/chart-relations.png)<br>**Lớp phủ quan hệ** |
+| [<img src="public/screenshots/daivan.png" width="260" alt="Bảng đại vận">](public/screenshots/daivan.png)<br>**Bảng đại vận** | [<img src="public/screenshots/reading.png" width="260" alt="Bài luận giải">](public/screenshots/reading.png)<br>**Bài luận giải** | [<img src="public/screenshots/chat.png" width="260" alt="Hỏi đáp">](public/screenshots/chat.png)<br>**Hỏi đáp** |
+| [<img src="public/screenshots/chart-ko.png" width="260" alt="Tiếng Hàn">](public/screenshots/chart-ko.png)<br>**Tiếng Hàn** |  |  |
 
 Mọi ảnh đều sinh ra từ lá số mẫu dành cho phát triển, nên không chứa dữ liệu
 ngày sinh của người thật. Chụp lại bằng `npm run screenshots`.

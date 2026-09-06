@@ -17,15 +17,11 @@ export captures.
 
 ## What it looks like
 
-| | |
-|---|---|
-| **[Landing](public/screenshots/landing.png)**<br>The birth-input form, the hero, and the stat strip. This is the whole of the app's first screen — it has a two-item nav, not a marketing site. | ![Landing](public/screenshots/landing.png) |
-| **[Twelve-palace chart](public/screenshots/chart.png)**<br>The natal chart with Cung Mệnh selected and its detail drawer open. Each cell carries its major stars with brightness, the minor and adjective rings, the decadal age range, and the palace's can chi. | ![Chart](public/screenshots/chart.png) |
-| **[Relationship overlay](public/screenshots/chart-relations.png)**<br>The signature interaction. Hovering a palace draws its **xung chiếu** (amber, the opposite palace) and its **tam hợp** (cyan, the two trine corners) as linework across the grid, with each target badged. Here Tật Ách is hovered. | ![Relationships](public/screenshots/chart-relations.png) |
-| **[Đại vận timeline](public/screenshots/daivan.png)**<br>The ten-year decadal periods as a table: age span, palace, its stars, the years covered, and a progress bar for the period currently running. | ![Đại vận](public/screenshots/daivan.png) |
-| **[The reading](public/screenshots/reading.png)**<br>The generated reading on the paper surface, with its export controls. The inset blocks are **citations** — each names the cung and the sao a judgement rests on. | ![Reading](public/screenshots/reading.png) |
-| **[Chat](public/screenshots/chat.png)**<br>Follow-up questions against the same chart. The mono row under the answer (`↳ Cung Mệnh · Liêm Trinh (bình) · …`) is the answer's citation, split out of the reply into its own line. | ![Chat](public/screenshots/chat.png) |
-| **[Korean](public/screenshots/chart-ko.png)**<br>The same chart at `?lang=ko`. Palace names, star names and brightness are all translated — 명궁, 자미, 칠살, 왕/평/묘/함 — because the domain vocabulary is translated, not just the interface labels. | ![Korean](public/screenshots/chart-ko.png) |
+| | | |
+|:--:|:--:|:--:|
+| [<img src="public/screenshots/landing.png" width="260" alt="Landing">](public/screenshots/landing.png)<br>**Landing** | [<img src="public/screenshots/chart.png" width="260" alt="Twelve-palace chart">](public/screenshots/chart.png)<br>**Twelve-palace chart** | [<img src="public/screenshots/chart-relations.png" width="260" alt="Relationship overlay">](public/screenshots/chart-relations.png)<br>**Relationship overlay** |
+| [<img src="public/screenshots/daivan.png" width="260" alt="Đại vận timeline">](public/screenshots/daivan.png)<br>**Đại vận timeline** | [<img src="public/screenshots/reading.png" width="260" alt="The reading">](public/screenshots/reading.png)<br>**The reading** | [<img src="public/screenshots/chat.png" width="260" alt="Chat">](public/screenshots/chat.png)<br>**Chat** |
+| [<img src="public/screenshots/chart-ko.png" width="260" alt="Korean">](public/screenshots/chart-ko.png)<br>**Korean** |  |  |
 
 All shots are generated from the built-in development fixture, so they contain
 no real person's birth data. Regenerate them with `npm run screenshots`.

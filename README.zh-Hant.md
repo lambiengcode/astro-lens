@@ -13,15 +13,11 @@
 
 ## 介面預覽
 
-| | |
-|---|---|
-| **[首頁](public/screenshots/landing.png)**<br>出生資料表單、主視覺區與數據列。這就是程式第一屏的全貌——導覽只有兩項，它不是一個行銷網站。 | ![首頁](public/screenshots/landing.png) |
-| **[十二宮命盤](public/screenshots/chart.png)**<br>命宮被選取、詳情抽屜展開的命盤。每一格包含主星及其廟旺得利平不陷、輔星與雜曜環、大限年齡區間，以及該宮的干支。 | ![命盤](public/screenshots/chart.png) |
-| **[宮位關係浮層](public/screenshots/chart-relations.png)**<br>本程式的招牌互動。滑過某一宮，會在格線上畫出它的**沖照**（琥珀色，對宮）與**三合**（青色，另外兩角），每個目標都帶標籤。圖中滑過的是疾厄宮。 | ![宮位關係](public/screenshots/chart-relations.png) |
-| **[大限時間軸](public/screenshots/daivan.png)**<br>以表格呈現的十步大限：年齡區間、宮名、宮內星曜、對應年份，以及現行大限的進度條。 | ![大限](public/screenshots/daivan.png) |
-| **[命盤解讀](public/screenshots/reading.png)**<br>紙面上的解讀正文與匯出按鈕。縮排的區塊是**引證**——每一條都寫明該判斷所依據的宮與星。 | ![解讀](public/screenshots/reading.png) |
-| **[追問對話](public/screenshots/chat.png)**<br>針對同一張命盤繼續追問。答案下方的等寬列（`↳ Cung Mệnh · Liêm Trinh (bình) · …`）是該答案的引證，已從正文中拆出獨立成列。 | ![對話](public/screenshots/chat.png) |
-| **[韓文](public/screenshots/chart-ko.png)**<br>同一張盤在 `?lang=ko` 下的樣子。宮名、星名與廟陷狀態全部譯出——명궁、자미、칠살、왕/평/묘/함——因為被翻譯的是術語表本身，而不只是介面文字。 | ![韓文](public/screenshots/chart-ko.png) |
+| | | |
+|:--:|:--:|:--:|
+| [<img src="public/screenshots/landing.png" width="260" alt="首頁">](public/screenshots/landing.png)<br>**首頁** | [<img src="public/screenshots/chart.png" width="260" alt="十二宮命盤">](public/screenshots/chart.png)<br>**十二宮命盤** | [<img src="public/screenshots/chart-relations.png" width="260" alt="宮位關係浮層">](public/screenshots/chart-relations.png)<br>**宮位關係浮層** |
+| [<img src="public/screenshots/daivan.png" width="260" alt="大限時間軸">](public/screenshots/daivan.png)<br>**大限時間軸** | [<img src="public/screenshots/reading.png" width="260" alt="命盤解讀">](public/screenshots/reading.png)<br>**命盤解讀** | [<img src="public/screenshots/chat.png" width="260" alt="追問對話">](public/screenshots/chat.png)<br>**追問對話** |
+| [<img src="public/screenshots/chart-ko.png" width="260" alt="韓文">](public/screenshots/chart-ko.png)<br>**韓文** |  |  |
 
 所有截圖都由內建的開發用範例命盤產生，因此不含任何真實人物的出生資料。用
 `npm run screenshots` 重新產生。

@@ -13,15 +13,11 @@
 
 ## 界面预览
 
-| | |
-|---|---|
-| **[首页](public/screenshots/landing.png)**<br>出生信息表单、主视觉区与数据条。这就是应用的第一屏全貌——导航只有两项，它不是一个产品宣传站。 | ![首页](public/screenshots/landing.png) |
-| **[十二宫命盘](public/screenshots/chart.png)**<br>命宫被选中、详情抽屉展开的命盘。每格包含主星及其庙旺得平陷、辅星与杂曜环、大限年龄区间，以及该宫的干支。 | ![命盘](public/screenshots/chart.png) |
-| **[宫位关系浮层](public/screenshots/chart-relations.png)**<br>本应用的标志性交互。悬停某一宫，会在网格上画出它的**冲照**（琥珀色，对宫）与**三合**（青色，另外两角），每个目标都带标签。图中悬停的是疾厄宫。 | ![宫位关系](public/screenshots/chart-relations.png) |
-| **[大限时间轴](public/screenshots/daivan.png)**<br>以表格呈现的十年大限：年龄区间、宫名、宫内星曜、对应年份，以及当前所行大限的进度条。 | ![大限](public/screenshots/daivan.png) |
-| **[命盘解读](public/screenshots/reading.png)**<br>纸面上的解读正文与导出按钮。缩进的区块是**引证**——每条都写明该判断依据的宫与星。 | ![解读](public/screenshots/reading.png) |
-| **[追问对话](public/screenshots/chat.png)**<br>针对同一张命盘继续追问。答案下方的等宽行（`↳ Cung Mệnh · Liêm Trinh (bình) · …`）是该答案的引证，已从正文中拆出单独成行。 | ![对话](public/screenshots/chat.png) |
-| **[韩语](public/screenshots/chart-ko.png)**<br>同一张盘在 `?lang=ko` 下的样子。宫名、星名与庙陷状态全部译出——명궁、자미、칠살、왕/평/묘/함——因为被翻译的是术语表本身，而不只是界面文案。 | ![韩语](public/screenshots/chart-ko.png) |
+| | | |
+|:--:|:--:|:--:|
+| [<img src="public/screenshots/landing.png" width="260" alt="首页">](public/screenshots/landing.png)<br>**首页** | [<img src="public/screenshots/chart.png" width="260" alt="十二宫命盘">](public/screenshots/chart.png)<br>**十二宫命盘** | [<img src="public/screenshots/chart-relations.png" width="260" alt="宫位关系浮层">](public/screenshots/chart-relations.png)<br>**宫位关系浮层** |
+| [<img src="public/screenshots/daivan.png" width="260" alt="大限时间轴">](public/screenshots/daivan.png)<br>**大限时间轴** | [<img src="public/screenshots/reading.png" width="260" alt="命盘解读">](public/screenshots/reading.png)<br>**命盘解读** | [<img src="public/screenshots/chat.png" width="260" alt="追问对话">](public/screenshots/chat.png)<br>**追问对话** |
+| [<img src="public/screenshots/chart-ko.png" width="260" alt="韩语">](public/screenshots/chart-ko.png)<br>**韩语** |  |  |
 
 所有截图均由内置的开发用样例命盘生成，因此不含任何真实人物的出生数据。用
 `npm run screenshots` 重新生成。

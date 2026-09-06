@@ -16,15 +16,11 @@
 
 ## 화면 미리보기
 
-| | |
-|---|---|
-| **[첫 화면](public/screenshots/landing.png)**<br>출생 정보 입력 폼, 히어로 영역, 지표 줄. 이것이 앱 첫 화면의 전부입니다 — 내비게이션 항목은 둘뿐이며, 마케팅 사이트가 아닙니다. | ![첫 화면](public/screenshots/landing.png) |
-| **[십이궁 명반](public/screenshots/chart.png)**<br>명궁을 선택해 상세 서랍을 연 명반. 각 칸에는 주성과 그 묘왕득리평불함, 보조성과 잡요 고리, 대한의 나이 구간, 그리고 그 궁의 간지가 담깁니다. | ![명반](public/screenshots/chart.png) |
-| **[궁위 관계 오버레이](public/screenshots/chart-relations.png)**<br>이 앱을 대표하는 상호작용. 어떤 궁에 커서를 올리면 그 궁의 **충조**(호박색, 대궁)와 **삼합**(청록색, 나머지 두 모서리)이 격자 위에 선으로 그려지고, 대상마다 배지가 붙습니다. 그림에서는 질액궁에 올린 상태입니다. | ![궁위 관계](public/screenshots/chart-relations.png) |
-| **[대한 타임라인](public/screenshots/daivan.png)**<br>열 개의 대한을 표로 보여 줍니다: 나이 구간, 궁 이름, 그 궁의 성요, 해당 연도, 그리고 지금 진행 중인 대한의 진행 막대. | ![대한](public/screenshots/daivan.png) |
-| **[해석문](public/screenshots/reading.png)**<br>종이면 위의 해석문 본문과 내보내기 버튼. 들여쓴 블록은 **근거**입니다 — 각 판단이 어떤 궁과 어떤 성요에 기대고 있는지 밝힙니다. | ![해석문](public/screenshots/reading.png) |
-| **[대화](public/screenshots/chat.png)**<br>같은 명반을 두고 이어서 묻습니다. 답변 아래의 고정폭 줄(`↳ Cung Mệnh · Liêm Trinh (bình) · …`)은 그 답변의 근거로, 본문에서 떼어내 따로 한 줄로 놓은 것입니다. | ![대화](public/screenshots/chat.png) |
-| **[한국어](public/screenshots/chart-ko.png)**<br>같은 명반을 `?lang=ko`로 본 모습. 궁 이름도 성요 이름도 밝기도 모두 번역됩니다 — 명궁, 자미, 칠살, 왕/평/묘/함 — 인터페이스 문구만이 아니라 용어표 자체가 번역돼 있기 때문입니다. | ![한국어](public/screenshots/chart-ko.png) |
+| | | |
+|:--:|:--:|:--:|
+| [<img src="public/screenshots/landing.png" width="260" alt="첫 화면">](public/screenshots/landing.png)<br>**첫 화면** | [<img src="public/screenshots/chart.png" width="260" alt="십이궁 명반">](public/screenshots/chart.png)<br>**십이궁 명반** | [<img src="public/screenshots/chart-relations.png" width="260" alt="궁위 관계 오버레이">](public/screenshots/chart-relations.png)<br>**궁위 관계 오버레이** |
+| [<img src="public/screenshots/daivan.png" width="260" alt="대한 타임라인">](public/screenshots/daivan.png)<br>**대한 타임라인** | [<img src="public/screenshots/reading.png" width="260" alt="해석문">](public/screenshots/reading.png)<br>**해석문** | [<img src="public/screenshots/chat.png" width="260" alt="대화">](public/screenshots/chat.png)<br>**대화** |
+| [<img src="public/screenshots/chart-ko.png" width="260" alt="한국어">](public/screenshots/chart-ko.png)<br>**한국어** |  |  |
 
 모든 스크린샷은 내장된 개발용 예시 명반으로 찍은 것이라 실제 인물의 출생 정보가 들어
 있지 않습니다. `npm run screenshots`로 다시 만듭니다.
