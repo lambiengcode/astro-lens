@@ -45,6 +45,19 @@
   --p-tx3: #6f6656;   /* AA 5.30:1                      */
   --verm: #b23a2e;
 
+  /* lamplight — the reading ON SCREEN. The export stays on paper: the same
+     `variant="print"` switch the chart uses restores the --p* family above.
+     PARITY.md §16, captain 2026-09-06. */
+  --l0: #14151a;      /* ground                          */
+  --l1: #1b1c22;      /* bar, citation block             */
+  --l-line: #2b2c33;  /* hairline                        */
+  --l-rule: #46474f;  /* the document's own 2px rule     */
+  --l-tx: #f5efe2;    /* emphasis                        */
+  --l-tx2: #d6cfc0;   /* body — 11.8:1                   */
+  --l-tx3: #8f887a;   /* meta — AA 5.20:1                */
+  --l-head: #e8956f;  /* headings, citation rule — 6.9:1 */
+  --l-seal: #c4533f;  /* the seal and the primary action */
+
   --r: 3px;           /* the radius. one value.         */
 
   /* motion primitives — DESIGN.md §10.2 */
@@ -468,22 +481,50 @@ textarea.inp { resize: none; line-height: 1.6; }
   background: var(--n0); position: relative; padding: 22px; text-align: center;
   min-height: 344px; min-width: 0;
 }
+/* Fallback rings, drawn only when the chart has no đại vận to dial. */
 .centre .ring { position: absolute; border: 1px solid var(--line); border-radius: 50%; }
 .centre .r1 { inset: 34px; }
 .centre .r2 { inset: 62px; border-color: rgba(94, 201, 214, .13); }
-.centre .cn { font-size: 16px; font-weight: 600; letter-spacing: .02em; position: relative; }
-.centre .han {
-  font-family: var(--font-noto-serif), var(--cjk-serif), Georgia, serif;
-  font-size: 12px; color: var(--tx3); margin-top: 3px; position: relative;
+
+/* Vòng đại vận — one arc per decade, the running one lit, a marker at this
+   year inside it. Colour comes from the tokens only, so the print map inverts
+   the whole dial with the rest of the grid. `fill: currentColor` keeps the SVG
+   labels measurable by tests/tools/a11y-check.mjs, which reads `color`. */
+.dial { position: absolute; inset: 0; width: 100%; height: 100%; }
+.dial path { fill: none; stroke: var(--line); stroke-width: 2.5; opacity: .55; }
+.dial .past path { stroke: var(--line2); opacity: .85; }
+.dial .now path { stroke: var(--cyan); stroke-width: 4; opacity: 1; }
+.dial text {
+  font-family: var(--font-plex-mono), var(--cjk-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums; font-size: 8.5px; fill: currentColor;
 }
-.centre .who { margin-top: 16px; position: relative; }
-.centre .who .nm { font-size: 19px; font-weight: 600; color: var(--amber); }
-.centre .who .dl {
+/* Digits only, so DESIGN.md §15.3's 11px floor does not apply — the same
+   reading as the đại vận range in the cell footer. */
+.dial .fut { color: var(--tx4); }
+.dial .past { color: var(--tx2); }
+.dial .now { color: var(--cyan); }
+.dial .mk { fill: var(--n0); stroke: var(--cyan); stroke-width: 2; }
+.dial .rg { fill: none; stroke: var(--line); }
+.dial .rg2 { fill: none; stroke: rgba(94, 201, 214, .10); }
+
+.centre .core { position: relative; z-index: 1; }
+.centre .core .nm { font-size: 20px; font-weight: 600; color: var(--amber); letter-spacing: -.01em; }
+.centre .core .sub {
   font-family: var(--font-plex-mono), var(--cjk-mono), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
-  font-size: 11.5px; color: var(--tx2); margin-top: 5px; line-height: 1.7;
+  font-size: 10.5px; color: var(--tx2); margin-top: 5px; line-height: 1.75;
 }
-.centre .hint { position: relative; margin-top: 18px; font-size: 11px; color: var(--tx4); }
+.centre .core .now {
+  font-family: var(--font-plex-mono), var(--cjk-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums; font-size: 11px; color: var(--cyan);
+  text-transform: uppercase; margin-top: 11px; display: inline-block;
+  border: 1px solid var(--cyan-d); border-radius: 2px; padding: 3px 9px;
+  background: rgba(94, 201, 214, .07);
+}
+.centre .core .han {
+  font-family: var(--font-noto-serif), var(--cjk-serif), Georgia, serif;
+  font-size: 11px; color: var(--tx4); margin-top: 9px;
+}
 
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; font-size: 11.5px; color: var(--tx3); }
 .legend i { font-style: normal; }
@@ -549,7 +590,30 @@ textarea.inp { resize: none; line-height: 1.6; }
 .bar { height: 3px; background: var(--line); position: relative; margin-top: 6px; }
 .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--cyan); }
 
-/* ── PAPER reading surface ───────────────────────────────── */
+/* ── The reading surface ─────────────────────────────────────
+   Lamplight on screen, paper on export. Every rule below is written once
+   against the --p* family; `.paper:not(.print)` remaps that family to the
+   lamplight tokens, and `.paper.print` — the same `variant="print"` switch
+   ChartGrid uses — keeps the root values, so the PDF stays ink on light.
+   PARITY.md §16, captain 2026-09-06. */
+.paper:not(.print) {
+  --p0: var(--l0); --p1: var(--l1); --p-line: var(--l-line);
+  --p-tx: var(--l-tx); --p-tx2: var(--l-tx2); --p-tx3: var(--l-tx3);
+}
+/* Paper's one vermilion splits in two under lamplight. The accent lifts to a
+   warm salmon so it reads on a dark ground; the primary action keeps --verm,
+   because #c4533f carries its 12px label at only 4.20:1 — the kind of value
+   DESIGN.md §4.5 corrects rather than copies. The seal is decoration at
+   opacity .5, where the deeper red disappears, so it takes --l-seal. */
+.paper:not(.print) .prose-interpretation h2,
+.paper:not(.print) .prose-interpretation li::marker,
+.paper:not(.print) .seal { color: var(--l-head); }
+.paper:not(.print) .prose-interpretation blockquote,
+.paper:not(.print) .sealq { border-left-color: var(--l-head); }
+.paper:not(.print) .seal { border-color: var(--l-seal); }
+/* The document's own 2px rule is a divider, not body emphasis. */
+.paper:not(.print) .doc-m { border-bottom-color: var(--l-rule); }
+
 .paper {
   background: var(--p0); color: var(--p-tx); border-radius: var(--r);
   font-family: var(--font-noto-serif), var(--cjk-serif), Georgia, serif; position: relative;
@@ -1141,6 +1205,11 @@ textarea.inp { resize: none; line-height: 1.6; }
 }
 :is([data-script="hans"], [data-script="hant"], [data-script="hangul"]) .empty {
   font-size: 11.5px;
+}
+/* The dial's core line carries giới tính and cục — translated words — so it
+   comes up to the floor. The dial's own labels are digits and stay at 8.5px. */
+:is([data-script="hans"], [data-script="hant"], [data-script="hangul"]) .centre .core .sub {
+  font-size: 11px;
 }
 /* The paper surface. `.print-foot` is digits and the domain only, so it keeps
    its 10px; these two carry translated words. */

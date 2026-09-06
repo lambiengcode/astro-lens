@@ -170,6 +170,7 @@ function ResultView() {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [chatOpen, setChatOpen] = useState(false);
   const [pdfExporting, setPdfExporting] = useState(false);
+  const [imageExporting, setImageExporting] = useState(false);
   const { t, v } = useI18n();
 
   const isFixture = searchParams.get('fixture') === FIXTURE_ID;
@@ -203,6 +204,26 @@ function ResultView() {
       setActiveTab(tab as TabId);
     }
   }, [searchParams]);
+
+  // Both exports capture the off-screen PRINT copy: the reading is lamplight on
+  // screen and ink on paper everywhere it leaves the app — PLAN.md §8.
+  const handleExportImage = useCallback(async () => {
+    const el = pdfInterpretationRef.current;
+    if (!el || imageExporting || pdfExporting || !result) return;
+    setImageExporting(true);
+    try {
+      const canvas = await captureElement(el);
+      const link = document.createElement('a');
+      const datePart = result.chart.solarDate || new Date().toISOString().split('T')[0];
+      link.download = `tuvi${input?.name ? `_${input.name}` : ''}_${datePart}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (e) {
+      console.error('Export image failed:', e);
+    } finally {
+      setImageExporting(false);
+    }
+  }, [imageExporting, pdfExporting, result, input?.name]);
 
   const handleExportPdf = useCallback(async () => {
     if (pdfExporting || !result) return;
@@ -404,10 +425,12 @@ function ResultView() {
             <>
               <ChartGrid
                 palaces={chart.palaces}
-                activePalace={activePalace}
                 onPalaceClick={(idx) => setActivePalace(activePalace === idx ? null : idx)}
                 chart={chart}
                 name={input?.name}
+                periods={decadalPeriods}
+                birthYear={birthYear}
+                referenceYear={referenceYear}
               />
               {selectedPalace && (
                 <PalaceDetail
@@ -430,6 +453,8 @@ function ResultView() {
               solarDate={chart.solarDate}
               meta={docMeta}
               generatedOn={isFixture ? FIXTURE_REFERENCE_DATE : undefined}
+              onExportImage={handleExportImage}
+              imageExporting={imageExporting}
               onExportPdf={handleExportPdf}
               pdfExporting={pdfExporting}
             />
@@ -505,10 +530,12 @@ function ResultView() {
           <div className="print-lab">{t.result.printPage2}</div>
           <ChartGrid
             palaces={chart.palaces}
-            activePalace={null}
             onPalaceClick={() => {}}
             chart={chart}
             name={input?.name}
+            periods={decadalPeriods}
+            birthYear={birthYear}
+            referenceYear={referenceYear}
             variant="print"
           />
           <div className="print-foot"><span>tuvi.app</span><span>2</span></div>

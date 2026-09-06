@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { ChartData, PalaceData, StarData } from '@/types';
+import type { ChartData, DecadalPeriod, PalaceData, StarData } from '@/types';
 import {
   BRANCH_LABELS, buildBranchMap, isSoulPalace, xung, tamHop, enDash,
+  decadeIndexAt, decadalMarker,
 } from '@/lib/branches';
 import { drawRelationships, clearOverlay } from '@/lib/rel-overlay';
 import { prefersReducedMotion } from '@/lib/motion';
@@ -14,11 +15,19 @@ type V = (value: string | undefined | null, domain?: Domain) => string;
 
 export interface ChartGridProps {
   palaces: PalaceData[];
-  activePalace: number | null;
   onPalaceClick: (index: number) => void;
   /** Subject details for the centre panel. Optional — omitted in previews. */
   chart?: ChartData;
   name?: string;
+  /**
+   * The chart's own đại vận, one segment per decade on the centre dial. Absent
+   * or shorter than two decades, the dial is not drawn — see `CentreDial`.
+   */
+  periods?: DecadalPeriod[];
+  /** Birth year, to turn the reference year into a tuổi mụ. */
+  birthYear?: number;
+  /** Pinned in fixture mode so the marker does not move — PLAN §10.1. */
+  referenceYear?: number;
   /** `print` renders the ink-on-paper variant: same anatomy, no motion. */
   variant?: 'screen' | 'print';
 }
@@ -165,8 +174,74 @@ function PalaceCell({
   );
 }
 
+// ============================================================
+// CENTRE — the đại vận life dial
+// ============================================================
+//
+// One arc segment per decade of THIS chart's đại vận: lived decades dim, the
+// running one lit, a marker at the current year's position inside it. Every
+// number comes from `decadalPeriods`; nothing about ten decades, or where a
+// decade starts, is assumed.
+//
+// The geometry lives in one 380×344 viewBox — the centre cell's own size in
+// the reference mockup — and scales with the cell, so the arcs stay circular
+// at any width.
+
+const DIAL_CX = 190;
+const DIAL_CY = 172;
+const DIAL_R = 148;        /* the arc ring                       */
+const DIAL_LABEL_R = 166;  /* age labels, just outside it        */
+const DIAL_GAP = 2.6;      /* degrees of air between two decades */
+
+/** Point on the dial, degrees clockwise from noon. */
+function polar(r: number, deg: number): [number, number] {
+  const a = ((deg - 90) * Math.PI) / 180;
+  return [DIAL_CX + r * Math.cos(a), DIAL_CY + r * Math.sin(a)];
+}
+
+function arcPath(r: number, a0: number, a1: number): string {
+  const [x0, y0] = polar(r, a0);
+  const [x1, y1] = polar(r, a1);
+  return `M ${x0} ${y0} A ${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1} ${y1}`;
+}
+
+function CentreDial({ periods, current, marker }: {
+  periods: DecadalPeriod[];
+  /** Index of the running decade, or −1 when the age falls outside them all. */
+  current: number;
+  /** Position of the year marker inside the running decade, 0–1. */
+  marker: number;
+}) {
+  const seg = 360 / periods.length;
+  return (
+    <svg className="dial" viewBox="0 0 380 344" aria-hidden="true">
+      {periods.map((p, i) => {
+        const a0 = i * seg + DIAL_GAP / 2;
+        const a1 = (i + 1) * seg - DIAL_GAP / 2;
+        const [lx, ly] = polar(DIAL_LABEL_R, i * seg + seg / 2);
+        const state = i === current ? 'now' : current >= 0 && i < current ? 'past' : 'fut';
+        return (
+          <g key={p.range[0]} className={state}>
+            <path d={arcPath(DIAL_R, a0, a1)} />
+            <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle">{p.range[0]}</text>
+          </g>
+        );
+      })}
+      {current >= 0 && (() => {
+        const a0 = current * seg + DIAL_GAP / 2;
+        const a1 = (current + 1) * seg - DIAL_GAP / 2;
+        const [mx, my] = polar(DIAL_R, a0 + (a1 - a0) * marker);
+        return <circle className="mk" cx={mx} cy={my} r={4.5} />;
+      })()}
+      <circle className="rg" cx={DIAL_CX} cy={DIAL_CY} r={118} />
+      <circle className="rg2" cx={DIAL_CX} cy={DIAL_CY} r={96} />
+    </svg>
+  );
+}
+
 export default function ChartGrid({
-  palaces, activePalace, onPalaceClick, chart, name, variant = 'screen',
+  palaces, onPalaceClick, chart, name,
+  periods, birthYear, referenceYear, variant = 'screen',
 }: ChartGridProps) {
   const { t, v } = useI18n();
   const isPrint = variant === 'print';
@@ -181,6 +256,15 @@ export default function ChartGrid({
   for (let i = 0; i < 12; i++) if (!branchMap.has(i)) missing.push(v(BRANCH_LABELS[i], 'branch'));
 
   const currentDecadalIndex = chart?.horoscope?.decadal.index ?? null;
+
+  // The dial needs at least two decades to be a dial. A chart with a missing
+  // or one-entry đại vận keeps the plain identity panel rather than drawing a
+  // ring that claims a whole life is one segment.
+  const dial = periods && periods.length >= 2 && birthYear ? periods : null;
+  const age = (referenceYear ?? new Date().getFullYear()) - (birthYear ?? 0) + 1; // tuổi mụ
+  const runningDecade = dial ? decadeIndexAt(dial, age) : -1;
+  const running = dial && runningDecade >= 0 ? dial[runningDecade] : null;
+  const marker = running ? decadalMarker(age, running.range[0], running.range[1]) : 0;
 
   // arrival: scan line crosses, then the cells resolve behind it — PLAN §7.4
   // Under reduced motion these classes are inert: the media block forces the
@@ -257,10 +341,6 @@ export default function ChartGrid({
     relBranch !== null ? 'rel' : '',
   ].filter(Boolean).join(' ');
 
-  const activeName = activePalace !== null
-    ? v(palaces.find((p) => p.index === activePalace)?.name, 'palace') || undefined
-    : undefined;
-
   const grid = (
     <div
       className={chartCls}
@@ -271,26 +351,25 @@ export default function ChartGrid({
       <div className="cmid">
         <div className="col">{LEFT_COL.map(renderCell)}</div>
         <div className="centre">
-          <span className="ring r1" />
-          <span className="ring r2" />
-          <div className="cn">{t.chart.centre}</div>
-          <div className="han">紫微斗數</div>
-          {chart && (
-            <div className="who">
-              {name && <div className="nm">{name}</div>}
-              <div className="dl">
+          {dial
+            ? <CentreDial periods={dial} current={runningDecade} marker={marker} />
+            : <><span className="ring r1" /><span className="ring r2" /></>}
+          <div className="core">
+            {name && <div className="nm">{name}</div>}
+            {chart && (
+              <div className="sub">
                 {chart.solarDate} · {t.chart.hour} {v(chart.time, 'branch')}<br />
-                {v(chart.gender, 'gender')} · {v(chart.fiveElementsClass, 'fiveElements')}<br />
-                {t.chart.menh} {v(chart.earthlyBranchOfSoulPalace, 'branch')} · {t.chart.than}{' '}
-                {v(chart.earthlyBranchOfBodyPalace, 'branch')}
+                {v(chart.gender, 'gender')} · {v(chart.fiveElementsClass, 'fiveElements')}
               </div>
-            </div>
-          )}
-          {!isPrint && (
-            <div className="hint">
-              {activeName ? `${t.chart.hintActivePre} ${activeName}` : t.chart.hint}
-            </div>
-          )}
+            )}
+            {running && (
+              <div className="now">
+                {t.chart.dialDecadal} {enDash(`${running.range[0]}-${running.range[1]}`)} ·{' '}
+                {t.decadal.yearPre} {age - running.range[0] + 1}{t.decadal.ofTen}
+              </div>
+            )}
+            <div className="han">紫微斗數</div>
+          </div>
         </div>
         <div className="col">{RIGHT_COL.map(renderCell)}</div>
       </div>

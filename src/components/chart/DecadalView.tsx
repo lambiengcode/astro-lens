@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { DecadalPeriod } from '@/types';
-import { decadalProgress, yearOfAge } from '@/lib/branches';
+import { decadalProgress, decadeIndexAt, yearOfAge } from '@/lib/branches';
 import { starsOrBorrowed } from '@/lib/chart-derived';
 import type { ChartData } from '@/types';
 import { useI18n } from '@/lib/i18n/context';
@@ -23,7 +23,8 @@ export default function DecadalView({ periods, birthYear, chart, referenceYear }
   const tlRef = useRef<HTMLDivElement>(null);
   const [run, setRun] = useState(false);
 
-  const current = periods.find((p) => currentAge >= p.range[0] && currentAge <= p.range[1]);
+  const currentIndex = decadeIndexAt(periods, currentAge);
+  const current = periods[currentIndex];
   const progress = current
     ? decadalProgress(currentAge, current.range[0], current.range[1])
     : 0;
@@ -53,9 +54,9 @@ export default function DecadalView({ periods, birthYear, chart, referenceYear }
         ref={tlRef}
         style={{ ['--dv-progress' as string]: `${progress}%` }}
       >
-        {periods.map((p) => {
+        {periods.map((p, i) => {
           const [start, end] = p.range;
-          const isCurrent = currentAge >= start && currentAge <= end;
+          const isCurrent = i === currentIndex;
           const isPast = currentAge > end;
           // The running decade names what it borrows, so the table agrees with
           // the Điểm nổi bật card. Other empty decades stay at the vcd label.

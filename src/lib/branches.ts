@@ -102,3 +102,27 @@ export function yearOfAge(birthYear: number, age: number): number {
 export function enDash(range: string): string {
   return range.replace('-', '–');
 }
+
+/**
+ * Index of the decade an age falls in, or −1 when it falls in none — a chart
+ * whose đại vận has not started yet, or has run out. First match wins, so the
+ * result agrees with a `find` over the same ranges.
+ */
+export function decadeIndexAt(periods: { range: [number, number] }[], age: number): number {
+  return periods.findIndex((p) => age >= p.range[0] && age <= p.range[1]);
+}
+
+/**
+ * Where the year marker sits along its decade's arc, 0–1: the CENTRE of the
+ * year's own band, so year 1 of 10 sits at .05 and year 10 at .95 rather than
+ * on the segment's edges, where the marker would straddle the gap between two
+ * decades. Ages outside the decade clamp to the nearest band, so a caller
+ * never draws a marker outside the arc it belongs to. One step finer than
+ * `decadalProgress`, which measures the bar and may legitimately read 100%.
+ */
+export function decadalMarker(age: number, start: number, end: number): number {
+  const years = end - start + 1;
+  if (years <= 0) return 0;
+  const band = Math.min(years - 1, Math.max(0, age - start));
+  return (band + 0.5) / years;
+}

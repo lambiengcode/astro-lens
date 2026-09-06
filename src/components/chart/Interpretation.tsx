@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n/context';
 import { INTL_LOCALE, type Locale } from '@/lib/i18n/locales';
 import { renderMarkdown } from '@/lib/markdown';
@@ -13,8 +13,15 @@ interface InterpretationProps {
   name?: string;
   solarDate?: string;
   meta?: string;
-  /** Generation date shown in the paper bar. Pinned in fixture mode. */
+  /** Generation date shown in the bar. Pinned in fixture mode. */
   generatedOn?: string;
+  /**
+   * Both exports capture the off-screen PRINT copy of this document, not what
+   * is on screen — the screen surface is lamplight and a saved reading is
+   * ink on paper. The owner of that node runs them; see result/page.tsx.
+   */
+  onExportImage?: () => void;
+  imageExporting?: boolean;
   onExportPdf?: () => void;
   pdfExporting?: boolean;
 }
@@ -72,13 +79,12 @@ export function InterpretationContent({
 }
 
 export default function Interpretation({
-  content, name, solarDate, meta, generatedOn, onExportPdf, pdfExporting,
+  content, name, solarDate, meta, generatedOn,
+  onExportImage, imageExporting, onExportPdf, pdfExporting,
 }: InterpretationProps) {
   const { locale, t } = useI18n();
-  const paperRef = useRef<HTMLDivElement>(null);
-  const [exportingImage, setExportingImage] = useState(false);
   const [stamped, setStamped] = useState(false);
-  const isExporting = exportingImage || !!pdfExporting;
+  const isExporting = !!imageExporting || !!pdfExporting;
 
   // The seal drops and settles once the reading arrives — PLAN §7.6.
   // Under reduced motion the media block pins it to its settled state.
@@ -87,42 +93,19 @@ export default function Interpretation({
     return () => clearTimeout(drop);
   }, []);
 
-  const handleExportImage = useCallback(async () => {
-    if (!paperRef.current || isExporting) return;
-    setExportingImage(true);
-    try {
-      const { default: html2canvas } = await import('html2canvas-pro');
-      const canvas = await html2canvas(paperRef.current, {
-        backgroundColor: PAPER,
-        scale: 2,
-        useCORS: true,
-        logging: false,
-      });
-      const link = document.createElement('a');
-      const datePart = solarDate || new Date().toISOString().split('T')[0];
-      link.download = `tuvi${name ? `_${name}` : ''}_${datePart}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    } catch (e) {
-      console.error('Export image failed:', e);
-    } finally {
-      setExportingImage(false);
-    }
-  }, [isExporting, name, solarDate]);
-
   const model = 'Gemini';
   const today = generatedOn ?? new Date().toISOString().split('T')[0];
 
   return (
-    <div className={stamped ? 'paper stamped' : 'paper'} ref={paperRef}>
+    <div className={stamped ? 'paper stamped' : 'paper'}>
       <div className="paper-bar">
         <span className="ttl">{t.paper.barTitle}</span>
         <span className="sub">
           {model} · {today} · {readingLength(content, locale)} {t.paper.words}
         </span>
         <span className="acts">
-          <button type="button" className="pbtn" onClick={handleExportImage} disabled={isExporting}>
-            {exportingImage ? t.paper.exporting : t.paper.downloadImage}
+          <button type="button" className="pbtn" onClick={onExportImage} disabled={isExporting}>
+            {imageExporting ? t.paper.exporting : t.paper.downloadImage}
           </button>
           <button type="button" className="pbtn pri" onClick={onExportPdf} disabled={isExporting}>
             {pdfExporting ? t.paper.exporting : t.paper.downloadPdf}

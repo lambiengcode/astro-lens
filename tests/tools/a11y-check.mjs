@@ -58,7 +58,8 @@ const samples = await page.evaluate(() => {
     pick('.res-body .pal-f .ct .pn', 'palace name (--tx)'),
     pick('.res-body .legend', 'legend (--tx3)'),
     pick('.res-body .mut.ky', 'Hóa Kỵ chip (--sig)'),
-    pick('.res-body .centre .hint', 'centre hint (--tx4)'),
+    pick('.res-body .dial .fut text', 'dial unlived age (--tx4)'),
+    pick('.res-body .centre .core .sub', 'centre identity (--tx2)'),
   ].filter(Boolean);
 });
 

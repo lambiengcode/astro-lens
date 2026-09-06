@@ -15,6 +15,20 @@ and fine for one-off layout, but **a new surface reuses an existing component
 class or adds one to `globals.css`.** Two spellings of the same component is
 how the direction rots.
 
+**The reading is lamplight on screen and paper on export**, through the one
+`variant="print"` switch `ChartGrid` uses: `.paper:not(.print)` remaps the
+`--p*` family to the `--l*` tokens, `.paper.print` keeps the root values. Both
+exports — PDF *and* image — capture the off-screen `.paper.print` section owned
+by `result/page.tsx`, never what is on screen. Never add a second theming
+mechanism, and never point an export at the screen node: a near-black PDF has
+already shipped once (`PARITY.md` §7).
+
+The centre of the chart is the **đại vận dial**, computed from the chart's own
+`decadalPeriods` and pinned to `referenceYear` like the đại vận bar, with the
+segment maths in `src/lib/branches.ts` and unit-tested. `PARITY.md` §16 records
+the settled decision, what it superseded, and the two AA corrections it makes to
+the mockup.
+
 Non-negotiables, all mechanically enforced by `./tests/tools/token-audit.sh`:
 one radius (`3px`), no blur/glow/elevation shadow/gradient text, colour only
 from the tokens, and anything that counts or dates set in the mono family.

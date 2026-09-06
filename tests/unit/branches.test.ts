@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   BRANCH_LABELS, xung, tamHop, tamHopGroup, buildBranchMap, decadalProgress, yearOfAge, enDash,
+  decadeIndexAt, decadalMarker,
 } from '@/lib/branches';
 import type { PalaceData } from '@/types';
 import { FIXTURE_RESULT } from '@/lib/fixture';
@@ -175,5 +176,76 @@ describe('enDash', () => {
   });
   it('leaves an empty range alone', () => {
     expect(enDash('')).toBe('');
+  });
+});
+
+// ============================================================
+// The centre dial — which decade is running, and where in its
+// arc this year's marker sits. Same class of quietly-wrong
+// logic as the relationship maths, so measured the same way.
+// ============================================================
+
+describe('decadeIndexAt — which decade an age falls in', () => {
+  const ten = Array.from({ length: 10 }, (_, i) => ({ range: [4 + i * 10, 13 + i * 10] as [number, number] }));
+
+  it('finds the decade at its first, middle and last age', () => {
+    expect(decadeIndexAt(ten, 24)).toBe(2);
+    expect(decadeIndexAt(ten, 29)).toBe(2);
+    expect(decadeIndexAt(ten, 33)).toBe(2);
+  });
+
+  it('moves to the next decade one year past the boundary', () => {
+    expect(decadeIndexAt(ten, 23)).toBe(1);
+    expect(decadeIndexAt(ten, 34)).toBe(3);
+  });
+
+  it('covers the first and last decade of the chart', () => {
+    expect(decadeIndexAt(ten, 4)).toBe(0);
+    expect(decadeIndexAt(ten, 103)).toBe(9);
+  });
+
+  it('returns −1 before the đại vận starts and after it runs out', () => {
+    expect(decadeIndexAt(ten, 3)).toBe(-1);
+    expect(decadeIndexAt(ten, 104)).toBe(-1);
+    expect(decadeIndexAt([], 30)).toBe(-1);
+  });
+
+  it('reads a chart whose đại vận starts at another age', () => {
+    // A Thủy nhị cục chart starts at 2, not 4 — the dial must not assume.
+    const two = Array.from({ length: 12 }, (_, i) => ({ range: [2 + i * 10, 11 + i * 10] as [number, number] }));
+    expect(decadeIndexAt(two, 2)).toBe(0);
+    expect(decadeIndexAt(two, 30)).toBe(2);
+    expect(decadeIndexAt(two, 121)).toBe(11);
+  });
+});
+
+describe('decadalMarker — where in the arc this year sits', () => {
+  it('puts year 1 of 10 in the middle of the first band, not on the edge', () => {
+    expect(decadalMarker(24, 24, 33)).toBeCloseTo(0.05, 10);
+  });
+
+  it('puts the middle year in the middle of the arc', () => {
+    expect(decadalMarker(28, 24, 33)).toBeCloseTo(0.45, 10);
+    expect(decadalMarker(29, 24, 33)).toBeCloseTo(0.55, 10);
+  });
+
+  it('puts year 10 of 10 inside the arc, never past its end', () => {
+    expect(decadalMarker(33, 24, 33)).toBeCloseTo(0.95, 10);
+    expect(decadalMarker(33, 24, 33)).toBeLessThan(1);
+  });
+
+  it('advances by exactly one band per year', () => {
+    const step = decadalMarker(26, 24, 33) - decadalMarker(25, 24, 33);
+    expect(step).toBeCloseTo(0.1, 10);
+  });
+
+  it('clamps an age outside the decade to the nearest band', () => {
+    expect(decadalMarker(20, 24, 33)).toBeCloseTo(0.05, 10);
+    expect(decadalMarker(40, 24, 33)).toBeCloseTo(0.95, 10);
+  });
+
+  it('handles a degenerate range without dividing by zero', () => {
+    expect(decadalMarker(30, 30, 30)).toBeCloseTo(0.5, 10);
+    expect(decadalMarker(30, 33, 24)).toBe(0);
   });
 });

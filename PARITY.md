@@ -46,21 +46,27 @@ rasterised, which is exactly why it is the one that decides.
 |---|---|---:|:---:|---:|---:|:---:|
 | §01 Landing | 1440×900 | 2.904% | no | 39 | **2** — 1 reference artefact (§3) + 1 authorised (§10) | ✅ |
 | §02 Tổng quan | 1440×900 | 2.119% | no | 54 | **0** | ✅ |
-| §03 12 Cung | 1440×900 | 1.636% | no | 114 | **0** | ✅ |
+| §03 12 Cung | 1440×900 | 1.808% | no | 114 | **1** — authorised (§16) | ✅ |
 | §04 Đại Vận | 1440×900 | 0.617% | no | 93 | **0** | ✅ |
-| §05 Luận giải | 1440×900 | 1.848% | no | 24 | **0** | ✅ |
+| §05 Luận giải | 1440×900 | **88.013%** | no | 24 | **0** — see §16 | ✅ |
 | §06 Vận hạn | 1440×900 | 0.431% | yes | 22 | **0** | ✅ |
 | §01 Landing | 390×844 | 2.869% | no | 39 | **15** — 13 reference artefacts (§3) + 2 authorised (§10) | ✅ |
 | §02 Tổng quan | 390×844 | 3.277% | no | 54 | **0** — but see §10.5 | ✅ |
-| §03 12 Cung | 390×844 | 0.430% | yes | 114 | **0** | ✅ |
+| §03 12 Cung | 390×844 | 0.552% | no | 114 | **1** — authorised (§16) | ✅ |
 | §04 Đại Vận | 390×844 | 0.487% | yes | 73 | **0** | ✅ |
-| §05 Luận giải | 390×844 | 1.621% | no | 23 | **0** | ✅ |
+| §05 Luận giải | 390×844 | **77.783%** | no | 23 | **0** — see §16 | ✅ |
 | §06 Vận hạn | 390×844 | 0.492% | yes | 22 | **0** | ✅ |
 
-**12 of 12 pass. 10 of 12 are geometrically clean; 4 of 12 also fall under the
+**12 of 12 pass. 8 of 12 are geometrically clean; 3 of 12 also fall under the
 ≤0.5% pixel proxy.** The two app-bar movements on §01 are the captain's
-right-aligned language selector, authorised in §10 — they are expected, not a
-regression.
+right-aligned language selector, authorised in §10. The one on §03 and §05's
+pixel figure are the captain's centre dial and lamplight reading, authorised in
+§16 — the reference predates both. All are expected, not regressions.
+
+**§05's percentage is no longer evidence of anything.** Comparing a warm dark
+surface against a light one differs on nearly every pixel by construction. On
+that screen the geometry column is the whole measurement, and it is still
+**0 of 24** — see §16.2.
 
 ### Re-measured after P5 — what moved and what did not
 
@@ -431,12 +437,16 @@ brand mark), and the palace relationship inset was not in the allowlist.
 in a real browser and saves the download.
 `node tests/tools/pdf-render.mjs <out.pdf> <dir>` renders every page.
 
-Result: **3 pages, all dark ink on light paper.**
+Result: **3 pages, all dark ink on light paper.** Re-performed after the
+2026-09-06 change (§16): still 3 pages, still ink on light, with the centre
+dial rasterising correctly into the print token map on page 2 and the reading
+on page 3 unchanged. `↓ Tải ảnh` now captures the same print section — its
+exported PNG grounds at `#fbf8f1`.
 
 | Page | Content | Verified |
 |---|---|---|
 | 1 | Document head, seal, `Trang 1 — Thông tin tổng quan`, the key/value summary | Ink `#221e18` on `#fbf8f1`; all eight rows legible |
-| 2 | `Trang 2 — Lá số 12 cung`, the full print-variant grid | All 12 palaces; chính tinh, phụ tinh, sao lẻ, tứ hóa chips (Kỵ in vermilion), can chi, vòng Trường Sinh/Bác Sĩ, đại vận ranges, `[ Thân ]`, the Mệnh rule, the đại vận rule and tint, the centre panel |
+| 2 | `Trang 2 — Lá số 12 cung`, the full print-variant grid | All 12 palaces; chính tinh, phụ tinh, sao lẻ, tứ hóa chips (Kỵ in vermilion), can chi, vòng Trường Sinh/Bác Sĩ, đại vận ranges, `[ Thân ]`, the Mệnh rule, the đại vận rule and tint, and the centre dial — arcs, ages, the lit decade and its year marker, all in paper tokens |
 | 3 | The reading on paper | Serif at 14.5px, section headings in vermilion, both `.sealq` citation blocks, the stamped seal, the footer |
 
 Three defects were found by opening the file and fixed:
@@ -463,8 +473,9 @@ labels and still read as a list.
 ## 8. Reproducing
 
 ```
-npm run test        # 106 unit tests — relationship maths, branch map, đại vận,
-                    #   print variant, vocabulary completeness, prompt packs, cache key
+npm run test        # 260 unit tests — relationship maths, branch map, đại vận,
+                    #   the centre dial's segment maths, print variant,
+                    #   vocabulary completeness, prompt packs, cache key
 npm run parity      # 12 parity screens + 6 reduced-motion + 20 locale-stress tests
 ./tests/tools/token-audit.sh
 node tests/tools/a11y-check.mjs                       # needs a server on :3000
@@ -502,7 +513,8 @@ over what is actually behind them:
 | Token in use | Size | Measured | Needs | |
 |---|---:|---:|---:|:--|
 | `--tx4` sao lẻ | 10px | **4.70:1** | 4.5 | ✅ |
-| `--tx4` centre hint | 11px | 4.88:1 | 4.5 | ✅ |
+| `--tx4` dial unlived age | 8.5px | 4.88:1 | 4.5 | ✅ |
+| `--tx2` centre identity | 10.5px | 8.06:1 | 4.5 | ✅ |
 | `--tx3` brightness | 9.5px | 5.65:1 | 4.5 | ✅ |
 | `--tx3` vòng Trường Sinh | 9.5px | 5.65:1 | 4.5 | ✅ |
 | `--tx3` legend | 11.5px | 5.87:1 | 4.5 | ✅ |
@@ -947,3 +959,141 @@ Both produce 3 pages of **dark ink on light paper**. Opened and looked at:
 
 `html2canvas-pro` rasterises the CJK webfont correctly; the zero-spread inset
 `box-shadow` remains disabled on the print variant, as `AGENTS.md` requires.
+
+---
+
+## 16. The centre dial and the lamplight reading — **captain, 2026-09-06**
+
+> **Decision:** the 2×2 centre panel becomes the **vòng đại vận life dial**
+> (option A), and the reading is read on a **warm dark surface** (option D) with
+> **the export unchanged on paper**. **Decided by the captain, 2026-09-06**, from
+> the mockup `.lavish/astro-lens-centre-and-reading.html`, drawn at the panel's
+> real 380×344 so the legibility question was answered rather than flattered.
+>
+> `tests/parity/reference/mockup.html` predates both and is **not** being
+> re-exported. §16.1 and §16.2 record what each surface looked like before, so a
+> future reader can see the divergence is a decision and does not "fix" it back.
+
+### 16.1 §03 — the centre panel
+
+**Was:** two static concentric rings (`.centre .ring.r1` at `inset:34px`,
+`.r2` at `inset:62px`, the second breathing at 9s), the title *Tử Vi Đẩu Số*,
+紫微斗數, three lines of subject detail, and the hint *Nhấn vào một cung để xem
+chi tiết*.
+
+**Is:** an SVG dial in a 380×344 viewBox — **one arc segment per decade of the
+chart's own `decadalPeriods`**, lived decades in `--line2`, the running one in
+`--cyan` at 4px with a marker at the current year's position inside it, the
+decade start ages on the rim, and the identity, the đại vận chip and 紫微斗數 in
+the core. The app name and the hint are gone: the title told the reader
+something they knew and the detail lines repeated the header directly above the
+chart.
+
+| | |
+|---|---|
+| **Nothing is hardcoded** | Segment count is `periods.length`, each label is that period's own `range[0]`. The mockup's `4, 14, 24…` are the fixture's values. A Thủy nhị cục chart starting at 2, or a real 12-palace chart with twelve decades, dials correctly — asserted in `tests/unit/branches.test.ts`. |
+| **The year marker cannot rot** | It reads `referenceYear`, the same `FIXTURE_REFERENCE_YEAR` pin `DecadalView` uses (`PLAN.md` §10.1). Without it the marker would move every January and silently invalidate this screen. |
+| **It degrades honestly** | Fewer than two decades — a chart with a missing or one-entry đại vận — draws **no dial at all**: the rings and the identity panel stay, because a full ring claiming one segment is a whole life is worse than no instrument. An age outside every decade draws the dial with no lit arc, no marker and no chip, rather than guessing one. Both asserted in `tests/unit/chart-grid.test.tsx`. |
+| **The maths is unit-tested** | `decadeIndexAt` and `decadalMarker`, 11 cases: decade start, middle and end; both boundaries; first and last decade; before the đại vận starts and after it runs out; a chart that starts at another age; and the degenerate range. `DecadalView` now uses the same `decadeIndexAt`, so there is one spelling of "which decade is running", not two. |
+
+**The measured cost, exactly one box.** §03 reports
+`.centre .ring: reference has 2 element(s), candidate has 0` at both viewports —
+the two rings the dial replaces. **The other 113 boxes still match, `.centre`
+itself included**, which is the evidence that the change is contained to the
+panel's contents and moved nothing in the twelve-palace grid around it. Pixels
+went 1.636% → **1.808%** at desktop and 0.430% → **0.552%** at mobile.
+
+`.centre .ring` is deliberately **left in the §03 geometry list**. Taking it out
+would make the number green by deleting the measurement, which is the one thing
+`PLAN.md` §10.3 does not allow; leaving it reports the divergence on every run,
+the same posture §10 takes for the language selector.
+
+**One departure from the mockup, for AA.** The mockup draws the unlived decades'
+age labels in `#3b4860` — 2.09:1, and `DESIGN.md` §4.5 already retires that value
+to `--tx-ghost`, decorative marks only, never text. The dial reads lived `--tx2`
+(8.06:1) → unlived `--tx4` (4.88:1), which keeps the mockup's ordering — the
+future dimmer than the past — with both above AA. Same correction as §5.2, for
+the same reason. The arcs themselves carry the three states in full.
+
+### 16.2 §05 — the reading
+
+**Was:** the paper surface on screen and in the export, identical: `--p0`
+`#f4efe4`, body `--p-tx2` `#554d42`, headings and citation rules `--verm`
+`#b23a2e`.
+
+**Is:** lamplight on screen — ground `#14151a`, body `#d6cfc0`, headings
+`#e8956f`, citations on `#1b1c22` behind an `#e8956f` rule, seal `#c4533f` —
+and **paper, unchanged, on export**.
+
+**One mechanism, not two.** `.paper:not(.print)` remaps the `--p*` family to the
+new `--l*` tokens; `.paper.print` — the same `variant="print"` switch
+`ChartGrid` has always used — keeps the root values. Every `.paper*` and
+`.prose-interpretation` rule is still written once. `PARITY.md` §7 records that
+a near-black PDF was already a bug once; the export path is therefore
+**verified, not assumed** (§16.3).
+
+**Both exports now capture the print copy.** `↓ Tải ảnh` used to rasterise the
+on-screen `.paper` node, which under lamplight would have saved a dark PNG with
+a paper background painted behind it. It now captures the same off-screen
+`.paper.print` section the PDF does, from `result/page.tsx`, which also drops
+the toolbar from the saved image. Measured: the exported PNG's ground is
+`251,248,241` = `#fbf8f1`.
+
+**Contrast, measured on the shipped values:**
+
+| Pair | Measured | Needs | |
+|---|---:|---:|:--|
+| body `--l-tx2` `#d6cfc0` on `--l0` `#14151a` | 11.76:1 | 4.5 | ✅ |
+| emphasis `--l-tx` `#f5efe2` on `--l0` | 15.91:1 | 4.5 | ✅ |
+| heading `--l-head` `#e8956f` on `--l0` | 7.78:1 | 4.5 | ✅ |
+| citation `--l-tx2` on `--l1` `#1b1c22` | 10.96:1 | 4.5 | ✅ |
+| meta `--l-tx3` `#8f887a` on `--l1` | 4.83:1 | 4.5 | ✅ |
+
+**One departure from the mockup, for AA.** The mockup's primary action is
+`#c4533f`, which carries its 12px label at **4.20:1**. The action keeps `--verm`
+`#b23a2e` (5.53:1) instead; `#c4533f` ships only as `--l-seal`, on the seal,
+which is `aria-hidden` decoration at opacity .5 and was never text. §5.2's rule.
+
+**The pixel figure.** 1.848% → **88.013%** desktop, 1.621% → **77.783%** mobile.
+That is the whole surface inverting, and it is not a defect — but it does mean
+the percentage on §05 now measures nothing. **Geometry is 0 of 24 boxes at
+desktop and 0 of 23 at mobile**, unchanged, and on this screen that is the
+entire measurement. The token audit is still clean; none of the nine `--l*`
+values is in a retired set, so **no allowlist entry was added and no grep was
+loosened**.
+
+### 16.3 Why the new mockup was not exported as a second reference
+
+It was considered and rejected. `.lavish/astro-lens-centre-and-reading.html` is
+an **options document**, not a screen: its centre cell is a standalone 380×344
+`.cell`, and its reading is a five-paragraph excerpt in `.read`/`.read-b`. It
+carries none of the selectors §03 and §05 actually gate on — `.chart`, `.crow`,
+`.pal`, `.paper-bar`, `.doc-t`, `.paper-foot`. Pointing the harness at it would
+mean a second reference path and a second selector map for two surfaces, which
+is the general machinery `PLAN.md` §1 and the captain's "make sure all changes
+are necessary" both rule out. The honest alternative — record what changed, keep
+the gate that still measures something — is what §16.1 and §16.2 do.
+
+If the reference is ever regenerated, it should be a **full-app** mockup as
+`horoscopes-thienvandai-mockup.html` was, and this section is what tells its
+author which two surfaces changed and why.
+
+### 16.4 Everything else is byte-identical
+
+Guarded, not assumed. The candidate captures were compared byte for byte
+against the pre-change run:
+
+```
+SAME  landing-desktop.cand.png    SAME  landing-mobile.cand.png
+SAME  overview-desktop.cand.png   SAME  overview-mobile.cand.png
+SAME  daivan-desktop.cand.png     SAME  daivan-mobile.cand.png
+SAME  horoscope-desktop.cand.png  SAME  horoscope-mobile.cand.png
+DIFF  chart-desktop.cand.png      DIFF  chart-mobile.cand.png
+DIFF  reading-desktop.cand.png    DIFF  reading-mobile.cand.png
+```
+
+Four screens moved by exactly zero pixels, including §04, which shares
+`decadeIndexAt` with the dial. The 6 reduced-motion and 20 per-locale
+layout-stress tests are all still green — the Korean centre panel renders the
+identity line at its raised 11px floor, and the dial's own labels are digits,
+which §11.1's rule leaves at their Latin size.
