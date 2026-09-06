@@ -16,11 +16,25 @@
 
 ## 화면 미리보기
 
-| | | |
-|:--:|:--:|:--:|
-| [<img src="public/screenshots/landing.png" width="260" alt="첫 화면">](public/screenshots/landing.png)<br>**첫 화면** | [<img src="public/screenshots/chart.png" width="260" alt="십이궁 명반">](public/screenshots/chart.png)<br>**십이궁 명반** | [<img src="public/screenshots/chart-relations.png" width="260" alt="궁위 관계 오버레이">](public/screenshots/chart-relations.png)<br>**궁위 관계 오버레이** |
-| [<img src="public/screenshots/daivan.png" width="260" alt="대한 타임라인">](public/screenshots/daivan.png)<br>**대한 타임라인** | [<img src="public/screenshots/reading.png" width="260" alt="해석문">](public/screenshots/reading.png)<br>**해석문** | [<img src="public/screenshots/chat.png" width="260" alt="대화">](public/screenshots/chat.png)<br>**대화** |
-| [<img src="public/screenshots/chart-ko.png" width="260" alt="한국어">](public/screenshots/chart-ko.png)<br>**한국어** |  |  |
+[![궁위 관계 오버레이](public/screenshots/chart-relations.png)](public/screenshots/chart-relations.png)
+
+**궁위 관계 오버레이** — 궁위에 마우스를 올리면 충조는 호박색, 삼합은 청색 선으로 명반 위에 바로 그려집니다.
+
+<table>
+<tr>
+<td width="50%" align="center"><a href="public/screenshots/chart.png"><img src="public/screenshots/chart.png" width="420" alt="십이궁 명반"></a><br><b>십이궁 명반</b></td>
+<td width="50%" align="center"><a href="public/screenshots/reading.png"><img src="public/screenshots/reading.png" width="420" alt="해석문"></a><br><b>해석문</b></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td width="25%" align="center"><a href="public/screenshots/daivan.png"><img src="public/screenshots/daivan.png" width="200" alt="대한 타임라인"></a><br><sub><b>대한 타임라인</b></sub></td>
+<td width="25%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="200" alt="첫 화면"></a><br><sub><b>첫 화면</b></sub></td>
+<td width="25%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="200" alt="대화"></a><br><sub><b>대화</b></sub></td>
+<td width="25%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="200" alt="한국어"></a><br><sub><b>한국어</b></sub></td>
+</tr>
+</table>
 
 모든 스크린샷은 내장된 개발용 예시 명반으로 찍은 것이라 실제 인물의 출생 정보가 들어
 있지 않습니다. `npm run screenshots`로 다시 만듭니다.

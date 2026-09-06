@@ -13,11 +13,25 @@
 
 ## 界面预览
 
-| | | |
-|:--:|:--:|:--:|
-| [<img src="public/screenshots/landing.png" width="260" alt="首页">](public/screenshots/landing.png)<br>**首页** | [<img src="public/screenshots/chart.png" width="260" alt="十二宫命盘">](public/screenshots/chart.png)<br>**十二宫命盘** | [<img src="public/screenshots/chart-relations.png" width="260" alt="宫位关系浮层">](public/screenshots/chart-relations.png)<br>**宫位关系浮层** |
-| [<img src="public/screenshots/daivan.png" width="260" alt="大限时间轴">](public/screenshots/daivan.png)<br>**大限时间轴** | [<img src="public/screenshots/reading.png" width="260" alt="命盘解读">](public/screenshots/reading.png)<br>**命盘解读** | [<img src="public/screenshots/chat.png" width="260" alt="追问对话">](public/screenshots/chat.png)<br>**追问对话** |
-| [<img src="public/screenshots/chart-ko.png" width="260" alt="韩语">](public/screenshots/chart-ko.png)<br>**韩语** |  |  |
+[![宫位关系浮层](public/screenshots/chart-relations.png)](public/screenshots/chart-relations.png)
+
+**宫位关系浮层** —— 悬停任一宫位，冲照以琥珀色亮起、三合以青色亮起，直接画在盘上。
+
+<table>
+<tr>
+<td width="50%" align="center"><a href="public/screenshots/chart.png"><img src="public/screenshots/chart.png" width="420" alt="十二宫命盘"></a><br><b>十二宫命盘</b></td>
+<td width="50%" align="center"><a href="public/screenshots/reading.png"><img src="public/screenshots/reading.png" width="420" alt="命盘解读"></a><br><b>命盘解读</b></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td width="25%" align="center"><a href="public/screenshots/daivan.png"><img src="public/screenshots/daivan.png" width="200" alt="大限时间轴"></a><br><sub><b>大限时间轴</b></sub></td>
+<td width="25%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="200" alt="首页"></a><br><sub><b>首页</b></sub></td>
+<td width="25%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="200" alt="追问对话"></a><br><sub><b>追问对话</b></sub></td>
+<td width="25%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="200" alt="韩语"></a><br><sub><b>韩语</b></sub></td>
+</tr>
+</table>
 
 所有截图均由内置的开发用样例命盘生成，因此不含任何真实人物的出生数据。用
 `npm run screenshots` 重新生成。

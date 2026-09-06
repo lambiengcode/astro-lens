@@ -16,11 +16,25 @@ lại.
 
 ## Giao diện
 
-| | | |
-|:--:|:--:|:--:|
-| [<img src="public/screenshots/landing.png" width="260" alt="Trang chủ">](public/screenshots/landing.png)<br>**Trang chủ** | [<img src="public/screenshots/chart.png" width="260" alt="Lá số 12 cung">](public/screenshots/chart.png)<br>**Lá số 12 cung** | [<img src="public/screenshots/chart-relations.png" width="260" alt="Lớp phủ quan hệ">](public/screenshots/chart-relations.png)<br>**Lớp phủ quan hệ** |
-| [<img src="public/screenshots/daivan.png" width="260" alt="Bảng đại vận">](public/screenshots/daivan.png)<br>**Bảng đại vận** | [<img src="public/screenshots/reading.png" width="260" alt="Bài luận giải">](public/screenshots/reading.png)<br>**Bài luận giải** | [<img src="public/screenshots/chat.png" width="260" alt="Hỏi đáp">](public/screenshots/chat.png)<br>**Hỏi đáp** |
-| [<img src="public/screenshots/chart-ko.png" width="260" alt="Tiếng Hàn">](public/screenshots/chart-ko.png)<br>**Tiếng Hàn** |  |  |
+[![Lớp phủ quan hệ](public/screenshots/chart-relations.png)](public/screenshots/chart-relations.png)
+
+**Lớp phủ quan hệ** — rê chuột vào một cung, xung chiếu sáng lên màu hổ phách, tam hợp màu lam, vẽ thẳng lên lá số.
+
+<table>
+<tr>
+<td width="50%" align="center"><a href="public/screenshots/chart.png"><img src="public/screenshots/chart.png" width="420" alt="Lá số 12 cung"></a><br><b>Lá số 12 cung</b></td>
+<td width="50%" align="center"><a href="public/screenshots/reading.png"><img src="public/screenshots/reading.png" width="420" alt="Bài luận giải"></a><br><b>Bài luận giải</b></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td width="25%" align="center"><a href="public/screenshots/daivan.png"><img src="public/screenshots/daivan.png" width="200" alt="Bảng đại vận"></a><br><sub><b>Bảng đại vận</b></sub></td>
+<td width="25%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="200" alt="Trang chủ"></a><br><sub><b>Trang chủ</b></sub></td>
+<td width="25%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="200" alt="Hỏi đáp"></a><br><sub><b>Hỏi đáp</b></sub></td>
+<td width="25%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="200" alt="Tiếng Hàn"></a><br><sub><b>Tiếng Hàn</b></sub></td>
+</tr>
+</table>
 
 Mọi ảnh đều sinh ra từ lá số mẫu dành cho phát triển, nên không chứa dữ liệu
 ngày sinh của người thật. Chụp lại bằng `npm run screenshots`.

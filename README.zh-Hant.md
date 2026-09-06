@@ -13,11 +13,25 @@
 
 ## 介面預覽
 
-| | | |
-|:--:|:--:|:--:|
-| [<img src="public/screenshots/landing.png" width="260" alt="首頁">](public/screenshots/landing.png)<br>**首頁** | [<img src="public/screenshots/chart.png" width="260" alt="十二宮命盤">](public/screenshots/chart.png)<br>**十二宮命盤** | [<img src="public/screenshots/chart-relations.png" width="260" alt="宮位關係浮層">](public/screenshots/chart-relations.png)<br>**宮位關係浮層** |
-| [<img src="public/screenshots/daivan.png" width="260" alt="大限時間軸">](public/screenshots/daivan.png)<br>**大限時間軸** | [<img src="public/screenshots/reading.png" width="260" alt="命盤解讀">](public/screenshots/reading.png)<br>**命盤解讀** | [<img src="public/screenshots/chat.png" width="260" alt="追問對話">](public/screenshots/chat.png)<br>**追問對話** |
-| [<img src="public/screenshots/chart-ko.png" width="260" alt="韓文">](public/screenshots/chart-ko.png)<br>**韓文** |  |  |
+[![宮位關係浮層](public/screenshots/chart-relations.png)](public/screenshots/chart-relations.png)
+
+**宮位關係浮層** —— 游標停在任一宮位，沖照以琥珀色亮起、三合以青色亮起，直接畫在盤上。
+
+<table>
+<tr>
+<td width="50%" align="center"><a href="public/screenshots/chart.png"><img src="public/screenshots/chart.png" width="420" alt="十二宮命盤"></a><br><b>十二宮命盤</b></td>
+<td width="50%" align="center"><a href="public/screenshots/reading.png"><img src="public/screenshots/reading.png" width="420" alt="命盤解讀"></a><br><b>命盤解讀</b></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td width="25%" align="center"><a href="public/screenshots/daivan.png"><img src="public/screenshots/daivan.png" width="200" alt="大限時間軸"></a><br><sub><b>大限時間軸</b></sub></td>
+<td width="25%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="200" alt="首頁"></a><br><sub><b>首頁</b></sub></td>
+<td width="25%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="200" alt="追問對話"></a><br><sub><b>追問對話</b></sub></td>
+<td width="25%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="200" alt="韓文"></a><br><sub><b>韓文</b></sub></td>
+</tr>
+</table>
 
 所有截圖都由內建的開發用範例命盤產生，因此不含任何真實人物的出生資料。用
 `npm run screenshots` 重新產生。

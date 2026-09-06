@@ -17,11 +17,25 @@ export captures.
 
 ## What it looks like
 
-| | | |
-|:--:|:--:|:--:|
-| [<img src="public/screenshots/landing.png" width="260" alt="Landing">](public/screenshots/landing.png)<br>**Landing** | [<img src="public/screenshots/chart.png" width="260" alt="Twelve-palace chart">](public/screenshots/chart.png)<br>**Twelve-palace chart** | [<img src="public/screenshots/chart-relations.png" width="260" alt="Relationship overlay">](public/screenshots/chart-relations.png)<br>**Relationship overlay** |
-| [<img src="public/screenshots/daivan.png" width="260" alt="Đại vận timeline">](public/screenshots/daivan.png)<br>**Đại vận timeline** | [<img src="public/screenshots/reading.png" width="260" alt="The reading">](public/screenshots/reading.png)<br>**The reading** | [<img src="public/screenshots/chat.png" width="260" alt="Chat">](public/screenshots/chat.png)<br>**Chat** |
-| [<img src="public/screenshots/chart-ko.png" width="260" alt="Korean">](public/screenshots/chart-ko.png)<br>**Korean** |  |  |
+[![Relationship overlay](public/screenshots/chart-relations.png)](public/screenshots/chart-relations.png)
+
+**Relationship overlay** — hover any palace and its xung chiếu lights amber, its tam hợp cyan, drawn straight onto the chart.
+
+<table>
+<tr>
+<td width="50%" align="center"><a href="public/screenshots/chart.png"><img src="public/screenshots/chart.png" width="420" alt="Twelve-palace chart"></a><br><b>Twelve-palace chart</b></td>
+<td width="50%" align="center"><a href="public/screenshots/reading.png"><img src="public/screenshots/reading.png" width="420" alt="The reading"></a><br><b>The reading</b></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td width="25%" align="center"><a href="public/screenshots/daivan.png"><img src="public/screenshots/daivan.png" width="200" alt="Đại vận timeline"></a><br><sub><b>Đại vận timeline</b></sub></td>
+<td width="25%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="200" alt="Landing"></a><br><sub><b>Landing</b></sub></td>
+<td width="25%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="200" alt="Chat"></a><br><sub><b>Chat</b></sub></td>
+<td width="25%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="200" alt="Korean"></a><br><sub><b>Korean</b></sub></td>
+</tr>
+</table>
 
 All shots are generated from the built-in development fixture, so they contain
 no real person's birth data. Regenerate them with `npm run screenshots`.
