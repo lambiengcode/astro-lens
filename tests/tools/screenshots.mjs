@@ -11,8 +11,12 @@
 // pinned to vi-VN — the app negotiates from Accept-Language and Playwright
 // sends en-US, so an unpinned run would quietly capture the English build.
 //
-// Captures are ELEMENT-scoped, not full-page. That is what keeps the files a
-// few hundred KB instead of the ~2.8MB full-page shots this replaced.
+// Every shot is ONE FRAME: a 1440x900 viewport, captured whole, with the thing
+// it shows scrolled into it. Element-scoped captures came out whatever size
+// their component was (0.58 to 1.69 aspect), which no README grid can line up.
+// The run fails if any output differs from FRAME, so that cannot come back.
+// Frames are palette-quantised through sharp (already installed with next) to
+// keep the directory near a megabyte rather than several.
 //
 // One shot needs a live model call: the chat answer with its citation row.
 // It cannot be faked without the screenshot ceasing to be evidence, so
@@ -22,6 +26,7 @@ import { spawn, execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUT = path.join(ROOT, 'public', 'screenshots');
@@ -71,10 +76,12 @@ try {
   fs.mkdirSync(OUT, { recursive: true });
   const browser = await chromium.launch();
 
+  const FRAME = { width: 1440, height: 900 };
+
   /** One page, configured the way every shot needs it. */
-  async function open({ locale = 'vi-VN', width = 1440, height = 900, motion = 'reduce' } = {}) {
+  async function open({ locale = 'vi-VN', motion = 'reduce' } = {}) {
     const ctx = await browser.newContext({
-      viewport: { width, height }, deviceScaleFactor: 1,
+      viewport: FRAME, deviceScaleFactor: 1,
       colorScheme: 'dark', reducedMotion: motion, locale,
     });
     return { ctx, page: await ctx.newPage() };
@@ -83,27 +90,33 @@ try {
   async function settle(page, selector) {
     await page.locator(selector).first().waitFor({ state: 'visible' });
     await page.evaluate(() => document.fonts.ready);
+    // The dev-server badge is not part of the app.
+    await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
     await page.waitForTimeout(400);
   }
 
-  async function shot(name, { route, selector, locale, width, height, motion, before, viewportSlice }) {
+  /** Scroll `selector` into the frame: centred if it fits, top-aligned if not. */
+  async function frame(page, selector) {
+    await page.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      const r = el.getBoundingClientRect();
+      const room = window.innerHeight;
+      const top = r.height <= room ? r.top - (room - r.height) / 2 : r.top - 64; // keeps the tab bar above it in frame
+      window.scrollBy(0, top);
+    }, selector);
+    await page.waitForTimeout(300);
+  }
+
+  async function shot(name, { route, selector, focus, locale, motion, before }) {
     if (only && !only.has(name)) return;
-    const { ctx, page } = await open({ locale, width, height, motion });
+    const { ctx, page } = await open({ locale, motion });
     await page.goto(base + route, { waitUntil: 'domcontentloaded' });
     await settle(page, selector);
+    if (focus) await frame(page, focus);
     if (before) await before(page);
     const file = path.join(OUT, `${name}.png`);
-    const target = page.locator(selector).first();
-    if (viewportSlice) {
-      // The element grows without bound — a chat panel is as tall as its
-      // conversation, and the raw element shot came out 440x9709. Take a
-      // viewport-height slice of its column instead, positioned by `before`.
-      const box = await target.boundingBox();
-      const vp = page.viewportSize();
-      await page.screenshot({ path: file, clip: { x: box.x, y: 0, width: box.width, height: vp.height } });
-    } else {
-      await target.screenshot({ path: file });
-    }
+    const raw = await page.screenshot({ fullPage: false });
+    await sharp(raw).png({ palette: true, quality: 90, effort: 10, compressionLevel: 9 }).toFile(file);
     await ctx.close();
     console.log(`  ${name}.png  ${(fs.statSync(file).size / 1024).toFixed(0)} KB`);
   }
@@ -111,7 +124,7 @@ try {
   await shot('landing', { route: '/?fixture=tuvi-ty', selector: '.app' });
 
   await shot('chart', {
-    route: '/result?fixture=tuvi-ty&tab=chart', selector: '.res-body',
+    route: '/result?fixture=tuvi-ty&tab=chart', selector: '.chart:not(.print)', focus: '.res-body',
     before: async (p) => { await p.locator('.chart:not(.print) .pal.menh').click(); await p.waitForTimeout(600); },
   });
 
@@ -119,7 +132,8 @@ try {
   // hợp. The linework is an SVG overlay, so motion is left ON and the shot
   // waits for a path to exist rather than for a fixed delay.
   await shot('chart-relations', {
-    route: '/result?fixture=tuvi-ty&tab=chart', selector: '.chart:not(.print)', motion: 'no-preference',
+    route: '/result?fixture=tuvi-ty&tab=chart', selector: '.chart:not(.print)', focus: '.res-body',
+    motion: 'no-preference',
     before: async (p) => {
       await p.locator('.chart:not(.print) .pal').nth(4).hover();
       await p.waitForFunction(() => (document.querySelector('.chart:not(.print) .rel-ov')?.childElementCount ?? 0) > 0,
@@ -128,19 +142,21 @@ try {
     },
   });
 
-  await shot('daivan', { route: '/result?fixture=tuvi-ty&tab=daivan', selector: '.res-body' });
-  await shot('reading', { route: '/result?fixture=tuvi-ty&tab=interpretation', selector: '.res-body' });
+  await shot('daivan', { route: '/result?fixture=tuvi-ty&tab=daivan', selector: '.res-body', focus: '.res-body' });
+  await shot('reading', { route: '/result?fixture=tuvi-ty&tab=interpretation', selector: '.res-body', focus: '.res-body' });
 
   // Korean, so the five-locale support is visible rather than claimed.
   await shot('chart-ko', {
-    route: '/result?fixture=tuvi-ty&tab=chart&lang=ko', selector: '.res-body', locale: 'ko-KR',
+    route: '/result?fixture=tuvi-ty&tab=chart&lang=ko', selector: '.chart:not(.print)', focus: '.res-body',
+    locale: 'ko-KR',
   });
 
-  // The live one. Asks a real question and waits for the citation row.
+  // The live one. Opens the floating panel over the chart, asks a real
+  // question and waits for the citation row.
   await shot('chat', {
-    route: '/result?fixture=tuvi-ty&tab=horoscope', selector: '.chat',
-    height: 760, viewportSlice: true,
+    route: '/result?fixture=tuvi-ty&tab=chart', selector: '.fab', focus: '.res-body',
     before: async (p) => {
+      await p.locator('.fab').click();
       // The citation row only renders when the model actually emitted one, and
       // it does not always. Ask again rather than shipping a shot of the
       // feature not happening.
@@ -149,7 +165,7 @@ try {
         await p.locator('.chat-f .inp').fill('Năm nay tôi chuyển việc có ổn không?');
         await p.locator('.chat-f button[type=submit]').click();
         console.log(`    attempt ${attempt}: waiting on a live model answer (~1-3 min)…`);
-        const row = p.locator('.msg.a .cite').first();
+        const row = p.locator('.msg.a .cite').last();
         try {
           await row.waitFor({ state: 'visible', timeout: 240_000 });
           cite = row;
@@ -159,16 +175,21 @@ try {
         }
       }
       if (!cite) throw new Error('the model would not cite after three attempts');
-      // Frame the citation row itself, near the foot of the slice, with the
-      // tail of the answer above it. The point of this shot is the .cite row.
+      // The panel scrolls internally; bring the citation row to its foot so
+      // the tail of the answer sits above it. The point of this shot is .cite.
       await cite.scrollIntoViewIfNeeded();
-      await p.evaluate(() => {
-        const r = document.querySelector('.msg.a .cite').getBoundingClientRect();
-        window.scrollBy(0, r.bottom - (window.innerHeight - 90));
-      });
       await p.waitForTimeout(600);
     },
   });
+
+  // Every frame the same size, or the README grid is ragged again.
+  // Checks the whole directory, so a SHOT_ONLY run cannot leave a stale odd one.
+  for (const file of fs.readdirSync(OUT).map((f) => path.join(OUT, f))) {
+    const { width, height } = await sharp(file).metadata();
+    if (width !== FRAME.width || height !== FRAME.height) {
+      throw new Error(`${path.basename(file)} is ${width}x${height}, not ${FRAME.width}x${FRAME.height}`);
+    }
+  }
 
   await browser.close();
   console.log('\n· total', (fs.readdirSync(OUT).reduce((n, f) => n + fs.statSync(path.join(OUT, f)).size, 0) / 1024 / 1024).toFixed(2), 'MB');

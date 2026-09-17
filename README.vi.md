@@ -26,13 +26,10 @@ lại.
 <td width="33.3%" align="center"><a href="public/screenshots/reading.png"><img src="public/screenshots/reading.png" width="340" alt="Bài luận giải"></a><br><b>Bài luận giải</b></td>
 <td width="33.3%" align="center"><a href="public/screenshots/daivan.png"><img src="public/screenshots/daivan.png" width="340" alt="Bảng đại vận"></a><br><b>Bảng đại vận</b></td>
 </tr>
-</table>
-
-<table>
 <tr>
-<td width="33.3%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="220" alt="Trang chủ"></a><br><sub><b>Trang chủ</b></sub></td>
-<td width="33.3%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="220" alt="Hỏi đáp"></a><br><sub><b>Hỏi đáp</b></sub></td>
-<td width="33.3%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="220" alt="Tiếng Hàn"></a><br><sub><b>Tiếng Hàn</b></sub></td>
+<td width="33.3%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="340" alt="Trang chủ"></a><br><b>Trang chủ</b></td>
+<td width="33.3%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="340" alt="Hỏi đáp"></a><br><b>Hỏi đáp</b></td>
+<td width="33.3%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="340" alt="Tiếng Hàn"></a><br><b>Tiếng Hàn</b></td>
 </tr>
 </table>
 

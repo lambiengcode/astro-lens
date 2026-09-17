@@ -26,13 +26,10 @@
 <td width="33.3%" align="center"><a href="public/screenshots/reading.png"><img src="public/screenshots/reading.png" width="340" alt="해석문"></a><br><b>해석문</b></td>
 <td width="33.3%" align="center"><a href="public/screenshots/daivan.png"><img src="public/screenshots/daivan.png" width="340" alt="대한 타임라인"></a><br><b>대한 타임라인</b></td>
 </tr>
-</table>
-
-<table>
 <tr>
-<td width="33.3%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="220" alt="첫 화면"></a><br><sub><b>첫 화면</b></sub></td>
-<td width="33.3%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="220" alt="대화"></a><br><sub><b>대화</b></sub></td>
-<td width="33.3%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="220" alt="한국어"></a><br><sub><b>한국어</b></sub></td>
+<td width="33.3%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="340" alt="첫 화면"></a><br><b>첫 화면</b></td>
+<td width="33.3%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="340" alt="대화"></a><br><b>대화</b></td>
+<td width="33.3%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="340" alt="한국어"></a><br><b>한국어</b></td>
 </tr>
 </table>
 

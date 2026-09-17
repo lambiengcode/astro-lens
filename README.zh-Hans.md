@@ -23,13 +23,10 @@
 <td width="33.3%" align="center"><a href="public/screenshots/reading.png"><img src="public/screenshots/reading.png" width="340" alt="命盘解读"></a><br><b>命盘解读</b></td>
 <td width="33.3%" align="center"><a href="public/screenshots/daivan.png"><img src="public/screenshots/daivan.png" width="340" alt="大限时间轴"></a><br><b>大限时间轴</b></td>
 </tr>
-</table>
-
-<table>
 <tr>
-<td width="33.3%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="220" alt="首页"></a><br><sub><b>首页</b></sub></td>
-<td width="33.3%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="220" alt="追问对话"></a><br><sub><b>追问对话</b></sub></td>
-<td width="33.3%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="220" alt="韩语"></a><br><sub><b>韩语</b></sub></td>
+<td width="33.3%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="340" alt="首页"></a><br><b>首页</b></td>
+<td width="33.3%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="340" alt="追问对话"></a><br><b>追问对话</b></td>
+<td width="33.3%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="340" alt="韩语"></a><br><b>韩语</b></td>
 </tr>
 </table>
 

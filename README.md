@@ -27,13 +27,10 @@ export captures.
 <td width="33.3%" align="center"><a href="public/screenshots/reading.png"><img src="public/screenshots/reading.png" width="340" alt="The reading"></a><br><b>The reading</b></td>
 <td width="33.3%" align="center"><a href="public/screenshots/daivan.png"><img src="public/screenshots/daivan.png" width="340" alt="Đại vận timeline"></a><br><b>Đại vận timeline</b></td>
 </tr>
-</table>
-
-<table>
 <tr>
-<td width="33.3%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="220" alt="Landing"></a><br><sub><b>Landing</b></sub></td>
-<td width="33.3%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="220" alt="Chat"></a><br><sub><b>Chat</b></sub></td>
-<td width="33.3%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="220" alt="Korean"></a><br><sub><b>Korean</b></sub></td>
+<td width="33.3%" align="center"><a href="public/screenshots/landing.png"><img src="public/screenshots/landing.png" width="340" alt="Landing"></a><br><b>Landing</b></td>
+<td width="33.3%" align="center"><a href="public/screenshots/chat.png"><img src="public/screenshots/chat.png" width="340" alt="Chat"></a><br><b>Chat</b></td>
+<td width="33.3%" align="center"><a href="public/screenshots/chart-ko.png"><img src="public/screenshots/chart-ko.png" width="340" alt="Korean"></a><br><b>Korean</b></td>
 </tr>
 </table>
 
